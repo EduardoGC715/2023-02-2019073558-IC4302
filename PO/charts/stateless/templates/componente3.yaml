@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.componente3.name }}
+  labels:
+    app: {{ .Values.config.componente3.name }}
+spec:
+  replicas: {{ .Values.config.componente3.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.componente3.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.componente3.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.componente3.name }}
+        image: {{ .Values.config.componente3.image }}
+        env:
+          - name: RABBITMQ
+            value: "stateful-rabbitmq"
+          - name: INPUT_QUEUE
+            value: {{ .Values.config.componente3.input_queue }}
+          - name: OUTPUT_QUEUE
+            value: {{ .Values.config.componente3.output_queue }}
+          - name: RABBITPASS
+            valueFrom:
+              secretKeyRef:
+                name: stateful-rabbitmq
+                key: rabbitmq-password
+                optional: false

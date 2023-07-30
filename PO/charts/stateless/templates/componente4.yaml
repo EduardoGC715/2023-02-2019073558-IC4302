@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.componente4.name }}
+  labels:
+    app: {{ .Values.config.componente4.name }}
+spec:
+  replicas: {{ .Values.config.componente4.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.componente4.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.componente4.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.componente4.name }}
+        image: {{ .Values.config.componente4.image }}
+        env:
+          - name: RABBITMQ
+            value: "stateful-rabbitmq"
+          - name: INPUT_QUEUE
+            value: {{ .Values.config.componente4.input_queue }}
+          - name: RABBITPASS
+            valueFrom:
+              secretKeyRef:
+                name: stateful-rabbitmq
+                key: rabbitmq-password
+                optional: false
+          - name: ESENDPOINT
+            value: ic4302-es-http
+          - name: ESPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ic4302-es-elastic-user
+                key: elastic
+                optional: false
+          - name: ESINDEX
+            value: messages

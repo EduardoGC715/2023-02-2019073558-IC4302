@@ -1,0 +1,24 @@
+config:
+  componente1:
+    replicas: 1
+    name: producer
+    output_queue: "TO_COMPONENTE2"
+    image: nereo08/componente1
+    interval: 1
+  componente2:
+    replicas: 1
+    name: componente2
+    output_queue: "TO_COMPONENTE3"
+    input_queue: "TO_COMPONENTE2"
+    image: nereo08/componente2
+  componente3:
+    replicas: 1
+    name: componente3
+    output_queue: "TO_COMPONENTE4"
+    input_queue: "TO_COMPONENTE3"
+    image: nereo08/componente3
+  componente4:
+    replicas: 1
+    name: publisher
+    input_queue: "TO_COMPONENTE4"
+    image: nereo08/componente4
