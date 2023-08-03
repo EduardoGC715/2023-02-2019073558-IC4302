@@ -2,7 +2,7 @@ import requests
 
 def get_biorxiv_data(query=None):
     base_url = 'https://api.biorxiv.org'
-    endpoint = '/details/biorxiv/2018-08-21/2018-08-28/45'
+    endpoint = '/covid19/0'
     headers = {'Content-Type': 'application/json'}
 
     # You can use the `query` parameter to filter data, for example, by subject or author.

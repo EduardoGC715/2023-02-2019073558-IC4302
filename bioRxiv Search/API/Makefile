@@ -1,11 +1,16 @@
 .DEFAULT_GOAL: run
 .PHONY: run build
 
+MY_DIR := $(shell cd)
 # Para desarrollo
 # make run
 # dentro del bash, se pone python bioRxivAPI.py para correr el codigo
 run:
-	docker run -d --name bioappdev --rm -v .:/app -it bioapidev:latest /bin/sh
+	docker run -itd --name bioappdev -v "$(MY_DIR)":/app bioapidev:latest
+	docker exec -it bioappdev /bin/sh
+
+start:
+	docker start bioappdev
 	docker exec -it bioappdev /bin/sh
 
 stop:
