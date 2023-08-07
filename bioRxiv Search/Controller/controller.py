@@ -4,7 +4,7 @@ import os
 import json
 import math
 
-def get_biorxiv_data(query=None):
+def get_biorxiv_data():
     base_url = 'https://api.biorxiv.org'
     endpoint = '/covid19/0'
     headers = {'Content-Type': 'application/json'}
@@ -30,7 +30,7 @@ channel.queue_declare(queue=CRAWLER_QUEUE, durable = True)
 
 data = {
     "jobId": "1234",
-    "pageSize": "123",
+    "pageSize": "100",
     "sleep": "2000"
 }
 jsonexample = json.dumps(data)
