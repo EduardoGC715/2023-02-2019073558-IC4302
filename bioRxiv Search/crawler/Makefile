@@ -36,5 +36,4 @@ buildProd:
 	docker build -t crawlerimage:$(version) .
 
 	docker tag crawlerimage:$(version) crawlerimage:latest
-
-	docker create --name crawlerimage -v .:/app crawlerimage:latest
+	docker tag crawlerimage:$(version) dandiego235/crawlerbio:$(version)

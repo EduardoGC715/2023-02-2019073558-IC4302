@@ -33,8 +33,7 @@ stopProd:
 
 buildProd:
 	@echo "Building..."
-	docker build -t controlimage:$(version) .
+	docker build -t controllerbio:$(version) .
 
-	docker tag controller:$(version) controlimage:latest
-
-	docker create --name controller -v .:/app controlimage:latest
+	docker tag controllerbio:$(version) controllerbio:latest
+	docker tag controllerbio:$(version) dandiego235/controllerbio:$(version)
