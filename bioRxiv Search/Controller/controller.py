@@ -28,6 +28,7 @@ ESPASSWORD=os.getenv('ESPASSWORD')
 ESINDEX=os.getenv('ESINDEX')
 
 credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
+print(RABBIT_MQ, RABBIT_MQ_PASSWORD)
 parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
 connection = pika.BlockingConnection(parameters)
 channel = connection.channel()
@@ -42,25 +43,32 @@ jsonexample = json.dumps(data)
 
 client = Elasticsearch("http://"+ESENDPOINT+":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
 
-search_body = {
-    "size": 1
-}
-
+indexes = {}
 while True:
     # Revisa a que recibe el request del kibana service.
-    jsonread = client.search(index="jobs", body = search_body)
+    try:
+        response = client.search(index="jobs", query = {"match_all": {}})
+    except Exception as e:
+        continue
+    
+    if len(response['hits']['hits']) == 0:
+        continue
+    for hit in response['hits']['hits']:
+        if hit['_source']['jobId'] in indexes.keys():
+            continue
+        jsonread = hit['_source']
+        pageSize = int(jsonread["pageSize"]) # extrae el page size del índice
+        apiData = get_biorxiv_data()
+        total = int(apiData["messages"][0]["total"])
+        print(total)
+        print(jsonread)
 
-    pageSize = int(jsonread["pageSize"]) # extrae el page size del índice
-    apiData = get_biorxiv_data()
-    total = int(apiData["messages"][0]["total"])
-    print(total)
-    print(jsonread)
-
-    splits = math.ceil(total / pageSize)
-    for split in range(splits):
-        jsonread["splitNumber"] = split
-        msg = json.dumps(jsonread)
-        channel.basic_publish(exchange='', routing_key=CRAWLER_QUEUE, body=msg)
-    break # para probar
+        splits = math.ceil(total / pageSize)
+        for split in range(splits):
+            jsonread["splitNumber"] = split
+            msg = json.dumps(jsonread)
+            channel.basic_publish(exchange='', routing_key=CRAWLER_QUEUE, body=msg)
+    # break # para probar
+    time.sleep(5000)
 
 connection.close()

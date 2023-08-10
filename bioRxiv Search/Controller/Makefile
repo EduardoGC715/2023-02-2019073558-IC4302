@@ -37,3 +37,8 @@ buildProd:
 
 	docker tag controllerbio:$(version) controllerbio:latest
 	docker tag controllerbio:$(version) dandiego235/controllerbio:$(version)
+	docker tag controllerbio:$(version) dandiego235/controllerbio:latest
+
+push:
+	docker push dandiego235/controllerbio:$(version)
+	docker push dandiego235/controllerbio:latest

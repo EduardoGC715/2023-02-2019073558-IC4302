@@ -3,7 +3,7 @@ config:
     replicas: 1
     name: controller
     crawler_queue: "CRAWLER_QUEUE"
-    image: dandiego235/controllerbio:2
+    image: dandiego235/controllerbio:latest
     interval: 1
   crawler:
     replicas: 1
