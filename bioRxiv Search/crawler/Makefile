@@ -37,3 +37,8 @@ buildProd:
 
 	docker tag crawlerimage:$(version) crawlerimage:latest
 	docker tag crawlerimage:$(version) dandiego235/crawlerbio:$(version)
+	docker tag crawlerimage:$(version) dandiego235/crawlerbio:latest
+
+push:
+	docker push dandiego235/crawlerbio:$(version)
+	docker push dandiego235/crawlerbio:latest

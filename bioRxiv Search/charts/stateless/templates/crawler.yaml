@@ -39,4 +39,4 @@ spec:
                 key: elastic
                 optional: false
           - name: ESINDEX
-            value: messages
+            value: raw

@@ -5,6 +5,7 @@ import json
 import math
 import time
 from elasticsearch import Elasticsearch
+from elasticsearch import TransportError
 
 def get_biorxiv_data():
     base_url = 'https://api.biorxiv.org'
@@ -28,7 +29,6 @@ ESPASSWORD=os.getenv('ESPASSWORD')
 ESINDEX=os.getenv('ESINDEX')
 
 credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
-print(RABBIT_MQ, RABBIT_MQ_PASSWORD)
 parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
 connection = pika.BlockingConnection(parameters)
 channel = connection.channel()
@@ -43,32 +43,58 @@ jsonexample = json.dumps(data)
 
 client = Elasticsearch("http://"+ESENDPOINT+":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
 
+index_settings = {
+    "mappings": {
+        "properties": {
+            "jobId": {
+                "type": "keyword"
+            },
+            "pageSize": {
+                "type": "integer"
+            },
+            "sleep": {
+                "type": "integer"
+            }
+        }
+    }
+}
+
+try:
+    client.indices.create(index=ESINDEX)
+    print(f"Index '{ESINDEX}' created successfully.")
+except Exception as e:
+    print(f"Index '{ESINDEX}' already exists.")
+
+
+
 indexes = {}
 while True:
+    print("Checking...")
     # Revisa a que recibe el request del kibana service.
     try:
-        response = client.search(index="jobs", query = {"match_all": {}})
+        response = client.search(index=ESINDEX, query = {"match_all": {}})
     except Exception as e:
+        print("Error:", e)
+        time.sleep(5000)
         continue
     
-    if len(response['hits']['hits']) == 0:
-        continue
-    for hit in response['hits']['hits']:
-        if hit['_source']['jobId'] in indexes.keys():
-            continue
-        jsonread = hit['_source']
-        pageSize = int(jsonread["pageSize"]) # extrae el page size del índice
-        apiData = get_biorxiv_data()
-        total = int(apiData["messages"][0]["total"])
-        print(total)
-        print(jsonread)
+    if len(response['hits']['hits']) != 0:
+        print("Found...")
+        for hit in response['hits']['hits']:
+            if hit['_source']['jobId'] in indexes.keys():
+                continue
+            jsonread = hit['_source']
+            pageSize = int(jsonread["pageSize"]) # extrae el page size del índice
+            apiData = get_biorxiv_data()
+            total = int(apiData["messages"][0]["total"])
+            print(total)
+            print(jsonread)
 
-        splits = math.ceil(total / pageSize)
-        for split in range(splits):
-            jsonread["splitNumber"] = split
-            msg = json.dumps(jsonread)
-            channel.basic_publish(exchange='', routing_key=CRAWLER_QUEUE, body=msg)
-    # break # para probar
+            splits = math.ceil(total / pageSize)
+            for split in range(splits):
+                jsonread["splitNumber"] = split
+                msg = json.dumps(jsonread)
+                channel.basic_publish(exchange='', routing_key=CRAWLER_QUEUE, body=msg)
     time.sleep(5000)
 
 connection.close()

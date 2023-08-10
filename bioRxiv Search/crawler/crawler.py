@@ -2,6 +2,7 @@ import requests
 import pika
 import os
 import json
+import time
 from elasticsearch import Elasticsearch
 
 def get_biorxiv_data(offset=None):
@@ -35,10 +36,11 @@ def callback(ch, method, properties, body):
 
     json_object["status"] = 'DOWNLOADED'
     documentId = jobId + str(splitNumber)
-    articlesJson = {documentId: articles}
+    articlesJson = {"splitId": documentId, "articles" : articles}
     channel.basic_publish(exchange='', routing_key=SPACY_QUEUE, body=json.dumps(json_object))
     print(splitNumber, len(articles))
     resp = client.index(index=ESINDEX, id=documentId, document=json.dumps(articlesJson))
+    time.sleep(int(json_object["sleep"]))
 
 
 RABBIT_MQ=os.getenv('RABBITMQ')

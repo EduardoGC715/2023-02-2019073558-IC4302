@@ -10,4 +10,4 @@ config:
     name: crawler
     crawler_queue: "CRAWLER_QUEUE"
     spacy_queue: "SPACY_QUEUE"
-    image: dandiego235/crawlerbio:2
+    image: dandiego235/crawlerbio:latest
