@@ -37,9 +37,9 @@ def callback(ch, method, properties, body):
     json_object["status"] = 'DOWNLOADED'
     documentId = jobId + str(splitNumber)
     articlesJson = {"splitId": documentId, "articles" : articles}
-    channel.basic_publish(exchange='', routing_key=SPACY_QUEUE, body=json.dumps(json_object))
     print(splitNumber, len(articles))
     resp = client.index(index=ESINDEX, id=documentId, document=json.dumps(articlesJson))
+    channel.basic_publish(exchange='', routing_key=SPACY_QUEUE, body=json.dumps(json_object))
     time.sleep(int(json_object["sleep"]))
 
 
