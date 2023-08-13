@@ -1,25 +1,58 @@
-import requests
+from elasticsearch import Elasticsearch
 import pika
 import os
 import json
-
-def get_biorxiv_data(query=None):
-    base_url = 'https://api.biorxiv.org'
-    endpoint = '/covid19/0'
-    headers = {'Content-Type': 'application/json'}
-
-    response = requests.get(base_url + endpoint, headers=headers)
-
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
-        return None
+import spacy
 
 def callback(ch, method, properties, body):
     json_object = json.loads(body)
     print(f"Received {json_object}")
+    jobId = json_object["jobId"]
+    splitNumber = int(json_object["splitNumber"])
+    
+    documentId = jobId + str(splitNumber)
+    query = {
+            "query": {
+                "match": {
+                    "splitId": documentId
+                }
+            }
+        }
+    response = es.search(index="raw", body=query, size=100)
+    
+    for hit in response["hits"]["hits"]:
+        source_dict = hit["_source"]  
+        
+        # Procesar y agregar las entidades
+        processed_document = process_and_augment_document(source_dict)
+        
+        # Actualizar el documento en Elasticsearch con el campo "augmented"
+        es.index(index=ESINDEX, id=hit["_id"], body=processed_document)
+        print(f"Processed and updated document {hit['_id']}")
 
+def perform_ner(text):
+    doc = nlp(text)
+    entities = [ent.text for ent in doc.ents]
+    return entities
+
+def process_and_augment_document(document):
+    text_to_process = document.get("articles") 
+    
+    processed_text_dict = json.loads(text_to_process)
+
+    entities = perform_ner(processed_text_dict["rel_abs"])
+
+    document["augmented"] = {"entities": entities}
+    
+    return document
+
+
+ESENDPOINT = os.getenv('ESENDPOINT')
+ESPASSWORD = os.getenv('ESPASSWORD')
+ESINDEX = os.getenv('ESINDEX')
+
+ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST')
+ELASTICSEARCH_PORT = int(os.getenv('ELASTICSEARCH_PORT', 9200))
 
 RABBIT_MQ=os.getenv('RABBITMQ')
 RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
@@ -32,5 +65,10 @@ channel = connection.channel()
 channel.queue_declare(queue=SPACY_QUEUE, durable = True)
 channel.basic_consume(queue=SPACY_QUEUE, on_message_callback=callback, auto_ack=True)
 
-channel.start_consuming()
+# Establish the Elasticsearch connection
+es = Elasticsearch(f"http://{ESENDPOINT}:{ELASTICSEARCH_PORT}",basic_auth=("elastic", ESPASSWORD),verify_certs=False)
 
+# Cargar el modelo de Spacy para NER
+nlp = spacy.load("en_core_web_sm")
+
+channel.start_consuming()
