@@ -36,5 +36,9 @@ buildProd:
 	docker build -t spacyimage:$(version) .
 
 	docker tag spacyimage:$(version) spacyimage:latest
+	docker tag spacyimage:$(version) dandiego235/spacybio:$(version)
+	docker tag spacyimage:$(version) dandiego235/spacybio:latest
 
-	docker create --name spacyimage -v .:/app spacyimage:latest
+push:
+	docker push dandiego235/spacybio:$(version)
+	docker push dandiego235/spacybio:latest

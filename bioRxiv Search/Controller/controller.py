@@ -67,7 +67,7 @@ except Exception as e:
 
 
 
-indexes = {}
+indexes = []
 while True:
     print("Checking...")
     # Revisa a que recibe el request del kibana service.
@@ -75,13 +75,13 @@ while True:
         response = client.search(index=ESINDEX, query = {"match_all": {}})
     except Exception as e:
         print("Error:", e)
-        time.sleep(5000)
+        time.sleep(5)
         continue
     
     if len(response['hits']['hits']) != 0:
         print("Found...")
         for hit in response['hits']['hits']:
-            if hit['_source']['jobId'] in indexes.keys():
+            if hit['_source']['jobId'] in indexes:
                 continue
             jsonread = hit['_source']
             pageSize = int(jsonread["pageSize"]) # extrae el page size del índice
@@ -95,6 +95,7 @@ while True:
                 jsonread["splitNumber"] = split
                 msg = json.dumps(jsonread)
                 channel.basic_publish(exchange='', routing_key=CRAWLER_QUEUE, body=msg)
-    time.sleep(5000)
+            indexes.append(jsonread['jobId'])
+    time.sleep(5)
 
 connection.close()

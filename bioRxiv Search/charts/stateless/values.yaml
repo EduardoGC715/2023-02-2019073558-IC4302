@@ -11,3 +11,8 @@ config:
     crawler_queue: "CRAWLER_QUEUE"
     spacy_queue: "SPACY_QUEUE"
     image: dandiego235/crawlerbio:latest
+  spacyentity:
+    replicas: 1
+    name: spacyentity
+    spacy_queue: "SPACY_QUEUE"
+    image: dandiego235/spacybio:latest

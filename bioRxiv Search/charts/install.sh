@@ -13,5 +13,5 @@ cd ..
 helm upgrade --install bootstrap bootstrap
 sleep 20
 helm upgrade --install stateful stateful
-sleep 60
+sleep 100
 helm upgrade --install stateless stateless

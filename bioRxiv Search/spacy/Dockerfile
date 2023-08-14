@@ -1,10 +1,16 @@
-FROM python:3.12.0b4-alpine3.18
+FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY bioRxivAPI.py .
+RUN apt-get update
+RUN apt-get install -y build-essential
+
+
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD [ "python", "-u", "./app.py" ]
+RUN python -m spacy download en_core_web_sm
+
+COPY spacyentity.py .
+CMD [ "python", "-u", "./spacyentity.py" ]

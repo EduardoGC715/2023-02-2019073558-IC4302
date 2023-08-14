@@ -40,7 +40,7 @@ def callback(ch, method, properties, body):
     print(splitNumber, len(articles))
     resp = client.index(index=ESINDEX, id=documentId, document=json.dumps(articlesJson))
     channel.basic_publish(exchange='', routing_key=SPACY_QUEUE, body=json.dumps(json_object))
-    time.sleep(int(json_object["sleep"]))
+    time.sleep(int(json_object["sleep"])/1000)
 
 
 RABBIT_MQ=os.getenv('RABBITMQ')

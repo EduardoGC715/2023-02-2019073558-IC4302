@@ -12,13 +12,11 @@ def callback(ch, method, properties, body):
     
     documentId = jobId + str(splitNumber)
     query = {
-            "query": {
-                "match": {
-                    "splitId": documentId
-                }
+            "term": {
+                "splitId": documentId
             }
         }
-    response = es.search(index="raw", body=query, size=100)
+    response = es.search(index=ESINDEX, query=query, size=100)
     
     for hit in response["hits"]["hits"]:
         source_dict = hit["_source"]  
@@ -27,7 +25,7 @@ def callback(ch, method, properties, body):
         processed_document = process_and_augment_document(source_dict)
         
         # Actualizar el documento en Elasticsearch con el campo "augmented"
-        es.index(index=ESINDEX, id=hit["_id"], body=processed_document)
+        es.index(index=AUGMENTEDINDEX, id=hit["_id"], body=processed_document)
         print(f"Processed and updated document {hit['_id']}")
 
 def perform_ner(text):
@@ -50,9 +48,7 @@ def process_and_augment_document(document):
 ESENDPOINT = os.getenv('ESENDPOINT')
 ESPASSWORD = os.getenv('ESPASSWORD')
 ESINDEX = os.getenv('ESINDEX')
-
-ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST')
-ELASTICSEARCH_PORT = int(os.getenv('ELASTICSEARCH_PORT', 9200))
+AUGMENTEDINDEX = os.getenv('AUGMENTEDINDEX')
 
 RABBIT_MQ=os.getenv('RABBITMQ')
 RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
@@ -66,7 +62,7 @@ channel.queue_declare(queue=SPACY_QUEUE, durable = True)
 channel.basic_consume(queue=SPACY_QUEUE, on_message_callback=callback, auto_ack=True)
 
 # Establish the Elasticsearch connection
-es = Elasticsearch(f"http://{ESENDPOINT}:{ELASTICSEARCH_PORT}",basic_auth=("elastic", ESPASSWORD),verify_certs=False)
+es = Elasticsearch("http://"+ESENDPOINT+":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
 
 # Cargar el modelo de Spacy para NER
 nlp = spacy.load("en_core_web_sm")
