@@ -1,0 +1,4 @@
+requests
+pika
+elasticsearch
+spacy

@@ -1,0 +1,4 @@
+RABBITMQ=rabbitmq
+RABBITPASS=
+CRAWLER_QUEUE=crawler
+SPACY_QUEUE=spacy

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.crawler.name }}
+  labels:
+    app: {{ .Values.config.crawler.name }}
+spec:
+  replicas: {{ .Values.config.crawler.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.crawler.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.crawler.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.crawler.name }}
+        image: {{ .Values.config.crawler.image }}
+        env:
+          - name: RABBITMQ
+            value: "stateful-rabbitmq"
+          - name: CRAWLER_QUEUE
+            value: {{ .Values.config.crawler.crawler_queue }}
+          - name: SPACY_QUEUE
+            value: {{ .Values.config.crawler.spacy_queue}}
+          - name: RABBITPASS
+            valueFrom:
+              secretKeyRef:
+                name: stateful-rabbitmq
+                key: rabbitmq-password
+                optional: false
+          - name: ESENDPOINT
+            value: ic4302-es-http
+          - name: ESPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ic4302-es-elastic-user
+                key: elastic
+                optional: false
+          - name: ESINDEX
+            value: raw
