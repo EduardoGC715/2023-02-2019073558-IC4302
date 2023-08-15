@@ -1,0 +1,30 @@
+PUT /jobs
+{
+  "mappings": {
+    "properties": {
+      "jobId": {
+        "type": "keyword"
+      },
+      "pageSize": {
+        "type": "integer"
+      },
+      "sleep": {
+        "type": "integer"
+      }
+    }
+  }
+}
+
+PUT /raw 
+{
+  "mappings": {
+    "properties": {
+      "splitId": {
+        "type": "keyword"
+      },
+      "articles": {
+        "type": "nested"
+      }
+    }
+  }
+}
