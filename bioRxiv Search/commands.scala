@@ -39,7 +39,7 @@ val daf = spark.read.format("org.elasticsearch.spark.sql").options(esOptions).lo
 val explodedDF: Dataframe = daf.select(EXPLODE(col("articles")).alias("article"))
 
 val resultDF: DataFrame = explodedDF.select(col("article.rel_author").alias("rel_author"),col("article.category").alias("category"),col("article.rel_date").alias("rel_date"))
-
+resultDF.show()
 val splitAuthorInst = functions.udf((authorInst: String) => {authorInst.split(", ").map(_.trim) })
 
 val transformAuthorName = functions.udf((authorName: String) => {
