@@ -5,7 +5,26 @@ import json
 import time
 from elasticsearch import Elasticsearch
 
+# Environment Variables
+RABBIT_MQ=os.getenv('RABBITMQ')
+RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
+CRAWLER_QUEUE=os.getenv('CRAWLER_QUEUE')
+SPACY_QUEUE=os.getenv('SPACY_QUEUE')
+ESENDPOINT=os.getenv('ESENDPOINT')
+ESPASSWORD=os.getenv('ESPASSWORD')
+ESINDEX=os.getenv('ESINDEX')
+        
 def get_biorxiv_data(offset=None):
+    """
+    Get data from the bioRxiv API
+
+    Args:
+    offset: ---
+
+    Returns:
+    json: Containing the data from the response of the API if response.status_code == 200
+    None: If response.status_code != 200
+    """
     base_url = 'https://api.biorxiv.org'
     endpoint = '/covid19/'
     headers = {'Content-Type': 'application/json'}
@@ -43,15 +62,6 @@ def callback(ch, method, properties, body):
     time.sleep(int(json_object["sleep"])/1000)
 
 
-RABBIT_MQ=os.getenv('RABBITMQ')
-RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
-CRAWLER_QUEUE=os.getenv('CRAWLER_QUEUE')
-SPACY_QUEUE=os.getenv('SPACY_QUEUE')
-
-ESENDPOINT=os.getenv('ESENDPOINT')
-ESPASSWORD=os.getenv('ESPASSWORD')
-ESINDEX=os.getenv('ESINDEX')
-
 credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
 connection = pika.BlockingConnection(parameters)
@@ -63,4 +73,3 @@ channel.basic_consume(queue=CRAWLER_QUEUE, on_message_callback=callback, auto_ac
 client = Elasticsearch("http://"+ESENDPOINT+":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
 
 channel.start_consuming()
-

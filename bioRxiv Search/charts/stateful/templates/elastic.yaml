@@ -35,6 +35,7 @@ spec:
       protocol: TCP
       port: 9200
       targetPort: 9200
+      nodePort: 30090
     - name: transport
       protocol: TCP
       port: 9300

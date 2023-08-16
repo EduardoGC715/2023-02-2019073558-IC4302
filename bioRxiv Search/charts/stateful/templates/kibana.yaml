@@ -7,3 +7,20 @@ spec:
   count: {{ .Values.kibana.replicas }}
   elasticsearchRef:
     name: {{ .Values.kibana.name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdp-data-nodeport-k
+  namespace: default
+spec:
+  ports:
+    - name: https
+      protocol: TCP
+      port: 5601
+      targetPort: 5601
+      nodePort: 30091
+  selector:
+    common.k8s.elastic.co/type: kibana
+    kibana.k8s.elastic.co/name: ic4302
+  type: NodePort
