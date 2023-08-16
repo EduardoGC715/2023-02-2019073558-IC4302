@@ -5,6 +5,8 @@ import json
 import spacy
 
 def callback(ch, method, properties, body):
+    response = es.search(index=ESINDEX, query = {"match_all": {}})
+    print(response)
     json_object = json.loads(body)
     print(f"Received {json_object}")
     jobId = json_object["jobId"]
@@ -12,20 +14,25 @@ def callback(ch, method, properties, body):
     
     documentId = jobId + str(splitNumber)
     query = {
-            "term": {
-                "splitId": documentId
-            }
-        }
+    "bool": {
+      "filter":
+        { "term":  { "splitId": documentId }}
+      }
+    }
+    print(query)
     response = es.search(index=ESINDEX, query=query, size=100)
-    
+
+    print(documentId, response)
     for hit in response["hits"]["hits"]:
         source_dict = hit["_source"]  
-        
-        # Procesar y agregar las entidades
-        processed_document = process_and_augment_document(source_dict)
-        
+        print(source_dict)
+        articles = source_dict.get("articles")
+        for article in articles:
+            # Procesar y agregar las entidades
+            process_and_augment_document(article)
+        print(source_dict)
         # Actualizar el documento en Elasticsearch con el campo "augmented"
-        es.index(index=AUGMENTEDINDEX, id=hit["_id"], body=processed_document)
+        es.index(index=AUGMENTEDINDEX, id=hit["_id"], document=json.dumps(source_dict))
         print(f"Processed and updated document {hit['_id']}")
 
 def perform_ner(text):
@@ -33,16 +40,11 @@ def perform_ner(text):
     entities = [ent.text for ent in doc.ents]
     return entities
 
-def process_and_augment_document(document):
-    text_to_process = document.get("articles") 
-    
-    processed_text_dict = json.loads(text_to_process)
+def process_and_augment_document(article):
 
-    entities = perform_ner(processed_text_dict["rel_abs"])
+    entities = perform_ner(article["rel_abs"])
 
-    document["augmented"] = {"entities": entities}
-    
-    return document
+    article["entities"] = entities
 
 
 ESENDPOINT = os.getenv('ESENDPOINT')
@@ -66,5 +68,5 @@ es = Elasticsearch("http://"+ESENDPOINT+":9200", basic_auth=("elastic", ESPASSWO
 
 # Cargar el modelo de Spacy para NER
 nlp = spacy.load("en_core_web_sm")
-
+print(ESINDEX)
 channel.start_consuming()

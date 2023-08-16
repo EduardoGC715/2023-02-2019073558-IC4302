@@ -34,13 +34,6 @@ connection = pika.BlockingConnection(parameters)
 channel = connection.channel()
 channel.queue_declare(queue=CRAWLER_QUEUE, durable = True)
 
-data = {
-    "jobId": "1234",
-    "pageSize": "100",
-    "sleep": "2000"
-}
-jsonexample = json.dumps(data)
-
 client = Elasticsearch("http://"+ESENDPOINT+":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
 
 index_settings = {
@@ -54,6 +47,9 @@ index_settings = {
             },
             "sleep": {
                 "type": "integer"
+            },
+            "processed": {
+                "type": "boolean"
             }
         }
     }
@@ -72,7 +68,9 @@ while True:
     print("Checking...")
     # Revisa a que recibe el request del kibana service.
     try:
-        response = client.search(index=ESINDEX, query = {"match_all": {}})
+        response = client.search(index=ESINDEX, query = {"term": {
+            "processed": False
+        }})
     except Exception as e:
         print("Error:", e)
         time.sleep(5)
@@ -95,6 +93,8 @@ while True:
                 jsonread["splitNumber"] = split
                 msg = json.dumps(jsonread)
                 channel.basic_publish(exchange='', routing_key=CRAWLER_QUEUE, body=msg)
+            jsonread['processed'] = True
+            client.update(index=ESINDEX, id=hit['_id'], doc= {'processed': True}, refresh = True)
             indexes.append(jsonread['jobId'])
     time.sleep(5)
 
