@@ -14,6 +14,9 @@ import org.elasticsearch.spark.sql._
 import org.elasticsearch.spark._ 
 import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.DataFrame
 sc.stop()
 spark.stop()
 
@@ -21,7 +24,7 @@ val conf = new SparkConf()
 conf.set("es.index.auto.create", "true")
 conf.set("es.nodes", "http://localhost:9200/")
 conf.set("es.net.http.auth.user", "elastic")
-conf.set("es.net.http.auth.pass", "59cr05jqo3eZsAD3jT5zj859")
+conf.set("es.net.http.auth.pass", "54h5i778GJVYi61n2xvExq9h")
 conf.set("es.port", "9200")
 conf.set("es.nodes.wan.only", "true")
 
@@ -32,10 +35,47 @@ val spark = SparkSession.builder.config(sc.getConf).getOrCreate()
 
 val sqlcontext = new org.apache.spark.sql.SQLContext(sc)
 
-val includedFields = "author_inst,author_name,category,rel_date" // List of fields to include
+val includedFields = "articles" 
 val esOptions = Map("es.read.field.include" -> includedFields)
-val daf = spark.read.format("org.elasticsearch.spark.sql").options(esOptions).load("augmented") 
 
+val augmentedDF = spark.read.format("org.elasticsearch.spark.sql").option("es.read.field.as.array.include","articles,articles.rel_authors,articles.entities").load("augmented")
+augmentedDF.printSchema()
+augmentedDF.show()
+
+val categoryTransform: String => String = category =>category.toLowerCase.capitalize
+
+val categoryUDF: UserDefinedFunction = udf(categoryTransform)
+
+val dateTransform: String => String = date => {
+  val originalFormat = new java.text.SimpleDateFormat("yyyy-MM-dd")
+  val targetFormat = new java.text.SimpleDateFormat("dd/MM/yyyy")
+  targetFormat.format(originalFormat.parse(date))
+}
+
+val dateUDF: UserDefinedFunction = udf(dateTransform)
+
+val nameTransform: String => String = fullName => {
+  val parts = fullName.split(" ")
+  if (parts.length >= 2) {
+    val lastName = parts.last
+    val firstName = parts.dropRight(1).mkString(" ")
+    s"$lastName, $firstName"
+  } else {
+    fullName
+  }
+}
+
+val nameUDF: UserDefinedFunction = udf(nameTransform)
+
+val transformedDF = augmentedDF.withColumn("articles", explode(col("articles"))).withColumn("articles.category", categoryUDF(col("articles.category"))).withColumn("articles.rel_date", dateUDF(col("articles.rel_date"))).groupBy("splitId").agg(collect_list("articles").as("articles"))
+
+
+transformedDF.show()
+transformedDF.saveToEs("documents")
+
+////////////////
+
+val daf = spark.read.format("org.elasticsearch.spark.sql").options(esOptions).load("augmented") 
 val explodedDF: Dataframe = daf.select(EXPLODE(col("articles")).alias("article"))
 
 val resultDF: DataFrame = explodedDF.select(col("article.rel_author").alias("rel_author"),col("article.category").alias("category"),col("article.rel_date").alias("rel_date"))
@@ -49,7 +89,7 @@ val transformAuthorName = functions.udf((authorName: String) => {
     val firstName = parts(0)
     s"$lastName, $firstName"
     } else {
-    authorName // Return original value if not in the expected format
+    authorName
     }
 })
 
