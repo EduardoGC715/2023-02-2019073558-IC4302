@@ -4,6 +4,8 @@
 //https://archive.apache.org/dist/spark/spark-2.4.8/spark-2.4.8-bin-hadoop2.7.tgz
 //https://artifacts.elastic.co/downloads/elasticsearch-hadoop/elasticsearch-hadoop-8.6.2.zip
 // copy elasticsearch-hadoop-8.6.2.jar into spark-2.4.8-bin-hadoop2.7/jars/
+
+// se hacen todos los imports
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
@@ -17,9 +19,12 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.DataFrame
+
+// Se detiene el contexto y la session actuales para definirlos manualmente.
 sc.stop()
 spark.stop()
 
+// Se establece la configuración para conectar con Elasticsearch
 val conf = new SparkConf()
 conf.set("es.index.auto.create", "true")
 conf.set("es.nodes", "http://localhost:9200/")
@@ -28,20 +33,21 @@ conf.set("es.net.http.auth.pass", "54h5i778GJVYi61n2xvExq9h")
 conf.set("es.port", "9200")
 conf.set("es.nodes.wan.only", "true")
 
+// Se crea el nuevo contexto y session
+val sc = new SparkContext(conf) // El contexto es el punto de entrada al cluster de Spark, lo cual permite manejar recursos y coordinar tareas.
 
-val sc = new SparkContext(conf)
-
+// Un session es un nivel de abstracción que permite trabajar con data frames y datasets.
 val spark = SparkSession.builder.config(sc.getConf).getOrCreate()
 
+// Permite tener una interfaz para trabajar con datos estructurados mediante el uso de SparkSQL.
 val sqlcontext = new org.apache.spark.sql.SQLContext(sc)
 
-val includedFields = "articles" 
-val esOptions = Map("es.read.field.include" -> includedFields)
-
+// Crea un data frame con lo que obtiene del índice de augmented.
 val augmentedDF = spark.read.format("org.elasticsearch.spark.sql").option("es.read.field.as.array.include","articles,articles.rel_authors,articles.entities").load("augmented")
 augmentedDF.printSchema()
-augmentedDF.show()
+augmentedDF.show(false)
 
+// Crea funciones que transforman los datos.
 val categoryTransform: String => String = category =>category.toLowerCase.capitalize
 
 val categoryUDF: UserDefinedFunction = udf(categoryTransform)
@@ -65,9 +71,37 @@ val nameTransform: String => String = fullName => {
   }
 }
 
+
 val nameUDF: UserDefinedFunction = udf(nameTransform)
 
-val transformedDF = augmentedDF.withColumn("articles", explode(col("articles"))).withColumn("articles.category", categoryUDF(col("articles.category"))).withColumn("articles.rel_date", dateUDF(col("articles.rel_date"))).groupBy("splitId").agg(collect_list("articles").as("articles"))
+augmentedDF.createOrReplaceTempView("temp_view")
+val result = spark.sql("""
+  SELECT
+    article.rel_title AS title,
+    article.category AS category,
+    article.rel_date AS rel_date,
+    author.author_name AS author_name,
+    author.author_inst AS author_inst
+  FROM
+    temp_view
+  LATERAL VIEW explode(articles) AS article
+  LATERAL VIEW explode(article.rel_authors) AS author
+""")
+result.show(50)
+
+val transformedDF = result.withColumn("title", col("title")).withColumn("category", categoryUDF(col("category"))).withColumn("rel_date", dateUDF(col("rel_date"))).withColumn("author_name", nameUDF(col("author_name")))
+
+transformedDF.show(50)
+
+val indexName = "documents"
+
+val groupedDF = transformedDF.groupBy("title").agg(first("category").alias("category"),first("rel_date").alias("rel_date"),collect_list(struct("author_name", "author_inst")).alias("authors"))
+
+groupedDF.saveToEs("documents", Map("es.mapping.id" -> "title"))
+
+
+/*
+val transformedDF = result.withColumn("articles.category", categoryUDF(categoriesDF.select(col("categories")))).withColumn("articles.rel_date", dateUDF(datesDF.select(col("rel_date")))).groupBy("splitId").agg(collect_list("articles").as("articles"))
 
 
 transformedDF.show()
@@ -106,7 +140,7 @@ val transformRelDate = functions.udf((relDate: String) => {java.time.LocalDate.p
 
 
 val transformedDF = df.withColumn("author_inst", splitAuthorInst(df("author_inst"))).withColumn("author_name", transformAuthorName(df("author_name"))).withColumn("category", transformCategory(df("category"))).withColumn("rel_date", transformRelDate(df("rel_date")))
-
+*/
 transformedDF.show()
 transformedDF.saveToEs("documents")
 
