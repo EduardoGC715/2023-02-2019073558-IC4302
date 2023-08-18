@@ -1,4 +1,5 @@
 from elasticsearch import Elasticsearch
+from collections import defaultdict
 import pika
 import os
 import json
@@ -30,9 +31,14 @@ def callback(ch, method, properties, body):
             process_and_augment_document(article)
         print("Processed:", source_dict)
         # Actualizar el documento en Elasticsearch con el campo "augmented"
-        es.index(index=AUGMENTEDINDEX, id=hit["_id"], document=json.dumps(source_dict))
+        es.index(index=AUGMENTEDINDEX, id=hit["_id"], document=json.dumps(source_dict, default=set_encoder))
         print(f"Processed and updated document {hit['_id']}\n")
     time.sleep(int(json_object["sleep"])/1000)
+
+def set_encoder(obj):
+    if isinstance(obj, set):
+        return list(obj)
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 def perform_ner(text):
     doc = nlp(text)
@@ -42,8 +48,22 @@ def perform_ner(text):
 def process_and_augment_document(article):
 
     entities = perform_ner(article["rel_abs"])
+    institutions = ner_institutions({author['author_inst'] for author in article['rel_authors']})
 
     article["entities"] = entities
+    article["institutions"] = institutions
+    
+def ner_institutions(institutions):
+
+    author_inst_str = ", ".join(institutions)
+
+    doc = nlp(author_inst_str)
+
+    ents = defaultdict(set)
+    for e in doc.ents:
+        ents[e.label_].add(e.text)
+    
+    return dict(ents)
 
 
 ESENDPOINT = os.getenv('ESENDPOINT')
