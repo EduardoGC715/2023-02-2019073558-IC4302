@@ -3,10 +3,9 @@ import pika
 import os
 import json
 import spacy
+import time
 
 def callback(ch, method, properties, body):
-    response = es.search(index=ESINDEX, query = {"match_all": {}})
-    print(response)
     json_object = json.loads(body)
     print(f"Received {json_object}")
     jobId = json_object["jobId"]
@@ -19,21 +18,21 @@ def callback(ch, method, properties, body):
         { "term":  { "splitId": documentId }}
       }
     }
-    print(query)
     response = es.search(index=ESINDEX, query=query, size=100)
+    print("DocumentId:", documentId, "Response:", response)
 
-    print(documentId, response)
     for hit in response["hits"]["hits"]:
         source_dict = hit["_source"]  
-        print(source_dict)
+        print("Unprocessed:", source_dict)
         articles = source_dict.get("articles")
         for article in articles:
             # Procesar y agregar las entidades
             process_and_augment_document(article)
-        print(source_dict)
+        print("Processed:", source_dict)
         # Actualizar el documento en Elasticsearch con el campo "augmented"
         es.index(index=AUGMENTEDINDEX, id=hit["_id"], document=json.dumps(source_dict))
-        print(f"Processed and updated document {hit['_id']}")
+        print(f"Processed and updated document {hit['_id']}\n")
+    time.sleep(int(json_object["sleep"])/1000)
 
 def perform_ner(text):
     doc = nlp(text)
