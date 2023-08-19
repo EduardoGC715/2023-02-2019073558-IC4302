@@ -11,7 +11,7 @@ rm -rf Char.lock
 helm dependency build --skip-refresh
 cd ..
 helm upgrade --install bootstrap bootstrap
-sleep 20
+sleep 10
 helm upgrade --install stateful stateful
-sleep 100
+sleep 40
 helm upgrade --install stateless stateless
