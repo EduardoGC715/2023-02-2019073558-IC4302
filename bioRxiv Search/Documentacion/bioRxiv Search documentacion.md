@@ -42,6 +42,7 @@ blablbal
 [Elasticsearch](https://www.elastic.co/elasticsearch/) es un motor de búsqueda y análisis de datos. Está diseñado para almacenar, indexar y buscar grandes volúmenes de datos en tiempo real. Utiliza una estructura basada en JSON.
 
 #### Implementación Elasticsearch
+
 blahblahblah
 
 ### Kibana
@@ -49,12 +50,14 @@ blahblahblah
 [Kibana](https://www.elastic.co/kibana), por otro lado, es una plataforma de visualización y análisis de datos, esta permite crear visualizaciones interactivas y paneles de control para explorar y analizar los datos almacenados en Elasticsearch.
 
 #### Implementación Kibana
+
 blahblahblah
 
 ### RabbitMQ
 [RabbitMQ](https://www.rabbitmq.com) es un software de intermediación de mensajes que se utiliza para gestionar colas de mensajes entre diferentes aplicaciones o componentes de software. 
 
 #### Implemantación RabbitMQ
+
 blahblahblah
 
 ### Spacy Entity Extractor
@@ -67,8 +70,6 @@ El Spacy Entity Extractor tiene la funcionalidad de leer los mensajes publicados
 
 ![Spacy Code Section 1](src/SpacyCode1.PNG)
 
-
-
 ![Spacy Code Section 2](src/SpacyCode2.PNG)
 
 ![Spacy Code Section 3](src/SpacyCode3.PNG)
@@ -79,10 +80,23 @@ Este componente cumple con la funcion de revisar continuamente el indice, en el 
 
 #### Implemantación Controller
 
+ A continuacion, se muestra al implementacion del componente Controller.
+
 ![Controller Code Section 1](src/ControllerCode1.PNG)
+
+En la figura anterior se encuenta la implementacion del metodo get_biorxiv_data. El cual se encarga de hacer un request al API de bioRxiv y retornando el response en caso de recibir un response status code igual 200.
+
 ![Controller Code Section 2](src/ControllerCode2.PNG)
+
+Posteriormente, se define las variables de entorno necesarios para establecer las conexiones tanto de elasticsearch como de rabbitMQ. Ademas, se inicializa la connecion al elasticsearch.
+
 ![Controller Code Section 3](src/ControllerCode3.PNG)
+
+En esta seccion se crea el indice de jobs para el cliente de elasticsearch, tal como se indica en el codigo.
+
 ![Controller Code Section 4](src/ControllerCode4.PNG)
+
+Finalmente, un ciclo donde se va a procesar el valor de messages.total y se generan lo splits para publicarlos en la cola de RabbitMQ.
 
 ### API Crawler
 
@@ -90,9 +104,19 @@ El API Crawler es el componente encargado de leer los mensajes publicados en el 
 
 #### Implemantación API Crawler
 
+ A continuacion, se muestra al implementacion del componente API Crawler.
+
 ![Crawler Code Section 1](src/CrawlerCode1.PNG)
+
+En la figura anterior se encuenta la implementacion del metodo get_biorxiv_data. El cual se encarga de hacer un request al API de bioRxiv y retornando el response en caso de recibir un response status code igual a 200.
+
 ![Crawler Code Section 2](src/CrawlerCode2.PNG)
+
+Posteriormente, en esta figura semuestra la implementacion del metodo callback. El cual se encarga de leer los mensajes de RabbitMQ provenientes del Controller, hace un request al API de bioRxiv para obtener los articulos y los prepara para publicarlos en la cola SPACY_QUEUE.
+
 ![Crawler Code Section 3](src/CrawlerCode3.PNG)
+
+Finalmente se definen las variables de entorno para la configuracion de la conexion con rabbitMQ y elasticsearch.
 
 ### SparkSQL
 
@@ -134,29 +158,29 @@ A continuacion, se presentan una serie de recomendaciones con el fin de un desar
 
 ### Recomendaciones
 
-1.
-2.
-3.
-4.
-5.
-6.
-7.
-8.
-9.
-10.
+1. Mejorar el trabajo en equipo.
+2. Una buena distribucion del trabajo.
+3. Estudiar a profundidad cada una de las tecnologias a trabajar.
+4. Invertir tiempo en aprender Kubernetes.
+5. Establecer consultas periodicas con el profesor a cargo.
+6. Establecer entregas periodicas.
+7. Buena comunicacion de equipo.
+8. Adecuada organizacion del GIT(repositorio).
+9. Mejorar las practicas de programacion.
+10. Realizar reuniones grupales periodicas donde todos los integrantes participen.
 
 ### Conclusiones
 
-1.
-2.
-3.
-4.
-5.
-6.
-7.
-8.
-9.
-10.
+1. 
+2. 
+3. 
+4. 
+5. 
+6. 
+7. 
+8. 
+9. 
+10. 
 
 ## Referencias
 
