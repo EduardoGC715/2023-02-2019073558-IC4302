@@ -7,4 +7,6 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN python -u test_controller.py
+
 CMD [ "python", "-u", "./controller.py" ]

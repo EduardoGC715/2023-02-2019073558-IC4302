@@ -100,7 +100,10 @@ def main():
                 jsonread = hit['_source']
                 pageSize = int(jsonread["pageSize"]) # extrae el page size del índice
                 apiData = get_biorxiv_data() #Aqui el codigo se cae.....
+                if apiData == None:
+                    break
                 total = int(apiData["messages"][0]["total"]) # cantidad total de mensajes
+
                 print(total)
                 print(jsonread)
 

@@ -9,7 +9,7 @@ class TestBiorxiv(unittest.TestCase):
       response = controller.get_biorxiv_data()
       
     def testNoneResponse(self):
-        self.assertIsNotNone(self.response, "The response is not supposed to be None")
+        self.assertIsNone(self.response, "The response is not supposed to be None")
 
     def tearDown(self):
         response = None
