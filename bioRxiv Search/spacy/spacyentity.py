@@ -40,6 +40,19 @@ def set_encoder(obj):
         return list(obj)
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
+def ner_institutions(institutions, author):
+
+    doc = nlp(institutions)
+    ents = defaultdict(set)
+    if len(doc.ents) != 0:
+        x=0
+        for e in doc.ents:
+          author["institutions"][e.label_+"_"+str(x)] = e.text
+          x+= 1
+    else:
+      author["institutions"]["ORG_0"] = institutions
+    return dict(ents)
+  
 def perform_ner(text):
     doc = nlp(text)
     entities = [ent.text for ent in doc.ents]
@@ -48,22 +61,17 @@ def perform_ner(text):
 def process_and_augment_document(article):
 
     entities = perform_ner(article["rel_abs"])
-    institutions = ner_institutions({author['author_inst'] for author in article['rel_authors']})
+    for author in article['rel_authors']: 
+        if not (author["author_inst"]):
+            author["author_inst"] = "No Institution"
+        if not (author["author_name"]):
+            author["author_name"]= "No Author"
+        author["institutions"] = {}
+        ner_institutions(author['author_inst'], author)
+        author["institutions"] = json.dumps(author["institutions"]).replace('"', "'")
 
-    article["entities"] = entities
-    article["institutions"] = institutions
-    
-def ner_institutions(institutions):
+    article["entities"] = entities  
 
-    author_inst_str = ", ".join(institutions)
-
-    doc = nlp(author_inst_str)
-
-    ents = defaultdict(set)
-    for e in doc.ents:
-        ents[e.label_].add(e.text)
-    
-    return dict(ents)
 
 
 ESENDPOINT = os.getenv('ESENDPOINT')
