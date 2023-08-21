@@ -30,6 +30,10 @@ Como pre-instalación del proyecto sern necesarias las siguientes aplicaciones:
 - [Docker](https://www.docker.com/products/docker-desktop/)
 - [Helm](https://helm.sh/docs/intro/install/)
 - [Lens](https://k8slens.dev)
+- [SparkSQL](https://archive.apache.org/dist/spark/spark-2.4.8/spark-2.4.8-bin-hadoop2.7.tgz)
+- [Elastic Hadoop](https://artifacts.elastic.co/downloads/elasticsearch-hadoop/elasticsearch-hadoop-8.6.2.zip)
+
+Copiar elasticsearch-hadoop-8.6.2.jar a spark-2.4.8-bin-hadoop2.7/jars/
 
 [Kubernetes](https://docs.docker.com/desktop/kubernetes/) será implemetado mediante la habilitación del cluster de docker.
 
@@ -59,8 +63,6 @@ Una vez se finaliza de instalar el stateful (se puede verificar con `kubectl get
 - `helm upgrade --install stateless stateless`
 
 Una vez finalizada la instalación se pueden realizar las pruebas de funcionamiento definidas en la sección de Ejecución y Pruebas Realizadas.
-
-blablbal
 
 ## Descripción de Componentes
 
@@ -147,7 +149,7 @@ SparkSQl es el componente encargado de leer el indice augmented que se ejecutara
 
 #### Implemantación SparkSQL
 
-Este componente no fue implementado.
+TODO
 
 ## Ejecución y Pruebas Realizadas
 Para iniciar con las pruebas debe de haber sido necesario realizar el proceso de pre-instalación e instalación para el cluster de kubernetes. Una vez se tiene todo listo se puede iniciar.
@@ -156,25 +158,25 @@ El primer paso es acceder a kibana mediante el NodePort: [Kibana](https://localh
 
 Una vez se ingresa a Kibana se abre el menú y se abre el apartado de *Management* bajo el nombre de *Dev Tools* para acceder a la consola de Kibana.
 
-kibana image 1
+![Consola de Kibana](src/kibana-1.PNG)
 
 En la consola se ejecutará el siguiente comando el cual en el índice de jobs ingresa un nuevo job con el formato especificado:
 
-kibana image 2
+![Comando consultar jobs](src/kibana-2.PNG)
 
 Una vez se ingrese el nuevo job, el controller verificará este indice de *jobs* y se dará cuenta que debe de enviar los splits con el mensaje a una cola de RabbitMQ. El crawler entonces empieza a consumir estos mensajes y empieza a extrar la información cruda del BioRxiv API y la guarda en un índice llamado raw, esto se puede verificar con el siguiente comando:
 
-kibana image 3
+![Comando consultar raw](src/kibana-3.PNG)
 
 Una vez que se van extrayendo los datos, el crawler va publicando mensajes en otra cola para que el Spacy los detecte y empiece con el Named Entity Recognition y guarde las nuevas entidades en un índice que se llama *augmented*, esto se puede verificar con el siguiente comando:
 
-kibana imaage 4
+![Comando consultar raw](src/kibana-4.PNG)
 
 Finalmente como ultimo proceso de verificación se ejecutará el código de SparkSQL con Scala.TODO
 
 ## Resultados Pruebas Unitarias
 
-Respecto a las pruebas unitarias, debido al poco codigo generado durante el desarrollo del proyecto, unicamente se logran identificar 2 componentes a los cuales se les puede realizar un unit test. Los cuales seran mencionados mas adelante. Esto bajo la premisa de probar unicamente codigo generado para la implementacion dell "motor de busqueda" de articulos cientificos, omitiendo las funciones que generen conexiones con los distintos componentes del sistema.
+Respecto a las pruebas unitarias, debido al poco codigo generado durante el desarrollo del proyecto, unicamente se logran identificar 2 componentes a los cuales se les puede realizar un unit test. Los cuales seran mencionados mas adelante. Esto bajo la premisa de probar unicamente codigo generado para la implementacion del "motor de busqueda" de articulos cientificos, omitiendo las funciones que generen conexiones con los distintos componentes del sistema.
 
 ### Controller
 
