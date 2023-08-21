@@ -29,7 +29,7 @@ val conf = new SparkConf()
 conf.set("es.index.auto.create", "true")
 conf.set("es.nodes", "http://localhost:9200/")
 conf.set("es.net.http.auth.user", "elastic")
-conf.set("es.net.http.auth.pass", "54h5i778GJVYi61n2xvExq9h")
+conf.set("es.net.http.auth.pass", "06ZDZ0uID6ih4WO97s1nlh00")
 conf.set("es.port", "9200")
 conf.set("es.nodes.wan.only", "true")
 
@@ -41,11 +41,6 @@ val spark = SparkSession.builder.config(sc.getConf).getOrCreate()
 
 // Permite tener una interfaz para trabajar con datos estructurados mediante el uso de SparkSQL.
 val sqlcontext = new org.apache.spark.sql.SQLContext(sc)
-
-// Crea un data frame con lo que obtiene del índice de augmented.
-val augmentedDF = spark.read.format("org.elasticsearch.spark.sql").option("es.read.field.as.array.include","articles,articles.rel_authors,articles.entities").load("augmented")
-augmentedDF.printSchema()
-augmentedDF.show(false)
 
 // Crea funciones que transforman los datos.
 val categoryTransform: String => String = category =>category.toLowerCase.capitalize
@@ -61,6 +56,9 @@ val dateTransform: String => String = date => {
 val dateUDF: UserDefinedFunction = udf(dateTransform)
 
 val nameTransform: String => String = fullName => {
+  if (fullName == null || fullName == ""){
+    "No author"
+  }
   val parts = fullName.split(" ")
   if (parts.length >= 2) {
     val lastName = parts.last
@@ -71,10 +69,68 @@ val nameTransform: String => String = fullName => {
   }
 }
 
-
 val nameUDF: UserDefinedFunction = udf(nameTransform)
 
+val componentsTransform: String => String = component => {
+  component.replace("\"","'")
+}
+
+val componentsUDF: UserDefinedFunction = udf(componentsTransform)
+
+val augmentedDF = spark.read.format("org.elasticsearch.spark.sql").option("es.read.field.as.array.include","articles,articles.rel_authors,articles.entities").load("augmented2")
+augmentedDF.printSchema()
+augmentedDF.show(false)
+
+// Crea funciones que transforman los datos.
+
 augmentedDF.createOrReplaceTempView("temp_view")
+
+
+val result = spark.sql("""
+  SELECT
+    article.rel_title AS title,
+    article.category AS category,
+    article.rel_date AS rel_date,
+    author.author_name AS author_name,
+    author.author_inst AS author_inst,
+    author.institutions AS components
+  FROM
+    temp_view
+  LATERAL VIEW explode(articles) AS article
+  LATERAL VIEW explode(article.rel_authors) AS author
+""")
+
+result.show(50)
+
+val transformedDF = result.withColumn("title", col("title")).withColumn("category", categoryUDF(col("category"))).withColumn("rel_date", dateUDF(col("rel_date"))).withColumn("author_name", nameUDF(col("author_name"))).withColumn("components", componentsUDF(col("components")))
+
+transformedDF.show(50)
+
+val groupedDF = transformedDF.groupBy("title").agg(first("category").alias("category"),first("rel_date").alias("rel_date"),collect_list(struct("author_name", "author_inst","components")).alias("authors"))
+groupedDF.show(50)
+groupedDF.saveToEs("documents", Map("es.mapping.id" -> "title"))
+
+
+
+
+
+
+
+
+
+
+// VERSIÓN QUE FUNCIONA, PERO NO HACE LO DEL AUTHOR_INST
+
+val augmentedDF = spark.read.format("org.elasticsearch.spark.sql").option("es.read.field.as.array.include","articles,articles.rel_authors,articles.entities").load("augmented2")
+augmentedDF.printSchema()
+augmentedDF.show(false)
+
+// Crea funciones que transforman los datos.
+
+augmentedDF.createOrReplaceTempView("temp_view")
+
+
+
 val result = spark.sql("""
   SELECT
     article.rel_title AS title,
@@ -87,6 +143,7 @@ val result = spark.sql("""
   LATERAL VIEW explode(articles) AS article
   LATERAL VIEW explode(article.rel_authors) AS author
 """)
+
 result.show(50)
 
 val transformedDF = result.withColumn("title", col("title")).withColumn("category", categoryUDF(col("category"))).withColumn("rel_date", dateUDF(col("rel_date"))).withColumn("author_name", nameUDF(col("author_name")))
@@ -96,54 +153,5 @@ transformedDF.show(50)
 val indexName = "documents"
 
 val groupedDF = transformedDF.groupBy("title").agg(first("category").alias("category"),first("rel_date").alias("rel_date"),collect_list(struct("author_name", "author_inst")).alias("authors"))
-
+groupedDF.show(false)
 groupedDF.saveToEs("documents", Map("es.mapping.id" -> "title"))
-
-
-/*
-val transformedDF = result.withColumn("articles.category", categoryUDF(categoriesDF.select(col("categories")))).withColumn("articles.rel_date", dateUDF(datesDF.select(col("rel_date")))).groupBy("splitId").agg(collect_list("articles").as("articles"))
-
-
-transformedDF.show()
-transformedDF.saveToEs("documents")
-
-////////////////
-
-val daf = spark.read.format("org.elasticsearch.spark.sql").options(esOptions).load("augmented") 
-val explodedDF: Dataframe = daf.select(EXPLODE(col("articles")).alias("article"))
-
-val resultDF: DataFrame = explodedDF.select(col("article.rel_author").alias("rel_author"),col("article.category").alias("category"),col("article.rel_date").alias("rel_date"))
-resultDF.show()
-val splitAuthorInst = functions.udf((authorInst: String) => {authorInst.split(", ").map(_.trim) })
-
-val transformAuthorName = functions.udf((authorName: String) => {
-    val parts = authorName.split(" ")
-    if (parts.length == 2) {
-    val lastName = parts(1)
-    val firstName = parts(0)
-    s"$lastName, $firstName"
-    } else {
-    authorName
-    }
-})
-
-val transformCategory = functions.udf((category: String) => {
-    val cleanedCategory = category.replaceAll("\\s+", "") 
-    if (cleanedCategory.nonEmpty) {
-        cleanedCategory.charAt(0).toUpper + cleanedCategory.substring(1).toLowerCase
-    } else {
-        cleanedCategory
-    }
-})
-
-val transformRelDate = functions.udf((relDate: String) => {java.time.LocalDate.parse(relDate).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))})
-
-
-val transformedDF = df.withColumn("author_inst", splitAuthorInst(df("author_inst"))).withColumn("author_name", transformAuthorName(df("author_name"))).withColumn("category", transformCategory(df("category"))).withColumn("rel_date", transformRelDate(df("rel_date")))
-*/
-transformedDF.show()
-transformedDF.saveToEs("documents")
-
-df.createOrReplaceTempView("es")
-spark.sql("SELECT col.hostname as hostname, col.msg as msg FROM (SELECT EXPLODE(data) FROM es)").show
-spark.sql("SELECT col.hostname as hostname, col.msg as msg FROM (SELECT EXPLODE(data) FROM es)").saveToEs("documents")
