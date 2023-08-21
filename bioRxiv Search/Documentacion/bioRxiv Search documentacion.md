@@ -95,9 +95,15 @@ El Spacy Entity Extractor tiene la funcionalidad de leer los mensajes publicados
 
 ![Spacy Code Section 1](src/SpacyCode1.PNG)
 
+En la figura anterior se muestra el metodo callback, encargado de leer los mensajes publicados por el  API Crawler en la cola de RabbitMQ.
+
 ![Spacy Code Section 2](src/SpacyCode2.PNG)
 
+En esta seccion se muestran los metodos encargados de parsear los json.
+
 ![Spacy Code Section 3](src/SpacyCode3.PNG)
+
+Finalmente, se define la configuracion y variables de ambiente para la conexion a la cola de RabbitMQ y elasticsearch.
 
 ### Controller
 
@@ -215,16 +221,16 @@ A continuacion, se presentan una serie de recomendaciones con el fin de un desar
 
 ### Conclusiones
 
-1. 
-2. 
-3. 
-4. 
-5. 
-6. 
-7. 
-8. 
-9. 
-10. 
+1. Para el manejo de datos semi-estructurados no es posible utilizar una base de datos SQL de forma optima.
+2. ElasticSearch es muy eficiente con grandes volumenes de datos.
+3. La configuracion establecida entre elasticsearch y python fue realizada con facilidad, por lo que las librerias utilizadas son intuitivas y faciles de configurar.
+4. Los mensajes de RabbitMQ funcionan de manera muy eficiente y rapida para el programa desarrollado. Resaltando algunas de las carecteriticas competitivas del message broker.
+5. Docker es realmente intuitivo una vez comprendida la teoria. Obteniendo asi una eficaz herramienta para el desarrollo de software.
+6. Kubernetes es una herramienta complicada de utilizar. Sin embargo, agrega gran beneficio en temas de automatizacion, escalado y administracion de contenedores.
+7. A nivel de cluster puede llegar a ser compleja la busqueda y resolucion de errores.
+8. Se genera un aprendizaje basico en cuanto a la arquitectura de microservicios.
+9. Es necesario leer la documentacion de los helm charts para entender el funcionamiento y parametros requeridos para el correcto funcionamiento de los mismos.
+10. Se comprende de forma basica los servicios de extraccion de entidades.
 
 ## Referencias
 

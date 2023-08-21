@@ -1,7 +1,7 @@
 #!/bin/bash
 #helm repo add elastic https://helm.elastic.co
 #helm repo add bitnami https://charts.bitnami.com
-helm repo update
+#helm repo update
 
 cd bootstrap
 rm -rf Char.lock
