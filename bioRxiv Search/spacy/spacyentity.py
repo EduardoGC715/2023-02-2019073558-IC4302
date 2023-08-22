@@ -22,6 +22,7 @@ def callback(ch, method, properties, body):
     response = es.search(index=ESINDEX, query=query, size=100)
     print("DocumentId:", documentId, "Response:", response)
 
+    # Para la extracción e inserción de dato en elasticsearch utilizamos como referncia https://www.elastic.co/guide/en/cloud/current/ec-getting-started-python.html
     for hit in response["hits"]["hits"]:
         source_dict = hit["_source"]  
         print("Unprocessed:", source_dict)
@@ -36,6 +37,7 @@ def callback(ch, method, properties, body):
     time.sleep(int(json_object["sleep"])/1000)
 
 def set_encoder(obj):
+    # Asegurarse de que el tipo de dato que se este insertando a elasticsearch sea el debido
     if isinstance(obj, set):
         return list(obj)
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
@@ -54,6 +56,7 @@ def ner_institutions(institutions, author):
     return dict(ents)
   
 def perform_ner(text):
+    # Para la implementación de NER con spacy utilizamos como referencia https://spacy.io/usage/linguistic-features 
     doc = nlp(text)
     entities = [ent.text for ent in doc.ents]
     return entities
