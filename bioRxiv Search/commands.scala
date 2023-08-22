@@ -43,11 +43,15 @@ val spark = SparkSession.builder.config(sc.getConf).getOrCreate()
 // Permite tener una interfaz para trabajar con datos estructurados mediante el uso de SparkSQL.
 val sqlcontext = new org.apache.spark.sql.SQLContext(sc)
 
-// Crea funciones que transforman los datos.
+// Crea funciones que transforman los datos. 
+// Código obtenido de
+//https://www.geeksforgeeks.org/scala-string-tolowercase-method-with-example/
 val categoryTransform: String => String = category =>category.toLowerCase.capitalize
 
 val categoryUDF: UserDefinedFunction = udf(categoryTransform)
 
+// Código obtenido de
+// https://stackoverflow.com/questions/27620889/scala-simpledateformat
 val dateTransform: String => String = date => {
   val originalFormat = new java.text.SimpleDateFormat("yyyy-MM-dd")
   val targetFormat = new java.text.SimpleDateFormat("dd/MM/yyyy")
@@ -60,11 +64,11 @@ val nameTransform: String => String = fullName => {
   if (fullName == null || fullName == ""){
     "No author"
   }
-  val parts = fullName.split(" ")
-  if (parts.length >= 2) {
-    val lastName = parts.last
-    val firstName = parts.dropRight(1).mkString(" ")
-    s"$lastName, $firstName"
+  val parts = fullName.split(" ") // Se separa el nombre entre las partes
+  if (parts.length >= 2) { // Si el nombre no es solo de una parte
+    val lastName = parts.last // el apellido lo toma como la última parte
+    val firstName = parts.dropRight(1).mkString(" ") // el nombre es lo demás y elimina el espacio del final
+    s"$lastName, $firstName" // retorna el string formateado.
   } else {
     fullName
   }
@@ -73,20 +77,21 @@ val nameTransform: String => String = fullName => {
 val nameUDF: UserDefinedFunction = udf(nameTransform)
 
 val componentsTransform: String => String = component => {
-  component.replace("\"","'")
+  component.replace("\"","'") // se cambian los " por ' para que se formatee bien la string en Elasticsearch
 }
 
 val componentsUDF: UserDefinedFunction = udf(componentsTransform)
 
+// Se lee el índice de augmented en Elasticsearch.
 val augmentedDF = spark.read.format("org.elasticsearch.spark.sql").option("es.read.field.as.array.include","articles,articles.rel_authors,articles.entities").load("augmented")
 augmentedDF.printSchema()
 augmentedDF.show(false)
 
-// Crea funciones que transforman los datos.
-
+// Esta view temporal se utiliza para realizar queries en SQL
+// y obtener las columnas.
 augmentedDF.createOrReplaceTempView("temp_view")
 
-
+// se obtienen las columnas que se necesitan.
 val result = spark.sql("""
   SELECT
     article.rel_title AS title,
@@ -101,12 +106,15 @@ val result = spark.sql("""
   LATERAL VIEW explode(article.rel_authors) AS author
 """)
 
-result.show(50)
+result.show(50) // se
 
+// Se transforman las columnas necesarias.
 val transformedDF = result.withColumn("title", col("title")).withColumn("category", categoryUDF(col("category"))).withColumn("rel_date", dateUDF(col("rel_date"))).withColumn("author_name", nameUDF(col("author_name"))).withColumn("components", componentsUDF(col("components")))
 
 transformedDF.show(50)
-
+// Se agrupan los registros en los artículos.
 val groupedDF = transformedDF.groupBy("title").agg(first("category").alias("category"),first("rel_date").alias("rel_date"),collect_list(struct("author_name", "author_inst","components")).alias("authors"))
 groupedDF.show(50)
+
+// Se guarda a Elasicsearch.
 groupedDF.saveToEs("documents", Map("es.mapping.id" -> "title"))
