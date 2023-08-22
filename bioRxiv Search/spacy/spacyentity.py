@@ -22,7 +22,7 @@ def callback(ch, method, properties, body):
     response = es.search(index=ESINDEX, query=query, size=100)
     print("DocumentId:", documentId, "Response:", response)
 
-    # Para la extracción e inserción de dato en elasticsearch utilizamos como referncia https://www.elastic.co/guide/en/cloud/current/ec-getting-started-python.html
+    # Para la extracción e inserción de dato en elasticsearch utilizamos como referencia https://www.elastic.co/guide/en/cloud/current/ec-getting-started-python.html
     for hit in response["hits"]["hits"]:
         source_dict = hit["_source"]  
         print("Unprocessed:", source_dict)
@@ -86,6 +86,8 @@ RABBIT_MQ=os.getenv('RABBITMQ')
 RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
 SPACY_QUEUE=os.getenv('SPACY_QUEUE')
 
+# Conexión con RabbitMQ
+# Código usado de referencia: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
 credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
 connection = pika.BlockingConnection(parameters)

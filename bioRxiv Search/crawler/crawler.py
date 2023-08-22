@@ -7,6 +7,7 @@ from elasticsearch import Elasticsearch
 
 # Función que extrae datos desde el API de bioRxiv.
 # Recibe el número de documento a partir va a descargar los 30 artículos
+# Código basado en: https://requests.readthedocs.io/en/latest/user/quickstart/
 def get_biorxiv_data(offset=None):
     base_url = 'https://api.biorxiv.org'
     endpoint = '/covid19/'
@@ -65,6 +66,7 @@ ESPASSWORD=os.getenv('ESPASSWORD')
 ESINDEX=os.getenv('ESINDEX')
 
 # Conexión con RabbitMQ
+# Código usado de referencia: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
 credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
 connection = pika.BlockingConnection(parameters)
