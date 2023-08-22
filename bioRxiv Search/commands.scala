@@ -29,7 +29,8 @@ val conf = new SparkConf()
 conf.set("es.index.auto.create", "true")
 conf.set("es.nodes", "http://localhost:9200/")
 conf.set("es.net.http.auth.user", "elastic")
-conf.set("es.net.http.auth.pass", "06ZDZ0uID6ih4WO97s1nlh00")
+// cambiar contraseña cada vez que se ejecuta el cluster (secrets de Lens)
+conf.set("es.net.http.auth.pass", "YBoD65PpGsG4104T7TD3QT05")
 conf.set("es.port", "9200")
 conf.set("es.nodes.wan.only", "true")
 
@@ -77,7 +78,7 @@ val componentsTransform: String => String = component => {
 
 val componentsUDF: UserDefinedFunction = udf(componentsTransform)
 
-val augmentedDF = spark.read.format("org.elasticsearch.spark.sql").option("es.read.field.as.array.include","articles,articles.rel_authors,articles.entities").load("augmented2")
+val augmentedDF = spark.read.format("org.elasticsearch.spark.sql").option("es.read.field.as.array.include","articles,articles.rel_authors,articles.entities").load("augmented")
 augmentedDF.printSchema()
 augmentedDF.show(false)
 
@@ -121,7 +122,7 @@ groupedDF.saveToEs("documents", Map("es.mapping.id" -> "title"))
 
 // VERSIÓN QUE FUNCIONA, PERO NO HACE LO DEL AUTHOR_INST
 
-val augmentedDF = spark.read.format("org.elasticsearch.spark.sql").option("es.read.field.as.array.include","articles,articles.rel_authors,articles.entities").load("augmented2")
+val augmentedDF = spark.read.format("org.elasticsearch.spark.sql").option("es.read.field.as.array.include","articles,articles.rel_authors,articles.entities").load("augmented")
 augmentedDF.printSchema()
 augmentedDF.show(false)
 

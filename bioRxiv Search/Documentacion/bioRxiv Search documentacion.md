@@ -33,7 +33,7 @@ Como pre-instalación del proyecto sern necesarias las siguientes aplicaciones:
 - [SparkSQL](https://archive.apache.org/dist/spark/spark-2.4.8/spark-2.4.8-bin-hadoop2.7.tgz)
 - [Elastic Hadoop](https://artifacts.elastic.co/downloads/elasticsearch-hadoop/elasticsearch-hadoop-8.6.2.zip)
 
-Copiar elasticsearch-hadoop-8.6.2.jar a spark-2.4.8-bin-hadoop2.7/jars/
+Extraer los elemenstos en un carpeta definida y copiar elasticsearch-hadoop-8.6.2.jar detntro de spark-2.4.8-bin-hadoop2.7/jars/
 
 [Kubernetes](https://docs.docker.com/desktop/kubernetes/) será implemetado mediante la habilitación del cluster de docker.
 
@@ -155,7 +155,7 @@ SparkSQl es el componente encargado de leer el indice augmented que se ejecutara
 
 #### Implemantación SparkSQL
 
-TODO
+Spark será probado manualmente mediante la consola de windows, el código de ejecución de este se encuentra [aquí](/bioRxiv%20Search/commands.scala). Estos comandos se encuentran debidamente deocumentados y de igual forma en la Ejecucion y Pruebas Realizadas se mostrará el funcionamiento de cada uno ya que se deben de ejecutar manualmente.
 
 ## Ejecución y Pruebas Realizadas
 Para iniciar con las pruebas debe de haber sido necesario realizar el proceso de pre-instalación e instalación para el cluster de kubernetes. Una vez se tiene todo listo se puede iniciar.
@@ -178,7 +178,16 @@ Una vez que se van extrayendo los datos, el crawler va publicando mensajes en ot
 
 ![Comando consultar raw](src/kibana-4.PNG)
 
-Finalmente como ultimo proceso de verificación se ejecutará el código de SparkSQL con Scala.TODO
+Finalmente como ultimo proceso de verificación se ejecutará el código de SparkSQL con Scala. Como primer paso se debe abrir la consola de Windows y navegar hasta donde se guardó el archivo extraido de la pre-instalación.
+una vez dentro de la carpeta, se ingresará a la carpeta de bin y se ejecutará el siguiente comando:
+`spark-shell`
+Una vez inicie Spark, se verá de esta forma:
+
+spark 1 
+
+Dentro del shell se procederá a realizar los siguientes comandos:
+
+
 
 ## Resultados Pruebas Unitarias
 
@@ -200,7 +209,7 @@ Caso similar al controller, el crawler unicamente cuenta con 2 metodos, de los c
 
 ![Unit test Crawler](src/TestCrawler.PNG)
 
-El resultado de esta prueba es positivo ya que funciona correctamente al ejecutar el sistema. En caso de rebir un status code diferente a 200 este indica el error.
+El resultado de esta prueba es positivo ya que funciona correctamente al ejecutar el sistema. En caso de recibir un status code diferente a 200 este indica el error.
 
 ## Recomendaciones y Conclusiones
 
@@ -235,4 +244,4 @@ A continuacion, se presentan una serie de recomendaciones con el fin de un desar
 ## Referencias
 
 1. UnitTest — Unit Testing framework. (s. f.). Python documentation. https://docs.python.org/3/library/unittest.html
-2. UnitTest — Unit Testing framework. (s. f.-b). Python documentation. https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertEqual
+2. UnitTest — Unit Testing framework. (s. f.). Python documentation. https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertEqual
