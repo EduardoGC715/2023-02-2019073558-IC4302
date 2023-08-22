@@ -44,13 +44,13 @@ val spark = SparkSession.builder.config(sc.getConf).getOrCreate()
 val sqlcontext = new org.apache.spark.sql.SQLContext(sc)
 
 // Crea funciones que transforman los datos. 
-// Código obtenido de
+// Código basado en
 //https://www.geeksforgeeks.org/scala-string-tolowercase-method-with-example/
 val categoryTransform: String => String = category =>category.toLowerCase.capitalize
 
 val categoryUDF: UserDefinedFunction = udf(categoryTransform)
 
-// Código obtenido de
+// Código basado en
 // https://stackoverflow.com/questions/27620889/scala-simpledateformat
 val dateTransform: String => String = date => {
   val originalFormat = new java.text.SimpleDateFormat("yyyy-MM-dd")
@@ -106,7 +106,7 @@ val result = spark.sql("""
   LATERAL VIEW explode(article.rel_authors) AS author
 """)
 
-result.show(50) // se
+result.show(50)
 
 // Se transforman las columnas necesarias.
 val transformedDF = result.withColumn("title", col("title")).withColumn("category", categoryUDF(col("category"))).withColumn("rel_date", dateUDF(col("rel_date"))).withColumn("author_name", nameUDF(col("author_name"))).withColumn("components", componentsUDF(col("components")))

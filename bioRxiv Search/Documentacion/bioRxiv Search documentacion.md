@@ -2,7 +2,7 @@
 
 ## Descripcion
 
-BioRxiv Search es un motor de búsqueda de articulos científicos de Covid19 utilizando la base de datos Elasticsearch y el repositorio de descripciones de artículos científicos BioRxiv.
+BioRxiv Search es un motor de búsqueda de artículos científicos de Covid19 utilizando la base de datos Elasticsearch y el repositorio de descripciones de artículos científicos BioRxiv.
 
 ## Diagramas
 
@@ -33,11 +33,10 @@ Como pre-instalación del proyecto serán necesarias las siguientes aplicaciones
 - [SparkSQL](https://archive.apache.org/dist/spark/spark-2.4.8/spark-2.4.8-bin-hadoop2.7.tgz)
 - [Elastic Hadoop](https://artifacts.elastic.co/downloads/elasticsearch-hadoop/elasticsearch-hadoop-8.6.2.zip)
 
-Extraer los elemenstos en un carpeta definida y copiar elasticsearch-hadoop-8.6.2.jar detntro de spark-2.4.8-bin-hadoop2.7/jars/ . Se debe verificar que el sistema este corriendo la version de JDK 1.8 ya que de otra forma no será posible correr el código de scala. Para verificar esto se pude correr el comando de:
+Extraer los elemenstos en un carpeta definida y copiar elasticsearch-hadoop-8.6.2.jar dentro de spark-2.4.8-bin-hadoop2.7/jars/ . Se debe verificar que el sistema este corriendo la version de JDK 1.8 ya que de otra forma no será posible correr el código de scala. Para verificar esto se pude correr el comando de:
 `java -version` y verificar que la version de este sea la 1.8. De no ser la versión 1.8 se recomienda para evitar conflictos desinstalar java e instalar la versión necesaria para el proyecto.
 
 [Kubernetes](https://docs.docker.com/desktop/kubernetes/) será implementado mediante la habilitación del cluster en la aplicación de Docker Desktop.
-Esto se hace 
 
 ## Instalación
 Para la instalación del cluster de Kubernetes es necesario ejecutar los siguientes comandos en el Git Bash: 
@@ -53,7 +52,7 @@ Para la instalación del cluster de Kubernetes es necesario ejecutar los siguien
 - `helm dependency build --skip-refresh`
 - `cd ..`
 
-Estas líneas de comando lo que realizan es importar los repositorios de bitnami y Elasticsearch que son necesarios para la instalación de sus debidos componentes e instalar las dependencias de cada Helm chart. En seguida se continuará con la instalación de los componentes, empezando con el bootstrap el cual instala el elastic operator:
+Estas líneas de comando lo que realizan es importar los repositorios de Bitnami y Elasticsearch que son necesarios para la instalación de sus debidos componentes e instalar las dependencias de cada Helm chart. En seguida se continuará con la instalación de los componentes, empezando con el bootstrap, el cual instala el elastic operator:
 
 - `helm upgrade --install bootstrap bootstrap`
 
@@ -80,14 +79,14 @@ Cuando ya es utilizó la aplicación y se desea desinstalarla, se debe realizar 
 [Elasticsearch](https://www.elastic.co/elasticsearch/) es un motor de búsqueda y análisis de datos. Está diseñado para almacenar, indexar y buscar grandes volúmenes de datos en tiempo real. Utiliza una estructura basada en JSON. Esta es la base de datos principal donde se guardarán los datos extraídos del API de BioRxiv.
 
 #### Implementación Elasticsearch
-Elasticsearch fue implementado mediante el uso de helm charts, en la dirección: [template elasticsearch](/bioRxiv%20Search/charts/stateful/templates), se encuentra el template de creación de Elasticsearch, y fuera de esta carpeta se encuentra el archivo de [Values.yaml](/bioRxiv%20Search/charts/stateful/values.yaml) donde se especifica los valores que debe tomar el template. Es importante notar que dentro del [elastic.yaml](/bioRxiv%20Search/charts/stateful/templates/elastic.yaml) se encuentra definido el stateful set de elasticsearch y el servicio tipo nodeport que expone el puerto del pod (9200) a la maquina (localhost) en el puerto 30090.
+Elasticsearch fue implementado mediante el uso de Helm charts, en la dirección: [template elasticsearch](/bioRxiv%20Search/charts/stateful/templates), se encuentra el template de creación de Elasticsearch, y fuera de esta carpeta se encuentra el archivo de [Values.yaml](/bioRxiv%20Search/charts/stateful/values.yaml) donde se especifica los valores que debe tomar el template. Es importante notar que dentro del [elastic.yaml](/bioRxiv%20Search/charts/stateful/templates/elastic.yaml) se encuentra definido el stateful set de elasticsearch y el servicio tipo nodeport que expone el puerto del pod (9200) a la máquina (localhost) en el puerto 30090.
 
 ### Kibana
 
 [Kibana](https://www.elastic.co/kibana), por otro lado, es una plataforma de visualización y análisis de datos, esta permite crear visualizaciones interactivas y páneles de control para explorar y analizar los datos almacenados en Elasticsearch. Este será utilizado para la interacción con Elasticsearch por parte de los usuarios.
 
 #### Implementación Kibana
-Elasticsearch fue implementado mediante el uso de Helm Charts, en la dirección: [template kibana](/bioRxiv%20Search/charts/stateful/templates), se encuentra el template de creación de Kibana, y tambien se encuentra el archivo de [Values.yaml](/bioRxiv%20Search/charts/stateful/values.yaml) donde se especifica los valores que debe tomar el template. Es importante notar que dentro del [kibana.yaml](/bioRxiv%20Search/charts/stateful/templates/kibana.yaml) se encuentra definido el replica set de kibana y el servicio tipo nodeport que expone el puerto del pod (5601) a la máquina (localhost) en el puerto 30091, por lo que para acceder a kibana es necesario ingresar a localhost:30091. Es importante entrar a la dirección con https:  https:/localhost:30091  
+Elasticsearch fue implementado mediante el uso de Helm Charts, en la dirección: [template kibana](/bioRxiv%20Search/charts/stateful/templates), se encuentra el template de creación de Kibana, y también se encuentra el archivo de [Values.yaml](/bioRxiv%20Search/charts/stateful/values.yaml) donde se especifica los valores que debe tomar el template. Es importante notar que dentro del [kibana.yaml](/bioRxiv%20Search/charts/stateful/templates/kibana.yaml) se encuentra definido el replica set de kibana y el servicio tipo nodeport que expone el puerto del pod (5601) a la máquina (localhost) en el puerto 30091, por lo que para acceder a kibana es necesario ingresar a localhost:30091. Es importante entrar a la dirección con https:  https:/localhost:30091  
 
 ### RabbitMQ
 [RabbitMQ](https://www.rabbitmq.com) es un software de intermediación de mensajes que se utiliza para gestionar colas de mensajes entre diferentes aplicaciones o componentes de software. Este será utilizado para enviar mensajes entre los componentes para que realicen sus tareas definidas. 
@@ -125,11 +124,11 @@ Este componente cumple con la función de revisar continuamente el índice. En e
 
 ![Controller Code Section 1](src/ControllerCode1.PNG)
 
-En la figura anterior se encuenta la implementación del método get_biorxiv_data. El cual se encarga de hacer un request al API de bioRxiv y retornando el response en caso de recibir un response status code igual 200. Este método usa la librería de [Requests](https://requests.readthedocs.io/en/latest/user/quickstart/). Está permite enviar solicitudes de HTTP a servicios, como el API.
+En la figura anterior se encuentra la implementación del método get_biorxiv_data. El cual se encarga de hacer un request al API de bioRxiv y retornando el response en caso de recibir un response status code igual 200. Este método usa la librería de [Requests](https://requests.readthedocs.io/en/latest/user/quickstart/). Está permite enviar solicitudes de HTTP a servicios, como el API.
 
 ![Controller Code Section 2](src/ControllerCode2.PNG)
 
-Posteriormente, se define las variables de entorno necesarias para establecer las conexiones tanto de elasticsearch como de rabbitMQ. Ademas, se inicializa la conexión al elasticsearch.
+Posteriormente, se define las variables de entorno necesarias para establecer las conexiones tanto de elasticsearch como de RabbitMQ. Además, se inicializa la conexión al Elasticsearch.
 
 ![Controller Code Section 3](src/ControllerCode3.PNG)
 
@@ -163,14 +162,14 @@ Finalmente se definen las variables de entorno para la configuración de la cone
 
 SparkSQl es el componente encargado de leer el índice augmented que se ejecutara de forma manual y aplicará ciertas transformaciones a los datos. Una vez transformados, este lo publicará en un índice llamado documents.
 
-#### Implemantación SparkSQL
+#### Implementación SparkSQL
 
 Spark será probado manualmente mediante la consola de Windows, el código de ejecución de este se encuentra [aquí](/bioRxiv%20Search/commands.scala). Estos comandos se encuentran debidamente documentados y de igual forma en la Ejecución y Pruebas Realizadas se mostrará el funcionamiento de cada uno ya que se deben de ejecutar manualmente.
 
 ## Ejecución y Pruebas Realizadas
 Para iniciar con las pruebas debe de haber sido necesario realizar el proceso de pre-instalación e instalación para el cluster de Kubernetes. Una vez se tiene todo listo se puede iniciar.
 
-El primer paso es acceder a kibana mediante el NodePort: [Kibana](https://localhost:30091) e ingresar las credenciales, el usuario predeterminado es **elastic** y la contraseña se puede accesar por medio de Lens en el apartado de *Config* en el apartado de *Secrets* bajo el nombre de **ic4302-es-elastic-user**. Es importante recordar hacer click sobre el ojo para decodificar la contraseña. Ya decodificada se puede copiar y pegar en Kibana.
+El primer paso es acceder a Kibana mediante el NodePort: [Kibana](https://localhost:30091) e ingresar las credenciales, el usuario predeterminado es **elastic** y la contraseña se puede accesar por medio de Lens en el apartado de *Config* en el apartado de *Secrets* bajo el nombre de **ic4302-es-elastic-user**. Es importante recordar hacer click sobre el ojo para decodificar la contraseña. Ya decodificada se puede copiar y pegar en Kibana.
 
 Una vez se ingresa a Kibana se abre el menú y se abre el apartado de *Management* bajo el nombre de *Dev Tools* para acceder a la consola de Kibana.
 
@@ -188,7 +187,7 @@ Una vez que se van extrayendo los datos, el crawler va publicando mensajes en ot
 
 ![Comando consultar raw](src/kibana-4.PNG)
 
-Finalmente como ultimo proceso de verificación se ejecutará el código de SparkSQL con Scala. Como primer paso se debe abrir la consola de Windows y navegar hasta donde se guardó el archivo extraído de la pre-instalación. Una vez dentro de la carpeta, se ingresará a la carpeta de bin y se ejecutará el siguiente comando:
+Finalmente como último proceso de verificación se ejecutará el código de SparkSQL con Scala. Como primer paso se debe abrir la consola de Windows y navegar hasta donde se guardó el archivo extraído de la pre-instalación. Una vez dentro de la carpeta, se ingresará a la carpeta de bin y se ejecutará el siguiente comando:
 `spark-shell`
 Una vez inicie Spark, se verá de esta forma:
 
@@ -196,7 +195,7 @@ Una vez inicie Spark, se verá de esta forma:
 
 ![spark shell 2](src/spark-2.PNG)
 
-Dentro del shell se procederá a copiar el codigo en el archivo de [Scala](/bioRxiv%20Search/commands.scala).
+Dentro del shell se procederá a copiar el código en el archivo de [Scala](/bioRxiv%20Search/commands.scala).
 
 ### Códigos Scala
 
