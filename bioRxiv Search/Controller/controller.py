@@ -8,6 +8,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch import TransportError
 
 # función que obtiene extrea datos del API de bioRxiv.
+# Código basado en: https://requests.readthedocs.io/en/latest/user/quickstart/
 def get_biorxiv_data():
     base_url = 'https://api.biorxiv.org'
     endpoint = '/covid19/30'
@@ -32,6 +33,7 @@ ESPASSWORD=os.getenv('ESPASSWORD')
 ESINDEX=os.getenv('ESINDEX')
 
 # Conexión con RabbitMQ
+# Código de referencia: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
 credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
 connection = pika.BlockingConnection(parameters)
@@ -61,6 +63,7 @@ index_settings = {
 }
 
 # Crea el índice de jobs, o el dado en ESINDEX
+# Código de referencia: https://kb.objectrocket.com/elasticsearch/how-to-create-and-delete-elasticsearch-indexes-using-the-python-client-library
 try:
     client.indices.create(index=ESINDEX)
     print(f"Index '{ESINDEX}' created successfully.")

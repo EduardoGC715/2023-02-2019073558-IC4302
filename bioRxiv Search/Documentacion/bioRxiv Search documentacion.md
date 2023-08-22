@@ -258,30 +258,35 @@ A continuación, se presentan una serie de recomendaciones con el fin de un desa
 ### Recomendaciones
 
 1. Mejorar el trabajo en equipo.
-2. Una buena distribucion del trabajo.
-3. Estudiar a profundidad cada una de las tecnologias a trabajar.
+2. Una buena distribución del trabajo.
+3. Estudiar a profundidad cada una de las tecnologías a trabajar.
 4. Invertir tiempo en aprender Kubernetes.
-5. Establecer consultas periodicas con el profesor a cargo.
-6. Establecer entregas periodicas.
+5. Establecer consultas periódicas y puntuales con el profesor a cargo.
+6. Establecer entregas periódicas.
 7. Buena comunicacion de equipo.
 8. Adecuada organizacion del GIT(repositorio).
-9. Mejorar las practicas de programacion.
-10. Realizar reuniones grupales periodicas donde todos los integrantes participen.
+9. Mejorar las prácticas de programacion.
+10. Realizar reuniones grupales periódicas donde todos los integrantes participen.
+11. Incorporar estrategias de métodos ágiles como SCRUM.
+12. Guardar las fuentes de donde se extrajo el código.
+13. Escribir archivos de automatización por medio de archivos .sh o Makefile. Estos pueden ser usados para instalar helm charts automáticamente o para subir imágenes a Docker Hub.
+14. Hacer imágenes de Docker para el desarrollo que utilicen un bind mount para no tener que recompilar la imágen.
 
 ### Conclusiones
 
-1. Para el manejo de datos semi-estructurados no es posible utilizar una base de datos SQL de forma optima.
-2. ElasticSearch es muy eficiente con grandes volumenes de datos.
-3. La configuracion establecida entre elasticsearch y python fue realizada con facilidad, por lo que las librerias utilizadas son intuitivas y faciles de configurar.
-4. Los mensajes de RabbitMQ funcionan de manera muy eficiente y rapida para el programa desarrollado. Resaltando algunas de las carecteriticas competitivas del message broker.
-5. Docker es realmente intuitivo una vez comprendida la teoria. Obteniendo asi una eficaz herramienta para el desarrollo de software.
-6. Kubernetes es una herramienta complicada de utilizar. Sin embargo, agrega gran beneficio en temas de automatizacion, escalado y administracion de contenedores.
-7. A nivel de cluster puede llegar a ser compleja la busqueda y resolucion de errores.
-8. Se genera un aprendizaje basico en cuanto a la arquitectura de microservicios.
-9. Es necesario leer la documentacion de los helm charts para entender el funcionamiento y parametros requeridos para el correcto funcionamiento de los mismos.
-10. Se comprende de forma basica los servicios de extraccion de entidades.
+1. Para el manejo de datos semi-estructurados no es posible utilizar una base de datos SQL de forma óptima.
+2. ElasticSearch es muy eficiente con grandes volúmenes de datos.
+3. La configuración establecida entre elasticsearch y python fue realizada con facilidad, por lo que las librerias utilizadas son intuitivas y fáciles de configurar.
+4. Los mensajes de RabbitMQ funcionan de manera muy eficiente y rápida para el programa desarrollado. Resaltando algunas de las características competitivas del message broker.
+5. Docker es realmente intuitivo una vez comprendida la teoría. Obteniendo así una eficaz herramienta para el desarrollo de software.
+6. Kubernetes es una herramienta complicada de utilizar. Sin embargo, agrega gran beneficio en temas de automatización, escalado y administración de contenedores.
+7. A nivel de cluster puede llegar a ser compleja la búsqueda y resolución de errores.
+8. Se genera un aprendizaje básico en cuanto a la arquitectura de microservicios.
+9. Es necesario leer la documentación de los helm charts para entender el funcionamiento y parámetros requeridos para el correcto funcionamiento de los mismos.
+10. Se comprende de forma básica los servicios de extracción de entidades.
 
 ## Referencias
 
 1. UnitTest — Unit Testing framework. (s. f.). Python documentation. https://docs.python.org/3/library/unittest.html
 2. UnitTest — Unit Testing framework. (s. f.). Python documentation. https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertEqual
+
