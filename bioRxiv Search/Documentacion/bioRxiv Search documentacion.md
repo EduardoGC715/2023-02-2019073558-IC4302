@@ -33,7 +33,8 @@ Como pre-instalación del proyecto sern necesarias las siguientes aplicaciones:
 - [SparkSQL](https://archive.apache.org/dist/spark/spark-2.4.8/spark-2.4.8-bin-hadoop2.7.tgz)
 - [Elastic Hadoop](https://artifacts.elastic.co/downloads/elasticsearch-hadoop/elasticsearch-hadoop-8.6.2.zip)
 
-Extraer los elemenstos en un carpeta definida y copiar elasticsearch-hadoop-8.6.2.jar detntro de spark-2.4.8-bin-hadoop2.7/jars/
+Extraer los elemenstos en un carpeta definida y copiar elasticsearch-hadoop-8.6.2.jar detntro de spark-2.4.8-bin-hadoop2.7/jars/ . Se debe verificar que el sistema este corriendo la version de JDK 1.8 ya que de otra forma no será posible correr el código de scala. Para verificar esto se pude correr el comando de:
+`java -version` y verificar que la version de este sea la 1.8. De no ser la versión 1.8 se recomienda para evitar conflictos desinstalar java e instalar la versión necesaria para el proyecto.
 
 [Kubernetes](https://docs.docker.com/desktop/kubernetes/) será implemetado mediante la habilitación del cluster de docker.
 
@@ -183,11 +184,43 @@ una vez dentro de la carpeta, se ingresará a la carpeta de bin y se ejecutará 
 `spark-shell`
 Una vez inicie Spark, se verá de esta forma:
 
-spark 1 
+![spark shell 1](src/spark-1.PNG)
 
-Dentro del shell se procederá a realizar los siguientes comandos:
+![spark shell 2](src/spark-2.PNG)
 
+Dentro del shell se procederá a copiar el codigo en el archivo de [Scala](/bioRxiv%20Search/commands.scala).
 
+### Códigos Scala
+
+![scala code 1](src/scala-1.PNG)
+La imagen anterior muestra los imports necesarios para ejecutar las pruebas.
+
+![scala code 2](src/scala-2.PNG)
+En esta imagen se detiene el contexto inicial y se crea uno propio, seguidamente se configura la conexión a elasticsearch con la credenciales correctas.
+
+![scala code 3](src/scala-3.PNG)
+![scala code 4](src/scala-4.PNG)
+![scala code 5](src/scala-5.PNG)
+Finalmente, se crean la funciones transforman los datos, por ejemplo: 
+- El author_name, deberá convertirse en formato Apellido, Nombre.
+- El author_inst deberá separarse en sus componentes
+- El category debe convertir cada primera letra de palabra en mayúscula y remover
+espacios a los lados.
+- El rel_date debe convertirse al formato dd/mm/yyyy. 
+Y luego se suben a un nuevo índice en elasticseach con el nombre de documents.
+
+### Ejecución
+
+Cuando se ejecute se deberá ver algo similiar a las siguientes capturas:
+![spark shell 3](src/spark-3.PNG)
+
+![spark shell 4](src/spark-4.PNG)
+
+Una vez finalizada la ejecución se debe verificar que no haya ocurrido ningún error, seguidamente se puede verificar en kibana los datos actualizados en el índice de *documents*:
+
+![kibana documents 1](src/kibana-spark-1.PNG)
+
+![kibana documents 2](src/kibana-spark-2.PNG)
 
 ## Resultados Pruebas Unitarias
 
