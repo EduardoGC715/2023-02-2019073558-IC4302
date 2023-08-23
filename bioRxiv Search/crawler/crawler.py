@@ -4,6 +4,7 @@ import os
 import json
 import time
 from elasticsearch import Elasticsearch
+# Página usada como referencia para el código de elasticsearch: https://www.elastic.co/guide/en/elasticsearch/client/python-api/current/getting-started-python.html
 
 # Función que extrae datos desde el API de bioRxiv.
 # Recibe el número de documento a partir va a descargar los 30 artículos

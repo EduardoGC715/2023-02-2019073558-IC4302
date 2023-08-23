@@ -5,6 +5,7 @@ import os
 import json
 import spacy
 import time
+# Página usada como referencia para el código de elasticsearch: https://www.elastic.co/guide/en/elasticsearch/client/python-api/current/getting-started-python.html
 
 def callback(ch, method, properties, body):
     json_object = json.loads(body)

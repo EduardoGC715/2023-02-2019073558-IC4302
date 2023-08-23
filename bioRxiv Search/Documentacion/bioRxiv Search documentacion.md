@@ -18,8 +18,13 @@ El siguiente diagrama describe el proceso realizado por el BioRxiv Search.
 
 El siguiente diagrama muestra la implementación e interacción de los componentes del BioRxiv Search. Así como el flujo de datos dentro del sistema.
 
-![Diagrama Arquitectura](src/DiagramaArquitectura.jpg)
+![Diagrama Arquitectura](src/DiagramaArquitectura.jpg)  
 
+### Diagrama de RabbitMQ
+
+El siguiente diagrama muestra cómo están estructuradas las colas de RabbitMQ y la forma en que se comunican los componentes.  
+
+![Diagrama RabbitMQ](src/RabbitMQDiag.png)
 ## Pre-instalación
 
 Como pre-instalación del proyecto serán necesarias las siguientes aplicaciones:
@@ -120,7 +125,7 @@ Este componente cumple con la función de revisar continuamente el índice. En e
 
 #### Implementación Controller
 
- A continuación, se muestra al implementación del componente Controller.
+ A continuación, se muestra la implementación del componente Controller.
 
 ![Controller Code Section 1](src/ControllerCode1.PNG)
 
