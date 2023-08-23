@@ -6,6 +6,7 @@ import math
 import time
 from elasticsearch import Elasticsearch
 from elasticsearch import TransportError
+# Página usada como referencia para el código de elasticsearch: https://www.elastic.co/guide/en/elasticsearch/client/python-api/current/getting-started-python.html
 
 # función que obtiene extrea datos del API de bioRxiv.
 # Código basado en: https://requests.readthedocs.io/en/latest/user/quickstart/
