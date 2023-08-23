@@ -212,6 +212,29 @@ POST jobs/_doc/1
   "processed": false
 }
 
+GET jobs/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+GET raw/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+GET raw/_search
+{
+    "query": {
+        "term": {
+            "splitId": "12"
+        }
+    }
+}
+
 GET /augmented/_search
 {
   "query": {
@@ -226,8 +249,6 @@ GET /documents/_search
   }
 }
 
-DELETE /augmented
-DELETE /documents
 ```
 
 ### Códigos Scala

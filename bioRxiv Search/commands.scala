@@ -30,7 +30,7 @@ conf.set("es.index.auto.create", "true")
 conf.set("es.nodes", "http://localhost:9200/")
 conf.set("es.net.http.auth.user", "elastic")
 // cambiar contraseña cada vez que se ejecuta el cluster (secrets de Lens)
-conf.set("es.net.http.auth.pass", "4e1ZzQ943tM2lh41udLQt76B")
+conf.set("es.net.http.auth.pass", "1tabpKKq602dE6n11t00Q7pj")
 conf.set("es.port", "9200")
 conf.set("es.nodes.wan.only", "true")
 

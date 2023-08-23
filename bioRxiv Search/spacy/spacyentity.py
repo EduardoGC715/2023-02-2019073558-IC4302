@@ -14,13 +14,7 @@ def callback(ch, method, properties, body):
     splitNumber = int(json_object["splitNumber"])
     
     documentId = jobId + str(splitNumber)
-    query = {
-    "bool": {
-      "filter":
-        { "term":  { "splitId": documentId }}
-      }
-    }
-    response = es.search(index=ESINDEX, query=query, size=100)
+    response = es.search(index=ESINDEX, query={"term":  { "splitId": documentId }})
     print("DocumentId:", documentId, "Response:", response)
 
     # Para la extracción e inserción de dato en elasticsearch utilizamos como referencia https://www.elastic.co/guide/en/cloud/current/ec-getting-started-python.html

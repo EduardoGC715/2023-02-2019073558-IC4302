@@ -51,32 +51,34 @@ def callback(ch, method, properties, body):
     print(splitNumber, len(articles))
     resp = client.index(index=ESINDEX, id=documentId, document=json.dumps(articlesJson))
 
+    time.sleep(int(json_object["sleep"])/1000)
+    
     # se publica el mensaje al SPACY_QUEUE
     channel.basic_publish(exchange='', routing_key=SPACY_QUEUE, body=json.dumps(json_object))
-    time.sleep(int(json_object["sleep"])/1000)
 
-# Configuración de RabbitMQ
-RABBIT_MQ=os.getenv('RABBITMQ')
-RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
-CRAWLER_QUEUE=os.getenv('CRAWLER_QUEUE')
-SPACY_QUEUE=os.getenv('SPACY_QUEUE')
+if __name__ == '__main__':
+    # Configuración de RabbitMQ
+    RABBIT_MQ=os.getenv('RABBITMQ')
+    RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
+    CRAWLER_QUEUE=os.getenv('CRAWLER_QUEUE')
+    SPACY_QUEUE=os.getenv('SPACY_QUEUE')
 
-# Configuración de Elasticsearch
-ESENDPOINT=os.getenv('ESENDPOINT')
-ESPASSWORD=os.getenv('ESPASSWORD')
-ESINDEX=os.getenv('ESINDEX')
+    # Configuración de Elasticsearch
+    ESENDPOINT=os.getenv('ESENDPOINT')
+    ESPASSWORD=os.getenv('ESPASSWORD')
+    ESINDEX=os.getenv('ESINDEX')
 
-# Conexión con RabbitMQ
-# Código usado de referencia: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
-credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
-parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
-connection = pika.BlockingConnection(parameters)
-channel = connection.channel()
-channel.queue_declare(queue=CRAWLER_QUEUE, durable = True) # cola que recibe mensajes
-channel.queue_declare(queue=SPACY_QUEUE, durable = True) # cola que envía mensajes al Spacy Entity Extractor
-channel.basic_consume(queue=CRAWLER_QUEUE, on_message_callback=callback, auto_ack=True)
+    # Conexión con RabbitMQ
+    # Código usado de referencia: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
+    credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
+    parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
+    connection = pika.BlockingConnection(parameters)
+    channel = connection.channel()
+    channel.queue_declare(queue=CRAWLER_QUEUE, durable = True) # cola que recibe mensajes
+    channel.queue_declare(queue=SPACY_QUEUE, durable = True) # cola que envía mensajes al Spacy Entity Extractor
+    channel.basic_consume(queue=CRAWLER_QUEUE, on_message_callback=callback, auto_ack=True)
 
-client = Elasticsearch("http://"+ESENDPOINT+":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
+    client = Elasticsearch("http://"+ESENDPOINT+":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
 
-channel.start_consuming()
+    channel.start_consuming()
 
