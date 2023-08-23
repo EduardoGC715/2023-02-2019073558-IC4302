@@ -197,6 +197,34 @@ Una vez inicie Spark, se verá de esta forma:
 
 Dentro del shell se procederá a copiar el código en el archivo de [Scala](/bioRxiv%20Search/commands.scala).
 
+### Código Kibana
+```
+POST jobs/_doc/1
+{
+  "jobId": "1",
+  "pageSize": 100,
+  "sleep": 5000,
+  "processed": false
+}
+
+GET /augmented/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+GET /augmented/_mapping
+GET /documents/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+DELETE /augmented
+DELETE /documents
+```
+
 ### Códigos Scala
 
 ![scala code 1](src/scala-1.PNG)
