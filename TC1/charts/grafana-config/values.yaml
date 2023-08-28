@@ -1,0 +1,24 @@
+prometheus: 
+  namespace: monitoring
+dashboards: 
+  - mariadb: 
+    name: mariadb
+    file: mariadb.json
+    enabled: true
+  - elasticsearch: 
+    name: elasticsearch
+    file: elasticsearch.json
+    enabled: false
+  - mongodb: 
+    name: mongodb
+    file: mongodb.json
+    enabled: false
+  - postgresqlha: 
+    name: postgresqlha
+    file: postgresqlha.json
+    enabled: false
+  - mariadbgal: 
+    name: mariadbgal
+    file: mariadbgal.json
+    enabled: false
+  

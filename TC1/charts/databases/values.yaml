@@ -1,0 +1,60 @@
+mariadb:
+  enabled: false
+  architecture: replication
+  primary:
+    persistence:
+      enabled: false
+  secondary:
+    persistence:
+      enabled: false
+    replicaCount: 2
+  metrics:
+    enabled: true
+    serviceMonitor: 
+      enabled: true
+      namespace: monitoring
+elasticsearch: 
+  enabled: false
+  master: 
+    replicaCount: 1
+  data:
+    replicaCount: 0
+  ingest:
+    enabled: false
+  coordinating:
+    replicaCount: 0
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+mongodb: 
+  enabled: true
+  architecture: replicaset
+  replicaCount: 3
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+postgresql-ha:
+  enabled: false
+  postgresql:
+    replicaCount: 1
+  pgpool:
+    replicaCount: 0
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+mariadb-galera:
+  enabled: false
+  replicaCount: 1
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+postgresql:
+  enabled: false
