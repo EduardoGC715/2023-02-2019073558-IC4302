@@ -1,9 +1,6 @@
-namespaces: 
-- mariadb
-- mariadb-g
-- mongodb
-- elasticsearch
-- postgresql-ha
-- postgresql
-- app
-- monitoring
+namespaces:
+  - app
+  - elastic
+  - mongo
+  - mysql
+  - monitoring

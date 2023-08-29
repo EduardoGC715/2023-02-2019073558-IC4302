@@ -24,11 +24,12 @@ version: 0.1.0
 appVersion: "1.16.0"
 
 dependencies:
-- name : grafana-operator
-  version: "2.7.12"
-  repository: https://charts.bitnami.com/bitnami
-  alias: grafana
-- name : kube-prometheus
-  version: "8.3.1"
-  repository: https://charts.bitnami.com/bitnami
-  alias: prometheus
+  # Prometheus
+  - name: grafana-operator
+    version: "2.7.12"
+    repository: https://charts.bitnami.com/bitnami
+    alias: grafana
+  - name: kube-prometheus
+    version: "8.3.1"
+    repository: https://charts.bitnami.com/bitnami
+    alias: prometheus

@@ -23,28 +23,26 @@ version: 0.1.0
 # It is recommended to use it with quotes.
 appVersion: "1.16.0"
 
-dependencies: 
-- name: mariadb
-  version: "11.4.6"
-  repository: https://charts.bitnami.com/bitnami
-  condition: mariadb.enabled
-- name: elasticsearch
-  version: "8.5.1"
-  repository: https://helm.elastic.co
-  condition: elasticsearch.enabled
-- name: mongodb
-  version: "13.6.7"
-  repository: https://charts.bitnami.com/bitnami
-  condition: mongodb.enabled
-- name: postgresql-ha
-  version: "11.1.2"
-  repository: https://charts.bitnami.com/bitnami
-  condition: postgresql-ha.enabled
-- name: mariadb-galera
-  version: "7.4.14"
-  repository: https://charts.bitnami.com/bitnami
-  condition: mariadb-galera.enabled
-- name: postgresql
-  version: "12.10.0"
-  repository: https://charts.bitnami.com/bitnami
-  condition: postgresql.enabled
+dependencies:
+  - name: mariadb
+    version: "11.4.6"
+    repository: https://charts.bitnami.com/bitnami
+    condition: mariadb.enabled
+  - name: elasticsearch
+    version: "19.10.6"
+    repository: https://charts.bitnami.com/bitnami
+    condition: elasticsearch.enabled
+  - name: mongodb
+    version: "13.6.7"
+    repository: https://charts.bitnami.com/bitnami
+    condition: mongodb.enabled
+  - name: postgresql-ha
+    version: "11.1.2"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresqlha.enabled
+    alias: postgresqlha
+  - name: mariadb-galera
+    version: "7.4.14"
+    repository: https://charts.bitnami.com/bitnami
+    condition: mariadbgal.enabled
+    alias: mariadbgal
