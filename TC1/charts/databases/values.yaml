@@ -1,10 +1,22 @@
 mariadb:
   enabled: true
+  architecture: replication
+  primary:
+    resources:
+      limits:
+        cpu: "1"
+        memory: "4Gi"
+  secondary:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: "0.5"
+        memory: "2Gi"
   metrics:
     enabled: true
     serviceMonitor: 
       enabled: true
-      namespace: "monitoring"
+      namespace: monitoring
 elasticsearch: 
   enabled: false
   master: 
@@ -22,8 +34,14 @@ elasticsearch:
       namespace: monitoring
 mongodb: 
   enabled: false
+  global:
+    namespaceOverride: mongodb
   architecture: replicaset
   replicaCount: 3
+  resources: 
+    limits: 
+      cpu: "0.6"
+      memory: "2Gi"
   metrics: 
     enabled: true
     serviceMonitor:
