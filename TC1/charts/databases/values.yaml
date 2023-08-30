@@ -1,18 +1,10 @@
 mariadb:
-  enabled: false
-  architecture: replication
-  primary:
-    persistence:
-      enabled: false
-  secondary:
-    persistence:
-      enabled: false
-    replicaCount: 2
+  enabled: true
   metrics:
     enabled: true
     serviceMonitor: 
       enabled: true
-      namespace: monitoring
+      namespace: "monitoring"
 elasticsearch: 
   enabled: false
   master: 
@@ -29,9 +21,9 @@ elasticsearch:
       enabled: true
       namespace: monitoring
 mongodb: 
-  enabled: true
+  enabled: false
   architecture: replicaset
-  replicaCount: 2
+  replicaCount: 3
   metrics: 
     enabled: true
     serviceMonitor:
