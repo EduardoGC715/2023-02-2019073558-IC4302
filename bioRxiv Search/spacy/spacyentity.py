@@ -5,6 +5,7 @@ import os
 import json
 import spacy
 import time
+# Página usada como referencia para el código de elasticsearch: https://www.elastic.co/guide/en/elasticsearch/client/python-api/current/getting-started-python.html
 
 def callback(ch, method, properties, body):
     json_object = json.loads(body)
@@ -13,15 +14,10 @@ def callback(ch, method, properties, body):
     splitNumber = int(json_object["splitNumber"])
     
     documentId = jobId + str(splitNumber)
-    query = {
-    "bool": {
-      "filter":
-        { "term":  { "splitId": documentId }}
-      }
-    }
-    response = es.search(index=ESINDEX, query=query, size=100)
+    response = es.search(index=ESINDEX, query={"term":  { "splitId": documentId }})
     print("DocumentId:", documentId, "Response:", response)
 
+    # Para la extracción e inserción de dato en elasticsearch utilizamos como referencia https://www.elastic.co/guide/en/cloud/current/ec-getting-started-python.html
     for hit in response["hits"]["hits"]:
         source_dict = hit["_source"]  
         print("Unprocessed:", source_dict)
@@ -36,11 +32,26 @@ def callback(ch, method, properties, body):
     time.sleep(int(json_object["sleep"])/1000)
 
 def set_encoder(obj):
+    # Asegurarse de que el tipo de dato que se este insertando a elasticsearch sea el debido
     if isinstance(obj, set):
         return list(obj)
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
+def ner_institutions(institutions, author):
+
+    doc = nlp(institutions)
+    ents = defaultdict(set)
+    if len(doc.ents) != 0:
+        x=0
+        for e in doc.ents:
+          author["institutions"][e.label_+"_"+str(x)] = e.text
+          x+= 1
+    else:
+      author["institutions"]["ORG_0"] = institutions
+    return dict(ents)
+  
 def perform_ner(text):
+    # Para la implementación de NER con spacy utilizamos como referencia https://spacy.io/usage/linguistic-features 
     doc = nlp(text)
     entities = [ent.text for ent in doc.ents]
     return entities
@@ -48,22 +59,17 @@ def perform_ner(text):
 def process_and_augment_document(article):
 
     entities = perform_ner(article["rel_abs"])
-    institutions = ner_institutions({author['author_inst'] for author in article['rel_authors']})
+    for author in article['rel_authors']: 
+        if not (author["author_inst"]):
+            author["author_inst"] = "No Institution"
+        if not (author["author_name"]):
+            author["author_name"]= "No Author"
+        author["institutions"] = {}
+        ner_institutions(author['author_inst'], author)
+        author["institutions"] = json.dumps(author["institutions"]).replace('"', "'")
 
-    article["entities"] = entities
-    article["institutions"] = institutions
-    
-def ner_institutions(institutions):
+    article["entities"] = entities  
 
-    author_inst_str = ", ".join(institutions)
-
-    doc = nlp(author_inst_str)
-
-    ents = defaultdict(set)
-    for e in doc.ents:
-        ents[e.label_].add(e.text)
-    
-    return dict(ents)
 
 
 ESENDPOINT = os.getenv('ESENDPOINT')
@@ -75,6 +81,8 @@ RABBIT_MQ=os.getenv('RABBITMQ')
 RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
 SPACY_QUEUE=os.getenv('SPACY_QUEUE')
 
+# Conexión con RabbitMQ
+# Código usado de referencia: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
 credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
 connection = pika.BlockingConnection(parameters)
