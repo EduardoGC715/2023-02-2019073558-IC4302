@@ -1,5 +1,5 @@
 mariadb:
-  enabled: true
+  enabled: false
   architecture: replication
   primary:
     resources:
@@ -14,29 +14,21 @@ mariadb:
         memory: "2Gi"
   metrics:
     enabled: true
-    serviceMonitor:
+    serviceMonitor: 
       enabled: true
-      namespace: "monitoring"
-elasticsearch:
+      namespace: monitoring
+elasticsearch: 
   enabled: false
-  replicas: 1
-  metrics:
-    enabled: false
-    serviceMonitor:
-      enabled: false
-      namespace: "monitoring"
+  master: 
+    replicaCount: 1
   data:
-    replicaCount: 1
-  coordinating:
-    replicaCount: 1
+    replicaCount: 0
   ingest:
-    replicaCount: 1
-  master:
-    replicaCount: 1
-mongodb:
-  enabled: false
-  metrics:
     enabled: false
+  coordinating:
+    replicaCount: 0
+  metrics: 
+    enabled: true
     serviceMonitor:
       enabled: true
       namespace: monitoring
@@ -59,15 +51,29 @@ postgresql-ha:
   enabled: false
   postgresql:
     replicaCount: 1
-  metrics:
-    enabled: false
+  pgpool:
+    replicaCount: 0
+  metrics: 
+    enabled: true
     serviceMonitor:
-      enabled: false
-      namespace: "monitoring"
-mariadbgal:
+      enabled: true
+      namespace: monitoring
+mariadb-galera:
   enabled: false
-  metrics:
-    enabled: false
+  replicaCount: 1
+  metrics: 
+    enabled: true
     serviceMonitor:
-      enabled: false
-      namespace: "monitoring"
+      enabled: true
+      namespace: monitoring
+postgresql:
+  enabled: true
+  auth:
+    database: testing
+    username: "admin"
+    postgresPassword: "admin"
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring

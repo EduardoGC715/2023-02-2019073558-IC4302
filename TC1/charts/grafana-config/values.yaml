@@ -1,4 +1,4 @@
-prometheus:
+prometheus: 
   namespace: monitoring
 dashboards: 
   mariadb: 
@@ -12,7 +12,7 @@ dashboards:
   mongodb: 
     name: mongodb
     file: mongodb.json
-    enable: true
+    enable: false
   postgresqlha: 
     name: postgresqlha
     file: postgresqlha.json
@@ -20,7 +20,7 @@ dashboards:
   postgresql: 
     name: postgresql
     file: postgresql.json
-    enable: false
+    enable: true
   mariadbgal: 
     name: mariadbgal
     file: mariadbgal.json
