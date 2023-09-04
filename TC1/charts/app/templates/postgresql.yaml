@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.postgresql.name }}
+  labels:
+    app: {{ .Values.config.postgresql.name }}
+spec:
+  replicas: {{ .Values.config.postgresql.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.postgresql.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.postgresql.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.postgresql.name }}
+        image: {{ .Values.config.postgresql.image }}
+        ports:
+          - containerPort: 5432
+          - containerPort: 5000
+        env:
+          - name: PGDATABASE
+            value: {{ .Values.config.postgresql.database }}
+          - name: PGUSER
+            value: {{ .Values.config.postgresql.user }}
+          - name: PGDPASSWORD
+            value: {{ .Values.config.postgresql.password }}
+          - name: PGSERVICE
+            value: {{ .Values.config.postgresql.service }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaskport
+spec:
+  type: NodePort
+  selector:
+    app: {{ .Values.config.postgresql.name }}
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30090

@@ -1,0 +1,4 @@
+PGDATABASE=testing
+PGUSER=admin
+PGPASSWORD=admin
+PGSERVICE=databases-postgresql

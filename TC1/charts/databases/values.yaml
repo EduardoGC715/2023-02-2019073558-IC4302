@@ -66,12 +66,13 @@ mariadb-galera:
     serviceMonitor:
       enabled: true
       namespace: monitoring
+
 postgresql:
   enabled: true
   auth:
     database: testing
     username: "admin"
-    postgresPassword: "admin"
+    password: "admin"
   metrics:
     enabled: true
     serviceMonitor:

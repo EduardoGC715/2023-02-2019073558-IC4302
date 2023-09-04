@@ -1,7 +1,9 @@
 config:
-  app:
+  postgresql:
     replicas: 1
-    name: controller
-    crawler_queue: "CRAWLER_QUEUE"
-    image: dandiego235/controllerbio:latest
-    interval: 1
+    name: postgreflask
+    image: dandiego235/postgreflask
+    database: "testing"
+    user: "admin"
+    password: "admin"
+    service: 'databases-postgresql'
