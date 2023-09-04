@@ -32,6 +32,12 @@ public class testFlask extends Simulation {
             exec(http("Get all Pokemon")
                     .get("/getPokemon"));
 
+    private static ChainBuilder getPokemonId =
+            exec(http("Get one Pokemon #{Id}")
+                    .get("/getPokemon/#{Id}")
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .formParam("Id", "#{Id}")
+                    .formParam("Name", "#{Name}"));
 
     private static ChainBuilder addPokemon =
             feed(jsonFeeder)
@@ -60,8 +66,38 @@ public class testFlask extends Simulation {
                             .formParam("Speed", "#{Speed}")
                             );
 
+    private static ChainBuilder updatePokemon =
+            feed(jsonFeeder)
+
+                    .exec(http("Update new Pokemon - #{Name}")
+                            .post("/putPokemon")
+                            .header("Content-Type", "application/x-www-form-urlencoded")
+                            .formParam("Id", "#{Id}")
+                            .formParam("Name", "#{Name}")
+                            .formParam("Type1", "#{Type1}")
+                            .formParam("Type2", "#{Type2}")
+                            .formParam("Category", "#{Category}")
+                            .formParam("Heightf", "#{Heightf}")
+                            .formParam("Heightm", "#{Heightm}")
+                            .formParam("Weightlbs", "#{Weightlbs}")
+                            .formParam("Weightkg", "#{Weightkg}")
+                            .formParam("CaptureRate", "#{CaptureRate}")
+                            .formParam("EggSteps", "#{EggSteps}")
+                            .formParam("ExpGroup", "#{ExpGroup}")
+                            .formParam("Total", "#{Total}")
+                            .formParam("HP", "#{HP}")
+                            .formParam("Attack", "#{Attack}")
+                            .formParam("Defense", "#{Defense}")
+                            .formParam("SpAttack", "#{SpAttack}")
+                            .formParam("SpDefense", "#{SpDefense}")
+                            .formParam("Speed", "#{Speed}")
+                    );
+
     private static ChainBuilder deleteLastPostedPokemon =
-            exec(http("Delete Pokemon - #{name}").post("/deletePokemon/").formParam("Id", "#{Id}")
+            exec(http("Delete Pokemon - #{name} #{Id}")
+                    .post("/deletePokemon/")
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .formParam("Id", "#{Id}")
                     .formParam("Name", "#{Name}"));
     // Scenario
     ScenarioBuilder scn = scenario("Database stress test")
@@ -72,7 +108,11 @@ public class testFlask extends Simulation {
             .pause(2)
             .exec(addPokemon)
             .pause(2)
-            .exec(deleteLastPostedPokemon);
+            .exec(deleteLastPostedPokemon)
+            .pause(2)
+            .exec(getPokemonId)
+            .pause(2)
+            .exec(updatePokemon);
     {
         setUp(
                 scn.injectOpen(atOnceUsers(10))
