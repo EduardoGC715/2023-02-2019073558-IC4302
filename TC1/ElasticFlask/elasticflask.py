@@ -1,20 +1,51 @@
-from flask import Flask, redirect, url_for, render_template
+from flask import Flask, request, redirect, url_for, render_template
+import json
 
 app = Flask(__name__)
+pokemon = [
+#   {
+#     "Id": "#{Id}",
+#     "Name": "#{Name}",
+#     "Type1": "#{Type1}",
+#     "Type2": "#{Type2}",
+#     "Category": "#{Category}",
+#     "Heightf": "#{Heightf}",
+#     "Heightm": "#{Heightm}",
+#     "Weightlbs": "#{Weightlbs}",
+#     "Weightkg": "#{Weightkg}",
+#     "CaptureRate": "#{CaptureRate}",
+#     "EggSteps": "#{EggSteps}",
+#     "ExpGroup": "#{ExpGroup}",
+#     "Total": "#{Total}",
+#     "HP": "#{HP}",
+#     "Attack": "#{Attack}",
+#     "Defense": "#{Defense}",
+#     "SpAttack": "#{SpAttack}",
+#     "SpDefense": "#{SpDefense}",
+#     "Speed": "#{Speed}"
+#   }
+]
 
 @app.route("/")
 def home():
-    return render_template("index.html", content = name)
+    return
 
-@app.route("/mysql/get", methods=["POST", "GET"])
-def user(name):
-    return f"Hello {name}!"
+@app.route("/getPokemon", methods=["POST", "GET"])
+def get():
+    print(pokemon)
+    return pokemon
 
 
-@app.route("/mondodb/get", methods=["POST", "GET"]) 
-def admin():
-    return redirect(url_for("user", name = "Admin!"))
+@app.route("/postPokemon", methods=["POST", "GET"]) 
+def post():
+    if request.method == "POST":
+        print(request.get_json())
+        pokemon.append(request.get_json())
+        return pokemon
 
+@app.route("/deletePokemon", methods=["POST", "GET"]) 
+def delete():
+    pass
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
