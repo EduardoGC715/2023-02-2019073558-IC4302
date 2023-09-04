@@ -1,26 +1,44 @@
-from flask import Flask, redirect, url_for, render_template
+from flask import Flask
+import pg8000.native
+from os import environ
+import logging
 
+# código basado en https://pypi.org/project/pg8000/#installation
 app = Flask(__name__)
 
-@app.route("/insert") #/home etc.
-def insert():
-    return "Hello! this is the main page <h1>HELLO</h1>"
-    #return render_template("index.html")
+@app.route('/test')
+def test():
+    return 'Hello World! I am from docker!'
 
-@app.route("/<name>") # grabs name value and passes it to function as a parameter.
-def user(name):
-    return render_template("index.html", content = name, r = 2, list = ["Tim", "Joe", "Bob"]) # content = name == variable inside html file.
+@app.route('/test_db')
+def test_db():
+    databasePG = environ.get("PGDATABASE")
+    username = environ.get("PGUSER")
+    passwordPG = environ.get("PGPASSWORD")
+    servicePG = environ.get("PGSERVICE")
+    logger.debug(databasePG)
+    logger.debug(username)
+    logger.debug(passwordPG)
+    logger.debug(servicePG)
 
-@app.route("/admin")
-def admin():
-    return redirect(url_for("home")) # use the name of the function to redirect it to path.
+    con = pg8000.native.Connection(username, password=passwordPG, host=servicePG, database=databasePG)
+    # Create a temporary table
+    con.run("CREATE TEMPORARY TABLE book (id SERIAL, title TEXT)")
 
-@app.route("/admin1")
-def admin1():
-    return redirect(url_for("user", name="Admin!")) # use the name of the function to redirect it to path. To pass with parameters
+    # Populate the table
+    for title in ("Ender's Game", "The Magus"):
+        con.run("INSERT INTO book (title) VALUES (:title)", title=title)
 
-
+    # Print all the rows in the table  
+    for row in con.run("SELECT * FROM book"):
+        print(row)
+    con.close()
+    return "<h1> Connected successfully. </h1>"
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
+
+   #connect()
     app.run()

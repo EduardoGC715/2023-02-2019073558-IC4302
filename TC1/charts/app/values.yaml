@@ -1,7 +1,14 @@
 config:
-  app:
+  flaskmariadb:
+    enabled: false
     replicas: 1
-    name: controller
-    crawler_queue: "CRAWLER_QUEUE"
-    image: dandiego235/controllerbio:latest
-    interval: 1
+    name: flaskmariadb
+    image: dado715/flask-mariadb:latest
+  postgresql:
+    enabled: true
+    name: postgreflask
+    image: dandiego235/postgreflask
+    database: "testing"
+    user: "admin"
+    password: "admin"
+    service: "databases-postgresql"
