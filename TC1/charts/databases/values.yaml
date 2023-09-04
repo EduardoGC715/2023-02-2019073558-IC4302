@@ -70,7 +70,7 @@ mariadb-galera:
 postgresql:
   enabled: true
   auth:
-    database: testing
+    database: "Pokemon"
     username: "admin"
     password: "admin"
   metrics:

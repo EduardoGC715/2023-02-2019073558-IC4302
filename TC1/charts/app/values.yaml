@@ -1,13 +1,14 @@
 config:
   flaskmariadb:
-  postgresql:
+    enabled: false
     replicas: 1
     name: flaskmariadb
     image: dado715/flask-mariadb:latest
-
+  postgresql:
+    enabled: true
     name: postgreflask
     image: dandiego235/postgreflask
     database: "testing"
     user: "admin"
     password: "admin"
-    service: 'databases-postgresql'
+    service: "databases-postgresql"
