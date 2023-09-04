@@ -1,7 +1,5 @@
 config:
-  app:
+  flaskmariadb:
     replicas: 1
-    name: controller
-    crawler_queue: "CRAWLER_QUEUE"
-    image: dandiego235/controllerbio:latest
-    interval: 1
+    name: flaskmariadb
+    image: dado715/flask-mariadb:latest
