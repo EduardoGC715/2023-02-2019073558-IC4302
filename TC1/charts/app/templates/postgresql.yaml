@@ -19,14 +19,13 @@ spec:
       - name: {{ .Values.config.postgresql.name }}
         image: {{ .Values.config.postgresql.image }}
         ports:
-          - containerPort: 5432
           - containerPort: 5000
         env:
           - name: PGDATABASE
             value: {{ .Values.config.postgresql.database }}
           - name: PGUSER
             value: {{ .Values.config.postgresql.user }}
-          - name: PGDPASSWORD
+          - name: PGPASSWORD
             value: {{ .Values.config.postgresql.password }}
           - name: PGSERVICE
             value: {{ .Values.config.postgresql.service }}
@@ -40,7 +39,7 @@ spec:
   selector:
     app: {{ .Values.config.postgresql.name }}
   ports:
-    - protocol: TCP
+    - protocol: "TCP"
       port: 5000
       targetPort: 5000
       nodePort: 30090
