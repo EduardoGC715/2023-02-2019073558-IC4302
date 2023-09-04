@@ -1,6 +1,10 @@
 config:
+  flaskmariadb:
   postgresql:
     replicas: 1
+    name: flaskmariadb
+    image: dado715/flask-mariadb:latest
+
     name: postgreflask
     image: dandiego235/postgreflask
     database: "testing"
