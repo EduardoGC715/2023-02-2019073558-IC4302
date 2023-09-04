@@ -1,4 +1,5 @@
 import mariadb
+import os
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
@@ -8,11 +9,10 @@ def connectMariaDB():
     try:
         conn = mariadb.connect(
             # TODO: Update to use environment variables or secrets
-            user="root",
-            password="uwJKdwvjY2",
-            host="localhost",
-            database="pokemon",
-            port= "59236"
+            user=os.environ.get("MDB_USER"),
+            password=os.environ.get("MDB_PASSWORD"),
+            host=os.environ.get("MDB_HOST"),
+            database=os.environ.get("MDB_DATABASE"),
         )
         return conn
     except mariadb.Error as e:
@@ -99,6 +99,16 @@ def commitMariaDB(conn):
         # Handle the exception
         print(f"Error commiting in MariaDB: {e}")
 
+def jsonToSQL(data, tableName, columns):
+    # Add backticks to column names
+    escapedColumns = [f"`{column}`" for column in columns]
+    # Construct the SQL INSERT statement
+    insertQuery = f"INSERT INTO {tableName} ({', '.join(escapedColumns)}) VALUES ({', '.join(['%s'] * len(columns))})"
+    # Prepare the values from the JSON data
+    values = [data.get(column) for column in columns]
+    transform = {"insertQuery": insertQuery, "values": values}
+    return transform
+
 @app.route("/mariadb/pokemon", methods=['POST'] )
 def postData():
     try:
@@ -109,19 +119,16 @@ def postData():
         conn = connectMariaDB()
         cursor = conn.cursor()
 
-        # Construct the SQL INSERT statement based on the JSON data
+        # Define the table to insert to
         tableName = 'pokemons'
 
         # Get the list of column names from the table schema
-        columns = getTableColumnsMariaDB(tableName)
+        columns = getTableColumnsMariaDB(tableName, cursor)
 
-        # Construct the SQL INSERT statement
-        insert_query = f"INSERT INTO {tableName} ({', '.join(columns)}) VALUES ({', '.join(['%s'] * len(columns))})"
+        # Transform from the http request to SQL query
+        transform = jsonToSQL(data, tableName, columns)
 
-        # Prepare the values from the JSON data
-        values = [data.get(column) for column in columns]
-
-        cursor.execute(insert_query, values)
+        cursor.execute(transform["insertQuery"], transform["values"])
         commitMariaDB(conn)
         cursor.close()
         disconnectMariaDB(conn)
