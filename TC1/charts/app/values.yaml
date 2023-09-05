@@ -5,10 +5,18 @@ config:
     name: flaskmariadb
     image: dado715/flask-mariadb:latest
   postgresql:
-    enabled: true
+    enabled: false
     name: postgreflask
     image: dandiego235/postgreflask
     database: "Pokemon"
     user: "admin"
     password: "admin"
     service: "databases-postgresql"
+  mongodb:
+    enabled: true
+    name: mongodb
+    image: dandiego2356/mongoflask
+    database: "Pokemon"
+    user: "admin"
+    password: "admin"
+    service: "databases-mongodb-headless"
