@@ -6,9 +6,34 @@ import logging
 # código basado en https://pypi.org/project/pg8000/#installation
 app = Flask(__name__)
 
+# Function to connect to PostGreSQL
+
+def connectPostGreSQL():
+    try:
+        databasePG = environ.get("PGDATABASE")
+        username = environ.get("PGUSER")
+        passwordPG = environ.get("PGPASSWORD")
+        servicePG = environ.get("PGSERVICE")
+        logger.debug(databasePG)
+        logger.debug(username)
+        logger.debug(passwordPG)
+        logger.debug(servicePG)
+        
+        conn = pg8000.native.Connection(username, password=passwordPG, host=servicePG, database=databasePG)
+        return conn
+    except Exception as e:
+        logger.error(e)
+        return None
+        
+def disconnectPostGreSQL(conn):
+    try:
+        conn.close()
+    except Exception as e:
+        logger.error(e)
+
 @app.route('/test')
 def test():
-    return 'Hello World! I am from docker!'
+    return 'Hello World! I am the PostGreSQL Flask app!'
 
 @app.route('/test_db')
 def test_db():
@@ -39,6 +64,4 @@ def test_db():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
-
-   #connect()
     app.run()
