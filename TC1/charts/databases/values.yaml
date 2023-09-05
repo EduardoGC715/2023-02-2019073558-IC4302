@@ -1,5 +1,5 @@
 mariadb:
-  enabled: true
+  enabled: false
   architecture: replication
   primary:
     resources:
@@ -33,7 +33,11 @@ elasticsearch:
       enabled: true
       namespace: monitoring
 mongodb: 
-  enabled: false
+  enabled: true
+  auth:
+    usernames: ["admin"]
+    passwords: ["admin"]
+    databases: ["Pokemon"]
   global:
     namespaceOverride: mongodb
   architecture: replicaset
@@ -66,5 +70,15 @@ mariadb-galera:
     serviceMonitor:
       enabled: true
       namespace: monitoring
+
 postgresql:
   enabled: false
+  auth:
+    database: "Pokemon"
+    username: "admin"
+    password: "admin"
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
