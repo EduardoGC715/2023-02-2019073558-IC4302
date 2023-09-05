@@ -104,20 +104,17 @@ public class testFlask extends Simulation {
     // Scenario
     ScenarioBuilder scn = scenario("Database stress test")
             .feed(jsonFeeder)
-
-            .exec(deleteLastPostedPokemon)
-
+            .exec(addPokemon)
             .pause(2)
             .exec(getPokemonId)
             .pause(2)
-            .exec(updatePokemon)
-            .exec(addPokemon)
-            .pause(2)
             .exec(getAllPokemon)
             .pause(2)
-
+            .exec(updatePokemon)
             .pause(2)
-            .exec(updatePokemon);
+            .exec(updatePokemon)
+            .pause(2)
+            .exec(deleteLastPostedPokemon);
     {
         setUp(
                 scn.injectOpen(atOnceUsers(10))
