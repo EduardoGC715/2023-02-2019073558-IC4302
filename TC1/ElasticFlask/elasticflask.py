@@ -1,30 +1,7 @@
-from flask import Flask, request, redirect, url_for, render_template
-import json
+from flask import Flask, request
 
 app = Flask(__name__)
-pokemon = [
-#   {
-#     "Id": "Id"],
-#     "Name": "Name"],
-#     "Type1": "Type1"],
-#     "Type2": "Type2"],
-#     "Category": "Category"],
-#     "Heightf": "Heightf"],
-#     "Heightm": "Heightm"],
-#     "Weightlbs": "Weightlbs"],
-#     "Weightkg": "Weightkg"],
-#     "CaptureRate": "CaptureRate"],
-#     "EggSteps": "EggSteps"],
-#     "ExpGroup": "ExpGroup"],
-#     "Total": "Total"],
-#     "HP": "HP"],
-#     "Attack": "Attack"],
-#     "Defense": "Defense"],
-#     "SpAttack": "SpAttack"],
-#     "SpDefense": "SpDefense"],
-#     "Speed": "Speed}"
-#   }
-]
+pokemon = []
 
 @app.route("/")
 def home():

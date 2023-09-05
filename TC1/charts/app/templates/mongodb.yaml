@@ -1,0 +1,47 @@
+{{- if .Values.config.mongodb.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.mongodb.name }}
+  namespace: mongodb
+  labels:
+    app: {{ .Values.config.mongodb.name }}
+spec:
+  replicas: {{ .Values.config.mongodb.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.mongodb.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.mongodb.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.mongodb.name }}
+        image: {{ .Values.config.mongodb.image }}
+        ports:
+          - containerPort: 5000
+        env:
+          - name: MONGODB_DATABASE
+            value: {{ .Values.config.mongodb.database }}
+          - name: MONGODB_USERNAME
+            value: {{ .Values.config.mongodb.user }}
+          - name: MONGODB_PASSWORD
+            value: {{ .Values.config.mongodb.password }}
+          - name: MONGODB_HOSTNAME
+            value: {{ .Values.config.mongodb.service }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongoport
+spec:
+  type: NodePort
+  selector:
+    app: {{ .Values.config.mongodb.name }}
+  ports:
+    - protocol: "TCP"
+      port: 5000
+      targetPort: 5000
+      nodePort: 30092
+{{- end }}
