@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class testFlask extends Simulation {
     // Http Protocol
     HttpProtocolBuilder httpProtocol =
-            http.baseUrl("http://127.0.0.1:52004")
+            http.baseUrl("http://127.0.0.1:63372")
                     .acceptHeader("application/json")
                     .contentTypeHeader("application/json");
 
@@ -30,10 +30,11 @@ public class testFlask extends Simulation {
 
     private static ChainBuilder getAllPokemon =
             exec(http("Get all Pokemon")
-                    .get("/getPokemon"));
+                    .get("/getAllPokemon"));
 
     private static ChainBuilder getPokemonId =
-            exec(http("Get one Pokemon #{Id}")
+            feed(jsonFeeder)
+                    .exec(http("Get one Pokemon #{Id}")
                     .get("/getPokemon/#{Id}")
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .formParam("Id", "#{Id}")
@@ -70,7 +71,7 @@ public class testFlask extends Simulation {
             feed(jsonFeeder)
 
                     .exec(http("Update new Pokemon - #{Name}")
-                            .post("/putPokemon")
+                            .put("/putPokemon/#{Id}")
                             .header("Content-Type", "application/x-www-form-urlencoded")
                             .formParam("Id", "#{Id}")
                             .formParam("Name", "#{Name}")
@@ -94,25 +95,29 @@ public class testFlask extends Simulation {
                     );
 
     private static ChainBuilder deleteLastPostedPokemon =
-            exec(http("Delete Pokemon - #{name} #{Id}")
-                    .post("/deletePokemon/")
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .formParam("Id", "#{Id}")
-                    .formParam("Name", "#{Name}"));
+            feed(jsonFeeder)
+                    .exec(http("Delete Pokemon - #{Name}")
+                            .delete("/deletePokemon/#{Id}")
+                            .header("Content-Type", "application/x-www-form-urlencoded")
+                    );
+
     // Scenario
     ScenarioBuilder scn = scenario("Database stress test")
             .feed(jsonFeeder)
-            .exec(addPokemon);
-           // .pause(2)
-            //.exec(getAllPokemon)
-            //.pause(2)
-            //.exec(addPokemon)
-            //.pause(2)
-            //.exec(deleteLastPostedPokemon)
-            //.pause(2)
-            //.exec(getPokemonId)
-            //.pause(2)
-            //.exec(updatePokemon);
+
+            .exec(deleteLastPostedPokemon)
+
+            .pause(2)
+            .exec(getPokemonId)
+            .pause(2)
+            .exec(updatePokemon)
+            .exec(addPokemon)
+            .pause(2)
+            .exec(getAllPokemon)
+            .pause(2)
+
+            .pause(2)
+            .exec(updatePokemon);
     {
         setUp(
                 scn.injectOpen(atOnceUsers(10))
