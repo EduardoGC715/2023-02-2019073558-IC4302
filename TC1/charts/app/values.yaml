@@ -8,7 +8,7 @@ config:
     enabled: true
     name: postgreflask
     image: dandiego235/postgreflask
-    database: "testing"
+    database: "Pokemon"
     user: "admin"
     password: "admin"
     service: "databases-postgresql"

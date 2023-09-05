@@ -97,7 +97,7 @@ def createTableMariaDB(conn):
             Speed VARCHAR(255)
         )
         """
-
+        
         # Execute the CREATE TABLE statement
         executeMariaDB(cursor, createTableQuery)
 
