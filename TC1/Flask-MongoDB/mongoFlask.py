@@ -1,7 +1,6 @@
 from flask import Flask, request, render_template_string
 from flask_pymongo import PyMongo
 from os import environ
-import jsonify
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -14,10 +13,10 @@ app.config["MONGO_URI"] = 'mongodb://' + environ['MONGODB_USERNAME'] + ':' + env
 
 mongo = PyMongo(app)
 db = mongo.db
-print(mongo)
-print(db)
+logger.debug(mongo)
+logger.debug(db)
 if mongo.db.client:
-    print("Connected to MongoDB successfully!")
+    logger.debug("Connected to MongoDB successfully!")
 
 
 @app.route("/")
@@ -35,20 +34,48 @@ def home():
 
 @app.route("/getPokemon/<id>", methods=["POST", "GET"])
 def getOnePokemon(id):
-    try:
-        pokemonFound = db.pokemon.find_one({"Id": id})
-        print(pokemonFound)
-        return f"Pokemon {pokemonFound}!"
-    except Exception as e:
-        print("No se pudo encontrar el pokemon: ", e)
+    if request.method == "GET":
+        try:
+            pokemonFound = db.pokemon.find_one({"Id": id})
+            logger.debug(f"Get One: {pokemonFound}")
+            return f"Get one {pokemonFound}"
+        except Exception as e:
+            logger.debug("No se pudo encontrar el pokemon: ", e)
+        
 
 @app.route("/getAllPokemon", methods=["POST", "GET"])
 def getAllPokemon():
-    
-    return pokemon
+    if request.method == "GET":
+        pokemones = db.pokemon.find()
+        pokemonGet = []
+        for species in pokemones:
+            item = {
+            "Id": str(species["Id"]),
+            "Name": str(species["Name"]),
+            "Type1": str(species["Type1"]),
+            "Type2": str(species["Type2"]),
+            "Category": str(species["Category"]),
+            "Heightf": str(species["Heightf"]),
+            "Heightm": str(species["Heightm"]),
+            "Weightlbs": str(species["Weightlbs"]),
+            "Weightkg": str(species["Weightkg"]),
+            "CaptureRate": str(species["CaptureRate"]),
+            "EggSteps": str(species["EggSteps"]),
+            "ExpGroup": str(species["ExpGroup"]),
+            "Total": str(species["Total"]),
+            "HP": str(species["HP"]),
+            "Attack": str(species["Attack"]),
+            "Defense": str(species["Defense"]),
+            "SpAttack": str(species["SpAttack"]),
+            "SpDefense": str(species["SpDefense"]),
+            "Speed": str(species["Speed"])
+            }
+            pokemonGet.append(item)
+        logger.debug(f"Pokemones Get All {pokemonGet}")
+        return f"Pokemones Get All {pokemonGet}"
 
 
-@app.route("/postPokemon", methods=["POST", "GET"]) 
+@app.route("/postPokemon", methods=["POST"]) 
 def insertPokemon():
     if request.method == "POST":
         formPokemon = {
@@ -72,21 +99,18 @@ def insertPokemon():
         "SpDefense": request.form["SpDefense"],
         "Speed": request.form["Speed"]
         }
-        print(formPokemon)
         pokemon.append(formPokemon)
         try:
             db.pokemon.insert_one(formPokemon)
+            logger.debug(f"Pokemon Post {formPokemon}")
         except Exception as e:
-            print("No se pudo insertar. ", e)
-        return f"Pokemon {formPokemon}!"
+            logger.debug("No se pudo insertar. ", e)
+        return f"Pokemon {formPokemon}"
 
-@app.route("/putPokemon", methods=["POST", "GET"]) 
-def updatePokemon():
-    if request.method == "POST":
-        print(request.form)
-        print(request.form["Name"])
-        formPokemon = [
-        {
+@app.route("/putPokemon/<id>", methods=["PUT"]) 
+def updatePokemon(id):
+    if request.method == "PUT":
+        formPokemon = {"$set": {
         "Id": request.form["Id"],
         "Name": request.form["Name"],
         "Type1": request.form["Type1"],
@@ -106,17 +130,27 @@ def updatePokemon():
         "SpAttack": request.form["SpAttack"],
         "SpDefense": request.form["SpDefense"],
         "Speed": request.form["Speed"]
-        }
-        ]
-        pokemon.append(formPokemon)
-        return formPokemon
+        }}
+        
+        try:
+            db.pokemon.update_one({"Id": id}, formPokemon)
+            logger.debug(f"Pokemon Update {formPokemon['$set']}")
+        except Exception as e:
+            logger.debug("No se pudo actualizar. ", e)
+        return f"Pokemon Update {formPokemon['$set']}"
 
-@app.route("/deletePokemon/<id>", methods=["POST", "GET"]) 
+@app.route("/deletePokemon/<id>", methods=["DELETE"]) 
 def delete(id):
-    if request.method == "POST":
-        print(request.form)
-        print(request.form["Name"])
-        return pokemon
+    if request.method == "DELETE":
+        try:
+            pokemonFound = db.pokemon.delete_one({"Id": id})
+            logger.debug(f"Delete One: {pokemonFound}")
+            return f"Delete one {pokemonFound}"
+        except Exception as e:
+            logger.debug("No se pudo eliminar el pokemon: ", e)
+            return f"Delete failed"
+            
+
 
 if __name__ == "__main__":
     
