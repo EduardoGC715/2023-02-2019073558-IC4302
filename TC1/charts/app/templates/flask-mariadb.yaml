@@ -26,7 +26,7 @@ spec:
                 name: databases-mariadb
                 key: mariadb-root-password
           - name: MDB_HOST
-            value: 10.0.187.183
+            value: databases-mariadb-primary
           - name: MDB_DATABASE
             value: "pokemon"
 ---
@@ -39,7 +39,7 @@ spec:
     app: {{ .Values.config.flaskmariadb.name }}
   ports:
     - protocol: TCP
-      port: 5000       # The port your Flask app is listening on
-      targetPort: 5000  # The port your Flask app is running on inside the container
+      port: 5000
+      targetPort: 5000
       nodePort: 30091
   type: NodePort 
