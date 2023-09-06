@@ -20,6 +20,7 @@ spec:
         image: {{ .Values.config.postgresql.image }}
         ports:
           - containerPort: 5000
+          - containerPort: 8000
         env:
           - name: PGDATABASE
             value: {{ .Values.config.postgresql.database }}
@@ -34,13 +35,53 @@ apiVersion: v1
 kind: Service
 metadata:
   name: flaskport
-spec:
-  type: NodePort
-  selector:
+  namespace: default
+  labels:
     app: {{ .Values.config.postgresql.name }}
+spec:
   ports:
-    - protocol: "TCP"
+    - name: http
+      protocol: TCP
       port: 5000
       targetPort: 5000
       nodePort: 30090
+  selector:
+    app: {{ .Values.config.postgresql.name }}
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaskservice
+  namespace: default
+  annotations:
+    prometheus.io/port: "metrics"
+    prometheus.io/scrape: "true"
+  labels:
+    app.kubernetes.io/part-of: dms
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .Values.config.postgresql.name }}
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+      name: "metrics"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flaskservicemonitor
+  namespace: monitoring
+spec:
+  endpoints:
+    - interval: 10s
+      port: metrics
+  namespaceSelector:
+    matchNames:
+      - default
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: dms
 {{- end }}

@@ -25,3 +25,7 @@ dashboards:
     name: mariadbgal
     file: mariadbgal.json
     enable: false
+  flaskapp:
+    name: flaskapp
+    file: flaskapp.json
+    enable: true
