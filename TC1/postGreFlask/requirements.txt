@@ -1,4 +1,3 @@
 flask
 pg8000
-uwsgi
-prometheus_client
+prometheus-flask-exporter

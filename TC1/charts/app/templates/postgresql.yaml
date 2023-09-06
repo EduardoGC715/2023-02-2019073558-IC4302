@@ -20,7 +20,6 @@ spec:
         image: {{ .Values.config.postgresql.image }}
         ports:
           - containerPort: 5000
-          - containerPort: 8000
         env:
           - name: PGDATABASE
             value: {{ .Values.config.postgresql.database }}

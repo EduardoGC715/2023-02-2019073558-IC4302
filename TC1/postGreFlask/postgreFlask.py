@@ -1,16 +1,15 @@
-from flask import Flask, request, jsonify
-from werkzeug.middleware.dispatcher import DispatcherMiddleware
-from prometheus_client import make_wsgi_app
+from flask import Flask, request
+from prometheus_flask_exporter import PrometheusMetrics
 import pg8000.native
 from os import environ
 import logging
 
 # código basado en https://pypi.org/project/pg8000/#installation
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 
-app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
-    '/metrics': make_wsgi_app()
-})
+metrics.info('postgres_info', 'PostGreSQL metricts info', version='1.0.0')
+
 
 # Function to connect to PostGreSQL
 def connectPostGreSQL():
@@ -120,9 +119,9 @@ def getPokemon(id):
 
 @app.route("/getAllPokemon", methods=["GET"])
 def getAllPokemon():
-    global conn
     if request.method == "GET":
         try:
+            conn = connectPostGreSQL()
             conn.run("""SELECT pokemonId, PokemonName, Type1, Type2, Category, Heightf,
                      Heightm, Weightlbs, Weightkg, CaptureRate, EggSteps, ExpGroup, Total,
                      HP, Attack, Defense,SpAttack, SpDefense, Speed
@@ -130,13 +129,16 @@ def getAllPokemon():
             logger.debug("Got All Pokemon")
         except Exception as e:
             logger.error(e)
+        finally:
+            if conn:
+                conn.close()
     return "getAllPokemon..."
 
 @app.route("/postPokemon", methods=["POST"])
 def postPokemon():
-    global conn
     if request.method == "POST":
         try:
+            conn = connectPostGreSQL()
             data = {
             "Id": request.form["Id"],
             "Name": request.form["Name"],
@@ -187,14 +189,17 @@ def postPokemon():
             logger.debug(f"Inserted {data['Id']} Name: {data['Name']}")
         except Exception as e:
             logger.error(e)
+        finally:
+            if conn:
+                conn.close()
     return "PostPokemon..."
     
 
 @app.route("/putPokemon/<id>", methods=["PUT"])
 def putPokemon(id):
-    global conn
     if request.method == "PUT":
         try:
+            conn = connectPostGreSQL()
             data = {
             "Id": request.form["Id"],
             "Name": request.form["Name"],
@@ -262,23 +267,30 @@ def putPokemon(id):
             logger.debug(f"Updated {data['Id']} Name: {data['Name']}")
         except Exception as e:
             logger.error(e)
+        finally:
+            if conn:
+                conn.close()
     return "putPokemon PostGreSQL"
 
 @app.route("/deletePokemon/<id>", methods=["DELETE"])
 def deletePokemon(id):
-    global conn
     if request.method == "DELETE":
         try:
+            conn = connectPostGreSQL()
             conn.run("DELETE FROM pokemons WHERE pokemonId = :pokemonId", pokemonId = id)
             logger.debug(f"Delete One: {id}")
-            return f"Delete one {id}"
         except Exception as e:
             logger.debug("No se pudo eliminar el pokemon: ", e)
             return f"Delete failed"
+        finally:
+            if conn:
+                conn.close()
+        return f"Delete one {id}"
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
     conn = connectPostGreSQL()
     createTablePostGreSQL(conn)
+    conn.close()
     app.run()
