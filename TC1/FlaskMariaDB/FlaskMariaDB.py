@@ -133,7 +133,7 @@ def commitMariaDB(conn):
         print(f"Error commiting in MariaDB: {e}")
 
 # Function to transform a JSON query into a SQL query
-def jsonToSQL(data, tableName, columns):
+def dictToSQLInsert(data, tableName, columns):
     # Add backticks to column names
     escapedColumns = [f"`{column}`" for column in columns]
     # Construct the SQL INSERT statement
@@ -143,11 +143,28 @@ def jsonToSQL(data, tableName, columns):
     transform = {"insertQuery": insertQuery, "values": values}
     return transform
 
+def transformDataToSQL(tableName, id, data):
+    try:
+        # Get the list of column names from the dictionary
+        columns = list(data.keys())
+
+        # Construct the SQL UPDATE statement
+        updateQuery = f"UPDATE {tableName} SET "
+        updateQuery += ", ".join([f"{column} = %s" for column in columns])
+        updateQuery += f" WHERE Id = {id}"  # Assuming 'Id' is the primary key
+
+        # Prepare the values from the dictionary
+        values = [data.get(column) for column in columns]
+
+        return updateQuery, values
+    except Exception as e:
+        raise Exception("Error transforming data to SQL: " + str(e))
+
 @app.route("/postPokemon", methods=['POST'] )
 def postData():
     try:
         # Parse the JSON request data
-        data = request.get_json()
+        data = request.form.to_dict()
 
         # Connect to the MariaDB database
         conn = connectMariaDB()
@@ -160,7 +177,7 @@ def postData():
         columns = getTableColumnsMariaDB(tableName, cursor)
 
         # Transform from the http request to SQL query
-        transform = jsonToSQL(data, tableName, columns)
+        transform = dictToSQLInsert(data, tableName, columns)
 
         cursor.execute(transform["insertQuery"], transform["values"])
         commitMariaDB(conn)
@@ -194,29 +211,22 @@ def deleteData(id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/putPokemon/<id>", methods=['PUT'] )
+# Function to handle the PUT request
+@app.route("/putPokemon/<id>", methods=['PUT'])
 def putData(id):
     try:
-        # Parse the JSON request data
-        data = request.get_json()
-
-        # Connect to the MariaDB database
-        conn = connectMariaDB()
-        cursor = conn.cursor()
+        # Parse the Form request data
+        data = request.form.to_dict()
 
         # Define the table to update
         tableName = 'pokemons'
 
-        # Get the list of column names from the JSON request data
-        columns = list(data.keys())
+        # Call the function to transform the data into an SQL update statement
+        updateQuery, values = transformDataToSQL(tableName, id, data)
 
-        # Construct the SQL UPDATE statement
-        updateQuery = f"UPDATE {tableName} SET "
-        updateQuery += ", ".join([f"{column} = %s" for column in columns])
-        updateQuery += f" WHERE Id = {id}"  # Assuming 'Id' is the primary key
-
-        # Prepare the values from the JSON data
-        values = [data.get(column) for column in columns]
+        # Connect to the MariaDB database
+        conn = connectMariaDB()
+        cursor = conn.cursor()
 
         # Execute the SQL UPDATE statement
         cursor.execute(updateQuery, values)
