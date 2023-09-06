@@ -1,0 +1,84 @@
+mariadb:
+  enabled: false
+  architecture: replication
+  primary:
+    resources:
+      limits:
+        cpu: "1"
+        memory: "4Gi"
+  secondary:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: "0.5"
+        memory: "2Gi"
+  metrics:
+    enabled: true
+    serviceMonitor: 
+      enabled: true
+      namespace: monitoring
+elasticsearch: 
+  enabled: false
+  master: 
+    replicaCount: 1
+  data:
+    replicaCount: 0
+  ingest:
+    enabled: false
+  coordinating:
+    replicaCount: 0
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+mongodb: 
+  enabled: true
+  auth:
+    usernames: ["admin"]
+    passwords: ["admin"]
+    databases: ["Pokemon"]
+  global:
+    namespaceOverride: mongodb
+  architecture: replicaset
+  replicaCount: 3
+  resources: 
+    limits: 
+      cpu: "0.6"
+      memory: "2Gi"
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+postgresql-ha:
+  enabled: false
+  postgresql:
+    replicaCount: 1
+  pgpool:
+    replicaCount: 0
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+mariadb-galera:
+  enabled: false
+  replicaCount: 1
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+
+postgresql:
+  enabled: false
+  auth:
+    database: "Pokemon"
+    username: "admin"
+    password: "admin"
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring

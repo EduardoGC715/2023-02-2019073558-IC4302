@@ -6,7 +6,10 @@ import math
 import time
 from elasticsearch import Elasticsearch
 from elasticsearch import TransportError
+# Página usada como referencia para el código de elasticsearch: https://www.elastic.co/guide/en/elasticsearch/client/python-api/current/getting-started-python.html
 
+# función que obtiene extrea datos del API de bioRxiv.
+# Código basado en: https://requests.readthedocs.io/en/latest/user/quickstart/
 def get_biorxiv_data():
     base_url = 'https://api.biorxiv.org'
     endpoint = '/covid19/30'
@@ -20,82 +23,90 @@ def get_biorxiv_data():
         print(f"Error: {response.status_code} - {response.text}")
         return None
     
-RABBIT_MQ=os.getenv('RABBITMQ')
-RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
-CRAWLER_QUEUE=os.getenv('CRAWLER_QUEUE')
+if __name__ == '__main__':
+    # Parámetros de conexión con RabbitMQ
+    RABBIT_MQ=os.getenv('RABBITMQ')
+    RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
+    CRAWLER_QUEUE=os.getenv('CRAWLER_QUEUE')
 
-ESENDPOINT=os.getenv('ESENDPOINT')
-ESPASSWORD=os.getenv('ESPASSWORD')
-ESINDEX=os.getenv('ESINDEX')
+    # Parámetros de conexión a Elasticsearch
+    ESENDPOINT=os.getenv('ESENDPOINT')
+    ESPASSWORD=os.getenv('ESPASSWORD')
+    ESINDEX=os.getenv('ESINDEX')
 
-credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
-parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
-connection = pika.BlockingConnection(parameters)
-channel = connection.channel()
-channel.queue_declare(queue=CRAWLER_QUEUE, durable = True)
+    # Conexión con RabbitMQ
+    # Código de referencia: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
+    credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
+    parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
+    connection = pika.BlockingConnection(parameters)
+    channel = connection.channel()
+    channel.queue_declare(queue=CRAWLER_QUEUE, durable = True) # Cola por la cual se mandan mensajes al crawler.
 
-data = {
-    "jobId": "1234",
-    "pageSize": "100",
-    "sleep": "2000"
-}
-jsonexample = json.dumps(data)
+    # Conexión con elasticsearch
+    client = Elasticsearch("http://"+ESENDPOINT+":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
 
-client = Elasticsearch("http://"+ESENDPOINT+":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
-
-index_settings = {
-    "mappings": {
-        "properties": {
-            "jobId": {
-                "type": "keyword"
-            },
-            "pageSize": {
-                "type": "integer"
-            },
-            "sleep": {
-                "type": "integer"
+    index_settings = {
+        "mappings": {
+            "properties": {
+                "jobId": {
+                    "type": "keyword"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "sleep": {
+                    "type": "integer"
+                },
+                "processed": {
+                    "type": "boolean"
+                }
             }
         }
     }
-}
 
-try:
-    client.indices.create(index=ESINDEX)
-    print(f"Index '{ESINDEX}' created successfully.")
-except Exception as e:
-    print(f"Index '{ESINDEX}' already exists.")
-
-
-
-indexes = []
-while True:
-    print("Checking...")
-    # Revisa a que recibe el request del kibana service.
+    # Crea el índice de jobs, o el dado en ESINDEX
+    # Código de referencia: https://kb.objectrocket.com/elasticsearch/how-to-create-and-delete-elasticsearch-indexes-using-the-python-client-library
     try:
-        response = client.search(index=ESINDEX, query = {"match_all": {}})
+        client.indices.create(index=ESINDEX)
+        print(f"Index '{ESINDEX}' created successfully.")
     except Exception as e:
-        print("Error:", e)
+        print(f"Index '{ESINDEX}' already exists.")
+
+    # loop donde el controller va a revisar el índice por mensajes no procesados.
+    while True:
+        print("Checking...")
+        # Revisa hasta que recibe el request del kibana service.
+        try:
+            # busca las entradas que no estén procesadas.
+            response = client.search(index=ESINDEX, query = {"term": {
+                "processed": False
+            }})
+        except Exception as e:
+            print("Error:", e)
+            time.sleep(5)
+            continue
+        
+        # si encontró algún documento
+        if len(response['hits']['hits']) != 0:
+            print("Found...")
+            for hit in response['hits']['hits']:
+                jsonread = hit['_source']
+                pageSize = int(jsonread["pageSize"]) # extrae el page size del índice
+                apiData = get_biorxiv_data()
+                total = int(apiData["messages"][0]["total"]) # cantidad total de mensajes
+                print(total)
+                print(jsonread)
+
+                splits = math.ceil(total / pageSize) # cantidad total de splits
+
+                # Se procesan los splits para publicarlos en la cola de RabbitMQ
+                for split in range(splits):
+                    jsonread["splitNumber"] = split
+                    msg = json.dumps(jsonread)
+                    channel.basic_publish(exchange='', routing_key=CRAWLER_QUEUE, body=msg)
+                jsonread['processed'] = True
+                # Se actualiza el documento como procesado,
+                client.update(index=ESINDEX, id=hit['_id'], doc= {'processed': True}, refresh = True)
         time.sleep(5)
-        continue
-    
-    if len(response['hits']['hits']) != 0:
-        print("Found...")
-        for hit in response['hits']['hits']:
-            if hit['_source']['jobId'] in indexes:
-                continue
-            jsonread = hit['_source']
-            pageSize = int(jsonread["pageSize"]) # extrae el page size del índice
-            apiData = get_biorxiv_data()
-            total = int(apiData["messages"][0]["total"])
-            print(total)
-            print(jsonread)
 
-            splits = math.ceil(total / pageSize)
-            for split in range(splits):
-                jsonread["splitNumber"] = split
-                msg = json.dumps(jsonread)
-                channel.basic_publish(exchange='', routing_key=CRAWLER_QUEUE, body=msg)
-            indexes.append(jsonread['jobId'])
-    time.sleep(5)
-
-connection.close()
+    connection.close()

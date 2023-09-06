@@ -15,7 +15,7 @@ metadata:
   namespace: default
 spec:
   ports:
-    - name: https
+    - name: http
       protocol: TCP
       port: 5601
       targetPort: 5601

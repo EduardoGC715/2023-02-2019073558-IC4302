@@ -1,0 +1,48 @@
+mariadb:
+  enabled: true
+  metrics:
+    enabled: true
+    serviceMonitor: 
+      enabled: true
+      namespace: monitoring
+elasticsearch: 
+  enabled: false
+  master: 
+    replicaCount: 1
+  data:
+    replicaCount: 0
+  ingest:
+    enabled: false
+  coordinating:
+    replicaCount: 0
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+mongodb: 
+  enabled: false
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+postgresql-ha:
+  enabled: false
+  postgresql:
+    replicaCount: 1
+  pgpool:
+    replicaCount: 0
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+mariadb-galera:
+  enabled: false
+  replicaCount: 1
+  metrics: 
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring

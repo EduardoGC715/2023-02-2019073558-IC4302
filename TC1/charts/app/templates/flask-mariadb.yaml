@@ -1,0 +1,47 @@
+{{- if .Values.config.flaskmariadb.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.flaskmariadb.name }}
+  labels:
+    app: {{ .Values.config.flaskmariadb.name }}
+spec:
+  replicas: {{ .Values.config.flaskmariadb.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.flaskmariadb.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.flaskmariadb.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.flaskmariadb.name }}
+        image: {{ .Values.config.flaskmariadb.image }}
+        env:
+          - name: MDB_USERNAME
+            value: "root"
+          - name: MDB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: databases-mariadb
+                key: mariadb-root-password
+          - name: MDB_HOST
+            value: databases-mariadb-primary
+          - name: MDB_DATABASE
+            value: "pokemon"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-port-mariadb
+spec:
+  selector:
+    app: {{ .Values.config.flaskmariadb.name }}
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30091
+  type: NodePort 
+{{- end }}
