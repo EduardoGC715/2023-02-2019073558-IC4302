@@ -20,3 +20,8 @@ config:
     user: "admin"
     password: "admin"
     service: "databases-mongodb-headless"
+  flaskmariadbgal:
+    enabled: true
+    replicas: 1
+    name: flaskmariadbgal
+    image: dado715/flask-mariadb:latest
