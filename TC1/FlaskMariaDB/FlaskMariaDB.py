@@ -1,6 +1,7 @@
 import mariadb
 import os
 from flask import Flask, request, jsonify
+import logging
 
 app = Flask(__name__)
 
@@ -16,7 +17,7 @@ def connectMariaDB():
         return conn
     except mariadb.Error as e:
         # Handle the exception
-        print(f"Error connecting to MariaDB: {e}")
+        logger.debug(f"Error connecting to MariaDB: {e}")
         return None
 
 # Function to disconnect from MariaDB
@@ -25,7 +26,7 @@ def disconnectMariaDB(conn):
         conn.close()
     except mariadb.Error as e:
         # Handle the exception
-        print(f"Error closing MariaDB connection: {e}")
+        logger.error(f"Error closing MariaDB connection: {e}")
 
 # Function to execute a given query on a given cursor connected to the database
 def executeMariaDB(cursor, query):
@@ -33,7 +34,7 @@ def executeMariaDB(cursor, query):
         cursor.execute(query)
     except mariadb.Error as e:
         # Handle the exception
-        print(f"Error executing MariaDB query: {e}")
+        logger.error(f"Error executing MariaDB query: {e}")
 
 # Function to create a database for storing pokemon
 def createDatabase():
@@ -60,10 +61,10 @@ def createDatabase():
         cursor.close()
         conn.close()
 
-        print(f"Database pokemon created successfully.")
+        logger.debug(f"Database pokemon created successfully.")
     except mariadb.Error as e:
         # Handle the exception
-        print(f"Error creating table: {e}")
+        logger.error(f"Error creating table: {e}")
 
 # Function to create the table for sotring the pokemon
 def createTableMariaDB(conn):
@@ -77,7 +78,7 @@ def createTableMariaDB(conn):
         createTableQuery = f"""
         CREATE TABLE IF NOT EXISTS {tableName} (
             PokemonId INT AUTO_INCREMENT PRIMARY KEY,
-            Id VARCHAR(255) PRIMARY KEY,
+            Id VARCHAR(255),
             Name VARCHAR(255),
             Type1 VARCHAR(255),
             Type2 VARCHAR(255),
@@ -108,10 +109,10 @@ def createTableMariaDB(conn):
         # Close cursor connection
         cursor.close()
 
-        print(f"Table '{tableName}' created successfully.")
+        logger.debug(f"Table '{tableName}' created successfully.")
     except mariadb.Error as e:
         # Handle the exception
-        print(f"Error creating table: {e}")
+        logger.error(f"Error creating table: {e}")
 
 # Function to retrieve column names from the database table
 def getTableColumnsMariaDB(tableName, cursor):
@@ -121,7 +122,7 @@ def getTableColumnsMariaDB(tableName, cursor):
         return columns
     except mariadb.Error as e:
         # Handle the exception
-        print(f"Error describing table in MariaDB: {e}")
+        logger.error(f"Error describing table in MariaDB: {e}")
         return None
 
 # Function to commit the changes made on a connection to MariaDB 
@@ -130,7 +131,7 @@ def commitMariaDB(conn):
         conn.commit() 
     except mariadb.Error as e:
         # Handle the exception
-        print(f"Error commiting in MariaDB: {e}")
+        logger.error(f"Error commiting in MariaDB: {e}")
 
 # Function to transform a JSON query into a SQL query
 def dictToSQLInsert(data, tableName, columns):
@@ -143,7 +144,7 @@ def dictToSQLInsert(data, tableName, columns):
     transform = {"insertQuery": insertQuery, "values": values}
     return transform
 
-def transformDataToSQL(tableName, id, data):
+def dictToSQLUpdate(tableName, id, data):
     try:
         # Get the list of column names from the dictionary
         columns = list(data.keys())
@@ -151,7 +152,7 @@ def transformDataToSQL(tableName, id, data):
         # Construct the SQL UPDATE statement
         updateQuery = f"UPDATE {tableName} SET "
         updateQuery += ", ".join([f"{column} = %s" for column in columns])
-        updateQuery += f" WHERE Id = {id}"  # Assuming 'Id' is the primary key
+        updateQuery += f" WHERE PokemonId = {id}"
 
         # Prepare the values from the dictionary
         values = [data.get(column) for column in columns]
@@ -199,7 +200,7 @@ def deleteData(id):
         tableName = "pokemons"
 
         # Construct the SQL DELETE statement
-        deleteQuery = f"DELETE FROM {tableName} WHERE Id = %s"
+        deleteQuery = f"DELETE FROM {tableName} WHERE PokemonId = %s"
 
         # Execute the SQL DELETE statement
         cursor.execute(deleteQuery, (id,))
@@ -222,7 +223,7 @@ def putData(id):
         tableName = 'pokemons'
 
         # Call the function to transform the data into an SQL update statement
-        updateQuery, values = transformDataToSQL(tableName, id, data)
+        updateQuery, values = dictToSQLUpdate(tableName, id, data)
 
         # Connect to the MariaDB database
         conn = connectMariaDB()
@@ -279,7 +280,7 @@ def getData(id):
         columns = getTableColumnsMariaDB(tableName, cursor)
 
         # Construct the SELECT query
-        select_query = f"SELECT {', '.join(columns)} FROM {tableName} WHERE Id = %s"
+        select_query = f"SELECT {', '.join(columns)} FROM {tableName} WHERE pokemonId = %s"
 
         cursor.execute(select_query, (id,))
         result = cursor.fetchone()
@@ -298,6 +299,8 @@ def getData(id):
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
     # Connect to the database and create the database anf table if it doesn´t exist, then disconnect
     conn = connectMariaDB()
     createDatabase()

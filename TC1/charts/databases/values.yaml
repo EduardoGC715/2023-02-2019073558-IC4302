@@ -1,5 +1,5 @@
 mariadb:
-  enabled: false
+  enabled: true
   architecture: replication
   primary:
     resources:
@@ -33,7 +33,7 @@ elasticsearch:
       enabled: true
       namespace: monitoring
 mongodb: 
-  enabled: true
+  enabled: false
   auth:
     usernames: ["admin"]
     passwords: ["admin"]
@@ -70,7 +70,6 @@ mariadb-galera:
     serviceMonitor:
       enabled: true
       namespace: monitoring
-
 postgresql:
   enabled: false
   auth:
