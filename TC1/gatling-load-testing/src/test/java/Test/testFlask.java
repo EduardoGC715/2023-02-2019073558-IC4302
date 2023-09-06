@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.gatling.javaapi.core.*;
 import io.gatling.javaapi.http.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jdk.internal.org.objectweb.asm.TypeReference;
+
 
 import java.io.File;
 import java.io.IOException;

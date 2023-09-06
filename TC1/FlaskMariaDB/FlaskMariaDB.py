@@ -76,6 +76,7 @@ def createTableMariaDB(conn):
         # Define the SQL CREATE TABLE statement
         createTableQuery = f"""
         CREATE TABLE IF NOT EXISTS {tableName} (
+            PokemonId INT AUTO_INCREMENT PRIMARY KEY,
             Id VARCHAR(255) PRIMARY KEY,
             Name VARCHAR(255),
             Type1 VARCHAR(255),
