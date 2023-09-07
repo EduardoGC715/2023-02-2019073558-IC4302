@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.config.mongodb.name }}
-  namespace: mongodb
+  namespace: {{ .Values.config.mongodb.namespace }}
   labels:
     app: {{ .Values.config.mongodb.name }}
 spec:
@@ -47,4 +47,40 @@ spec:
       port: 5000
       targetPort: 5000
       nodePort: 30092
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaskservice
+  namespace: {{ .Values.config.mongodb.namespace }}
+  annotations:
+    prometheus.io/port: "metrics"
+    prometheus.io/scrape: "true"
+  labels:
+    app.kubernetes.io/part-of: dms
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .Values.config.mongodb.name }}
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: "metrics"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flaskservicemonitor
+  namespace: monitoring
+spec:
+  endpoints:
+    - interval: 10s
+      port: metrics
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.config.mongodb.namespace }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: dms
 {{- end }}
