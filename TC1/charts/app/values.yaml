@@ -5,7 +5,7 @@ config:
     name: flaskmariadb
     image: dado715/flask-mariadb:latest
   postgresql:
-    enabled: false
+    enabled: true
     name: postgreflask
     image: dandiego235/postgreflask
     database: "Pokemon"

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.gatling.javaapi.core.*;
 import io.gatling.javaapi.http.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import jdk.internal.org.objectweb.asm.TypeReference;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class testFlask extends Simulation {
     // Http Protocol
     HttpProtocolBuilder httpProtocol =
-            http.baseUrl("http://127.0.0.1:58229")
+            http.baseUrl("http://127.0.0.1:59210")
                     .acceptHeader("application/json")
                     .contentTypeHeader("application/json");
 
@@ -104,20 +104,27 @@ public class testFlask extends Simulation {
     // Scenario
     ScenarioBuilder scn = scenario("Database stress test")
             .feed(jsonFeeder)
-            .exec(addPokemon)
+
+
+            .exec(deleteLastPostedPokemon)
             .pause(2)
             .exec(getPokemonId)
             .pause(2)
+            .exec(updatePokemon)
+           .exec(addPokemon)
+            .pause(2)
             .exec(getAllPokemon)
             .pause(2)
+
+
             .exec(updatePokemon)
             .pause(2)
-            .exec(updatePokemon)
-            .pause(2)
-            .exec(deleteLastPostedPokemon);
+            .exec(deleteLastPostedPokemon)
+            .pause(2);
+
     {
         setUp(
-                scn.injectOpen(atOnceUsers(10))
+                scn.injectOpen(rampUsers(10).during(30))
         ).protocols(httpProtocol);
     }
 }
