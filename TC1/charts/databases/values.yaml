@@ -1,5 +1,5 @@
 mariadb:
-  enabled: true
+  enabled: false
   architecture: replication
   primary:
     resources:
@@ -17,21 +17,11 @@ mariadb:
     serviceMonitor: 
       enabled: true
       namespace: monitoring
-elasticsearch: 
+elastic:
   enabled: false
-  master: 
-    replicaCount: 1
-  data:
-    replicaCount: 0
-  ingest:
-    enabled: false
-  coordinating:
-    replicaCount: 0
-  metrics: 
-    enabled: true
-    serviceMonitor:
-      enabled: true
-      namespace: monitoring
+  version: 8.6.1
+  replicas: 1
+  name: ic4302
 mongodb: 
   enabled: false
   auth:
@@ -69,7 +59,12 @@ mariadb-galera:
       enabled: true
       namespace: monitoring
 postgresql:
-  enabled: false
+  enabled: true
+  primary:
+    resources:
+      limits:
+        cpu: "1"
+        memory: "4Gi"
   auth:
     database: "Pokemon"
     username: "admin"

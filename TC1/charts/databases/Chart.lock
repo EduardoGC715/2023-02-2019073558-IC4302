@@ -2,9 +2,6 @@ dependencies:
 - name: mariadb
   repository: https://charts.bitnami.com/bitnami
   version: 11.4.6
-- name: elasticsearch
-  repository: https://helm.elastic.co
-  version: 8.5.1
 - name: mongodb
   repository: https://charts.bitnami.com/bitnami
   version: 13.6.7
@@ -17,5 +14,8 @@ dependencies:
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami
   version: 12.10.0
-digest: sha256:31bbf875e6db5731ca24b5dd60ef0ce1f7f2dee6f5728e6a8a04bec73cede33d
-generated: "2023-08-26T14:41:41.2537041-06:00"
+- name: eck-operator
+  repository: https://helm.elastic.co
+  version: 2.6.1
+digest: sha256:a1048cf78083e46057eb9072fd7d062197fab7ab7709cfbb721a7f23a5c096de
+generated: "2023-09-07T12:12:46.2776871-06:00"
