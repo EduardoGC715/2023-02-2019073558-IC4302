@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class testFlask extends Simulation {
     // Http Protocol
     HttpProtocolBuilder httpProtocol =
-            http.baseUrl("http://127.0.0.1:63372")
+            http.baseUrl("http://127.0.0.1:59210")
                     .acceptHeader("application/json")
                     .contentTypeHeader("application/json");
 
@@ -105,22 +105,26 @@ public class testFlask extends Simulation {
     ScenarioBuilder scn = scenario("Database stress test")
             .feed(jsonFeeder)
 
-            .exec(deleteLastPostedPokemon)
 
+            .exec(deleteLastPostedPokemon)
             .pause(2)
             .exec(getPokemonId)
             .pause(2)
             .exec(updatePokemon)
-            .exec(addPokemon)
+           .exec(addPokemon)
             .pause(2)
             .exec(getAllPokemon)
             .pause(2)
 
+
+            .exec(updatePokemon)
             .pause(2)
-            .exec(updatePokemon);
+            .exec(deleteLastPostedPokemon)
+            .pause(2);
+
     {
         setUp(
-                scn.injectOpen(atOnceUsers(10))
+                scn.injectOpen(rampUsers(10).during(30))
         ).protocols(httpProtocol);
     }
 }
