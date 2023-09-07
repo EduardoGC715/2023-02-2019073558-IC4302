@@ -12,8 +12,12 @@ config:
     user: "admin"
     password: "admin"
     service: "databases-postgresql"
-  mongodb:
+  postgresqlha:
     enabled: true
+    name: flaskpostgresqlha
+    image: dado715/flask-postgresqlha:latest
+  mongodb:
+    enabled: false
     name: mongodb
     image: dandiego2356/mongoflask
     database: "Pokemon"
@@ -21,7 +25,7 @@ config:
     password: "admin"
     service: "databases-mongodb-headless"
   flaskmariadbgal:
-    enabled: true
+    enabled: false
     replicas: 1
     name: flaskmariadbgal
     image: dado715/flask-mariadb:latest
