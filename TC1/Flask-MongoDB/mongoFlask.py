@@ -162,7 +162,7 @@ def delete(id):
             logger.debug(f"Delete One: {pokemonFound}")
             return f"Delete one {pokemonFound}"
         except Exception as e:
-            logger.debug("No se pudo eliminar el pokemon: ", e)
+            logger.debug("No se pudo eliminar pokemon: ", e)
             return f"Delete failed"
             
 
