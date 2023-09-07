@@ -33,7 +33,7 @@ elasticsearch:
       enabled: true
       namespace: monitoring
 mongodb: 
-  enabled: true
+  enabled: false
   auth:
     usernames: ["admin"]
     passwords: ["admin"]
@@ -52,7 +52,7 @@ mongodb:
       enabled: true
       namespace: monitoring
 postgresql-ha:
-  enabled: true
+  enabled: false
   postgresql:
     database: "pokemon"
   metrics:

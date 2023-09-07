@@ -13,11 +13,11 @@ config:
     password: "admin"
     service: "databases-postgresql"
   postgresqlha:
-    enabled: true
+    enabled: false
     name: flaskpostgresqlha
     image: dado715/flask-postgresqlha:latest
   mongodb:
-    enabled: true
+    enabled: false
     name: mongodb
     namespace: mongodb
     image: dandiego2356/mongoflask
