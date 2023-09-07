@@ -52,12 +52,10 @@ mongodb:
       enabled: true
       namespace: monitoring
 postgresql-ha:
-  enabled: false
+  enabled: true
   postgresql:
-    replicaCount: 1
-  pgpool:
-    replicaCount: 0
-  metrics: 
+    database: "pokemon"
+  metrics:
     enabled: true
     serviceMonitor:
       enabled: true
