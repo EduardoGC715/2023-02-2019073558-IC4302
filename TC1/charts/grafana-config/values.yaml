@@ -21,6 +21,14 @@ dashboards:
     name: postgresql
     file: postgresql.json
     enable: true
+  postgresql2: 
+    name: postgresql2
+    file: postgresql2.json
+    enable: true
+  postgresql3: 
+    name: postgresql3
+    file: postgresql3.json
+    enable: true
   mariadbgal: 
     name: mariadbgal
     file: mariadbgal.json
