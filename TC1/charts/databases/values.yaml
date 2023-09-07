@@ -33,7 +33,7 @@ elasticsearch:
       enabled: true
       namespace: monitoring
 mongodb: 
-  enabled: true
+  enabled: false
   auth:
     usernames: ["admin"]
     passwords: ["admin"]
@@ -72,7 +72,7 @@ mariadb-galera:
       namespace: monitoring
 
 postgresql:
-  enabled: false
+  enabled: true
   auth:
     database: "Pokemon"
     username: "admin"
