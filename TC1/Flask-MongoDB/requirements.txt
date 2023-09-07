@@ -1,2 +1,4 @@
 flask
 flask_pymongo
+prometheus_client
+https://github.com/unbit/uwsgi/archive/uwsgi-2.0.zip#egg=uwsgi

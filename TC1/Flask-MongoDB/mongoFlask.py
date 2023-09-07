@@ -2,11 +2,23 @@ from flask import Flask, request, render_template_string
 from flask_pymongo import PyMongo
 from os import environ
 import logging
+from prometheus_client import start_http_server, Counter
+from flask import Flask
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from prometheus_client import make_wsgi_app
+
+# Create a metric to track time spent and requests made.
+REQUEST_TIME = Summary('request_processing_seconds_count', 'Cantidad de requests')
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-# código basado en https://pypi.org/project/pg8000/#installation
+# 
 app = Flask(__name__)
+
+app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
+    '/metrics': make_wsgi_app()
+})
+
 pokemon = []
 logger.debug('mongodb://' + environ['MONGODB_USERNAME'] + ':' + environ['MONGODB_PASSWORD'] + '@' + environ['MONGODB_HOSTNAME'] + ':27017/' + environ['MONGODB_DATABASE'])
 app.config["MONGO_URI"] = 'mongodb://' + environ['MONGODB_USERNAME'] + ':' + environ['MONGODB_PASSWORD'] + '@' + environ['MONGODB_HOSTNAME'] + ':27017/' + environ['MONGODB_DATABASE']
@@ -32,6 +44,7 @@ def home():
 </html>
 ''')
 
+@REQUEST_TIME.time()
 @app.route("/getPokemon/<id>", methods=["POST", "GET"])
 def getOnePokemon(id):
     if request.method == "GET":
@@ -42,7 +55,7 @@ def getOnePokemon(id):
         except Exception as e:
             logger.debug("No se pudo encontrar el pokemon: ", e)
         
-
+@REQUEST_TIME.time()
 @app.route("/getAllPokemon", methods=["POST", "GET"])
 def getAllPokemon():
     if request.method == "GET":
@@ -74,7 +87,7 @@ def getAllPokemon():
         logger.debug(f"Pokemones Get All {pokemonGet}")
         return f"Pokemones Get All {pokemonGet}"
 
-
+@REQUEST_TIME.time()
 @app.route("/postPokemon", methods=["POST"]) 
 def insertPokemon():
     if request.method == "POST":
@@ -107,6 +120,7 @@ def insertPokemon():
             logger.debug("No se pudo insertar. ", e)
         return f"Pokemon {formPokemon}"
 
+@REQUEST_TIME.time()
 @app.route("/putPokemon/<id>", methods=["PUT"]) 
 def updatePokemon(id):
     if request.method == "PUT":
@@ -139,6 +153,7 @@ def updatePokemon(id):
             logger.debug("No se pudo actualizar. ", e)
         return f"Pokemon Update {formPokemon['$set']}"
 
+@REQUEST_TIME.time()
 @app.route("/deletePokemon/<id>", methods=["DELETE"]) 
 def delete(id):
     if request.method == "DELETE":
@@ -153,5 +168,7 @@ def delete(id):
 
 
 if __name__ == "__main__":
-    
+    # Start up the server to expose the metrics.
+    start_http_server(8000)
     app.run(debug=True)
+    
