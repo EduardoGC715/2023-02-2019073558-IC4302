@@ -1,11 +1,11 @@
 from flask import Flask, request
-from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from prometheus_client import start_http_server, Counter
 import pg8000.native
 from os import environ
 import logging
 
 # código basado en https://pypi.org/project/pg8000/#installation
+# y en https://github.com/prometheus/client_python
 app = Flask(__name__)
 
 REQUEST_COUNT = Counter('flask_http_requests', 'Number of HTTP requests received')

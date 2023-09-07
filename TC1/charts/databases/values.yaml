@@ -17,21 +17,11 @@ mariadb:
     serviceMonitor: 
       enabled: true
       namespace: monitoring
-elasticsearch: 
-  enabled: false
-  master: 
-    replicaCount: 1
-  data:
-    replicaCount: 0
-  ingest:
-    enabled: false
-  coordinating:
-    replicaCount: 0
-  metrics: 
-    enabled: true
-    serviceMonitor:
-      enabled: true
-      namespace: monitoring
+elastic:
+  enabled: true
+  version: 8.6.1
+  replicas: 1
+  name: ic4302
 mongodb: 
   enabled: false
   auth:
@@ -70,9 +60,8 @@ mariadb-galera:
     serviceMonitor:
       enabled: true
       namespace: monitoring
-
 postgresql:
-  enabled: true
+  enabled: false
   auth:
     database: "Pokemon"
     username: "admin"
