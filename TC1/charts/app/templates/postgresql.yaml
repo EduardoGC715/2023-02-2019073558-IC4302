@@ -19,7 +19,10 @@ spec:
       - name: {{ .Values.config.postgresql.name }}
         image: {{ .Values.config.postgresql.image }}
         ports:
-          - containerPort: 5000
+          - name: "flask"
+            containerPort: 5000
+          - name: "metrics"
+            containerPort: 8000
         env:
           - name: PGDATABASE
             value: {{ .Values.config.postgresql.database }}
@@ -63,8 +66,8 @@ spec:
   selector:
     app: {{ .Values.config.postgresql.name }}
   ports:
-    - port: 5000
-      targetPort: 5000
+    - port: 8000
+      targetPort: 8000
       protocol: TCP
       name: "metrics"
 ---

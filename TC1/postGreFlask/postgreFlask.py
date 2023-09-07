@@ -1,15 +1,14 @@
 from flask import Flask, request
-from prometheus_flask_exporter import PrometheusMetrics
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from prometheus_client import start_http_server, Counter
 import pg8000.native
 from os import environ
 import logging
 
 # código basado en https://pypi.org/project/pg8000/#installation
 app = Flask(__name__)
-metrics = PrometheusMetrics(app)
 
-metrics.info('postgres_info', 'PostGreSQL metricts info', version='1.0.0')
-
+REQUEST_COUNT = Counter('flask_http_requests', 'Number of HTTP requests received')
 
 # Function to connect to PostGreSQL
 def connectPostGreSQL():
@@ -104,9 +103,10 @@ def test_db():
 
 @app.route("/getPokemon/<id>", methods=["GET"])
 def getPokemon(id):
-    global conn
+    REQUEST_COUNT.inc()
     if request.method == "GET":
         try:
+            conn = connectPostGreSQL()
             conn.run("""SELECT pokemonId, PokemonName, Type1, Type2, Category, Heightf,
                      Heightm, Weightlbs, Weightkg, CaptureRate, EggSteps, ExpGroup, Total,
                      HP, Attack, Defense,SpAttack, SpDefense, Speed
@@ -115,10 +115,15 @@ def getPokemon(id):
             logger.debug("Got All Pokemon")
         except Exception as e:
             logger.error(e)
+        finally:
+            if conn:
+                conn.close()
+
     return "getAllPokemon..."
 
 @app.route("/getAllPokemon", methods=["GET"])
 def getAllPokemon():
+    REQUEST_COUNT.inc()
     if request.method == "GET":
         try:
             conn = connectPostGreSQL()
@@ -136,6 +141,7 @@ def getAllPokemon():
 
 @app.route("/postPokemon", methods=["POST"])
 def postPokemon():
+    REQUEST_COUNT.inc()
     if request.method == "POST":
         try:
             conn = connectPostGreSQL()
@@ -197,6 +203,7 @@ def postPokemon():
 
 @app.route("/putPokemon/<id>", methods=["PUT"])
 def putPokemon(id):
+    REQUEST_COUNT.inc()
     if request.method == "PUT":
         try:
             conn = connectPostGreSQL()
@@ -274,6 +281,7 @@ def putPokemon(id):
 
 @app.route("/deletePokemon/<id>", methods=["DELETE"])
 def deletePokemon(id):
+    REQUEST_COUNT.inc()
     if request.method == "DELETE":
         try:
             conn = connectPostGreSQL()
@@ -293,4 +301,5 @@ if __name__ == "__main__":
     conn = connectPostGreSQL()
     createTablePostGreSQL(conn)
     conn.close()
+    start_http_server(8000)
     app.run()
