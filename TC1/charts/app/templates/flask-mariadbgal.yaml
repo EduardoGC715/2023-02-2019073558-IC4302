@@ -18,6 +18,11 @@ spec:
       containers:
       - name: {{ .Values.config.flaskmariadbgal.name }}
         image: {{ .Values.config.flaskmariadbgal.image }}
+        ports:
+          - name: "flask"
+            containerPort: 5000
+          - name: "metrics"
+            containerPort: 8000
         env:
           - name: MDB_USERNAME
             value: "root"
@@ -44,4 +49,40 @@ spec:
       targetPort: 5000
       nodePort: 30093
   type: NodePort 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaskservice
+  namespace: default
+  annotations:
+    prometheus.io/port: "metrics"
+    prometheus.io/scrape: "true"
+  labels:
+    app.kubernetes.io/part-of: dms
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .Values.config.postgresql.name }}
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: "metrics"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flaskservicemonitor
+  namespace: monitoring
+spec:
+  endpoints:
+    - interval: 10s
+      port: metrics
+  namespaceSelector:
+    matchNames:
+      - default
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: dms
 {{- end }}
