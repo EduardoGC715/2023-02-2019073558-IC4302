@@ -29,6 +29,8 @@ elasticsearch:
     replicas: 1
     name: ic4302
 elasticprometheus:
+  env:
+    ES_USERNAME: elastic
   extraEnvSecrets:
     ES_PASSWORD:
       secret: ic4302-es-elastic-user
