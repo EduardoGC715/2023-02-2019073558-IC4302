@@ -9,10 +9,10 @@ import io.gatling.javaapi.http.HttpProtocolBuilder;
 import static io.gatling.javaapi.core.CoreDsl.*;
 import static io.gatling.javaapi.http.HttpDsl.http;
 
-public class inserts extends Simulation {
+public class updates extends Simulation {
     // Http Protocol
     HttpProtocolBuilder httpProtocol =
-            http.baseUrl("http://127.0.0.1:65310")
+            http.baseUrl("http://127.0.0.1:58926")
                     .acceptHeader("application/json")
                     .contentTypeHeader("application/json");
 
@@ -93,10 +93,10 @@ public class inserts extends Simulation {
                     );
 
     // Scenario
-    ScenarioBuilder scn = scenario("Database stress test with inserts").forever().on(
+    ScenarioBuilder scn = scenario("Database stress test with updates").forever().on(
             pace(2)
                 .feed(jsonFeeder)
-                .exec(addPokemon)
+                .exec(updatePokemon)
                 .pause(2)
             );
 ;

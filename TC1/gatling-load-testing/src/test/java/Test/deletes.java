@@ -9,10 +9,10 @@ import io.gatling.javaapi.http.HttpProtocolBuilder;
 import static io.gatling.javaapi.core.CoreDsl.*;
 import static io.gatling.javaapi.http.HttpDsl.http;
 
-public class inserts extends Simulation {
+public class deletes extends Simulation {
     // Http Protocol
     HttpProtocolBuilder httpProtocol =
-            http.baseUrl("http://127.0.0.1:65310")
+            http.baseUrl("http://127.0.0.1:57895")
                     .acceptHeader("application/json")
                     .contentTypeHeader("application/json");
 
@@ -85,7 +85,7 @@ public class inserts extends Simulation {
                             .formParam("Speed", "#{Speed}")
                     );
 
-    private static ChainBuilder deleteLastPostedPokemon =
+    private static ChainBuilder deletePokemon =
             feed(jsonFeeder)
                     .exec(http("Delete Pokemon - #{Name}")
                             .delete("/deletePokemon/#{Id}")
@@ -96,7 +96,7 @@ public class inserts extends Simulation {
     ScenarioBuilder scn = scenario("Database stress test with inserts").forever().on(
             pace(2)
                 .feed(jsonFeeder)
-                .exec(addPokemon)
+                .exec(deletePokemon)
                 .pause(2)
             );
 ;

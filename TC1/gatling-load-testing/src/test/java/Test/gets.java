@@ -9,10 +9,10 @@ import io.gatling.javaapi.http.HttpProtocolBuilder;
 import static io.gatling.javaapi.core.CoreDsl.*;
 import static io.gatling.javaapi.http.HttpDsl.http;
 
-public class inserts extends Simulation {
+public class gets extends Simulation {
     // Http Protocol
     HttpProtocolBuilder httpProtocol =
-            http.baseUrl("http://127.0.0.1:65310")
+            http.baseUrl("http://127.0.0.1:58926")
                     .acceptHeader("application/json")
                     .contentTypeHeader("application/json");
 
@@ -26,10 +26,10 @@ public class inserts extends Simulation {
     private static ChainBuilder getPokemonId =
             feed(jsonFeeder)
                     .exec(http("Get one Pokemon #{Id}")
-                    .get("/getPokemon/#{Id}")
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .formParam("Id", "#{Id}")
-                    .formParam("Name", "#{Name}"));
+                            .get("/getPokemon/#{Id}")
+                            .header("Content-Type", "application/x-www-form-urlencoded")
+                            .formParam("Id", "#{Id}")
+                            .formParam("Name", "#{Name}"));
 
     private static ChainBuilder addPokemon =
             feed(jsonFeeder)
@@ -56,7 +56,7 @@ public class inserts extends Simulation {
                             .formParam("SpAttack", "#{SpAttack}")
                             .formParam("SpDefense", "#{SpDefense}")
                             .formParam("Speed", "#{Speed}")
-                            );
+                    );
 
     private static ChainBuilder updatePokemon =
             feed(jsonFeeder)
@@ -93,13 +93,12 @@ public class inserts extends Simulation {
                     );
 
     // Scenario
-    ScenarioBuilder scn = scenario("Database stress test with inserts").forever().on(
+    ScenarioBuilder scn = scenario("Database stress test with gets").forever().on(
             pace(2)
-                .feed(jsonFeeder)
-                .exec(addPokemon)
-                .pause(2)
-            );
-;
+                    .feed(jsonFeeder)
+                    .exec(getPokemonId)
+                    .pause(2)
+    );
 
     {
         setUp(
