@@ -155,7 +155,7 @@ def dictToSQLUpdate(tableName, id, data):
         # Construct the SQL UPDATE statement
         updateQuery = f"UPDATE {tableName} SET "
         updateQuery += ", ".join([f"{column} = %s" for column in columns])
-        updateQuery += f" WHERE PokemonId = {id}"
+        updateQuery += f" WHERE PokemonId = (SELECT Id FROM pokemons WHERE PokemonId = {id} LIMIT 1);"
 
         # Prepare the values from the dictionary
         values = [data.get(column) for column in columns]
@@ -205,10 +205,10 @@ def deleteData(id):
         tableName = "pokemons"
 
         # Construct the SQL DELETE statement
-        deleteQuery = f"DELETE FROM {tableName} WHERE PokemonId = %s"
+        deleteQuery = f"DELETE FROM {tableName} WHERE PokemonId = (SELECT Id FROM pokemons WHERE PokemonId = {id} LIMIT 1);"
 
         # Execute the SQL DELETE statement
-        cursor.execute(deleteQuery, (id,))
+        cursor.execute(deleteQuery)
         commitMariaDB(conn)
         cursor.close()
         disconnectMariaDB(conn)

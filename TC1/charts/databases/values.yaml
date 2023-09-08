@@ -1,5 +1,5 @@
 mariadb:
-  enabled: false
+  enabled: true
   architecture: replication
   primary:
     resources:
@@ -59,7 +59,7 @@ mariadb-galera:
       enabled: true
       namespace: monitoring
 postgresql:
-  enabled: true
+  enabled: false
   primary:
     resources:
       limits:

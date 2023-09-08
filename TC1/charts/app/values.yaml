@@ -1,6 +1,6 @@
 config:
   flaskmariadb:
-    enabled: false
+    enabled: true
     replicas: 1
     name: flaskmariadb
     image: dado715/flask-mariadb:latest
