@@ -17,10 +17,6 @@ def connectPostGreSQL():
         username = environ.get("PGUSER")
         passwordPG = environ.get("PGPASSWORD")
         servicePG = environ.get("PGSERVICE")
-        logger.debug(databasePG)
-        logger.debug(username)
-        logger.debug(passwordPG)
-        logger.debug(servicePG)
         
         conn = pg8000.native.Connection(username, password=passwordPG, host=servicePG, database=databasePG)
         return conn
@@ -112,13 +108,10 @@ def getPokemon(id):
                      HP, Attack, Defense,SpAttack, SpDefense, Speed
                      FROM pokemons
                      WHERE pokemonId = :pokemonId""", pokemonId = id)
-            logger.debug("Got All Pokemon")
+            logger.debug(f"Got Pokemon Id {id}")
+            disconnectPostGreSQL(conn)
         except Exception as e:
             logger.error(e)
-        finally:
-            if conn:
-                conn.close()
-
     return "getAllPokemon..."
 
 @app.route("/getAllPokemon", methods=["GET"])
@@ -132,11 +125,9 @@ def getAllPokemon():
                      HP, Attack, Defense,SpAttack, SpDefense, Speed
                      FROM pokemons""")
             logger.debug("Got All Pokemon")
+            disconnectPostGreSQL(conn)
         except Exception as e:
             logger.error(e)
-        finally:
-            if conn:
-                conn.close()
     return "getAllPokemon..."
 
 @app.route("/postPokemon", methods=["POST"])
@@ -193,11 +184,9 @@ def postPokemon():
                     Speed = data["Speed"]
                     )
             logger.debug(f"Inserted {data['Id']} Name: {data['Name']}")
+            disconnectPostGreSQL(conn)
         except Exception as e:
             logger.error(e)
-        finally:
-            if conn:
-                conn.close()
     return "PostPokemon..."
     
 
@@ -272,11 +261,9 @@ def putPokemon(id):
                     Speed = data["Speed"]
                     )
             logger.debug(f"Updated {data['Id']} Name: {data['Name']}")
+            disconnectPostGreSQL(conn)
         except Exception as e:
             logger.error(e)
-        finally:
-            if conn:
-                conn.close()
     return "putPokemon PostGreSQL"
 
 @app.route("/deletePokemon/<id>", methods=["DELETE"])
@@ -285,14 +272,12 @@ def deletePokemon(id):
     if request.method == "DELETE":
         try:
             conn = connectPostGreSQL()
-            conn.run("DELETE FROM pokemons WHERE pokemonId = :pokemonId", pokemonId = id)
+            conn.run("DELETE FROM pokemons WHERE primaryKey = (SELECT primaryKey from Pokemons where pokemonId = :pokemonId LIMIT 1)", pokemonId = id)
             logger.debug(f"Delete One: {id}")
+            disconnectPostGreSQL(conn)
         except Exception as e:
             logger.debug("No se pudo eliminar el pokemon: ", e)
             return f"Delete failed"
-        finally:
-            if conn:
-                conn.close()
         return f"Delete one {id}"
 
 if __name__ == "__main__":
