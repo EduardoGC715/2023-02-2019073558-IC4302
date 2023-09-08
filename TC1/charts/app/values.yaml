@@ -1,20 +1,25 @@
 config:
   flaskmariadb:
-    enabled: false
+    enabled: true
     replicas: 1
     name: flaskmariadb
     image: dado715/flask-mariadb:latest
   postgresql:
-    enabled: true
+    enabled: false
     name: postgreflask
     image: dandiego235/postgreflask
     database: "Pokemon"
     user: "admin"
     password: "admin"
     service: "databases-postgresql"
+  postgresqlha:
+    enabled: false
+    name: flaskpostgresqlha
+    image: dado715/flask-postgresqlha:latest
   mongodb:
     enabled: false
     name: mongodb
+    namespace: mongodb
     image: dandiego2356/mongoflask
     database: "Pokemon"
     user: "admin"

@@ -1,5 +1,5 @@
 mariadb:
-  enabled: false
+  enabled: true
   architecture: replication
   primary:
     resources:
@@ -63,10 +63,8 @@ mongodb:
 postgresql-ha:
   enabled: false
   postgresql:
-    replicaCount: 1
-  pgpool:
-    replicaCount: 0
-  metrics: 
+    database: "pokemon"
+  metrics:
     enabled: true
     serviceMonitor:
       enabled: true

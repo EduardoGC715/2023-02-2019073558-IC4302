@@ -12,7 +12,7 @@ import static io.gatling.javaapi.http.HttpDsl.http;
 public class updates extends Simulation {
     // Http Protocol
     HttpProtocolBuilder httpProtocol =
-            http.baseUrl("http://127.0.0.1:58926")
+            http.baseUrl("http://127.0.0.1:65310")
                     .acceptHeader("application/json")
                     .contentTypeHeader("application/json");
 

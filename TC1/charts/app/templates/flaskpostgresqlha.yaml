@@ -1,0 +1,49 @@
+{{- if .Values.config.postgresqlha.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.postgresqlha.name }}
+  labels:
+    app: {{ .Values.config.postgresqlha.name }}
+spec:
+  replicas: {{ .Values.config.postgresqlha.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.postgresqlha.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.postgresqlha.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.postgresqlha.name }}
+        image: {{ .Values.config.postgresqlha.image }}
+        ports:
+          - containerPort: 5000
+        env:
+          - name: PG_USER
+            value: "postgres"
+          - name: PG_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: databases-postgresql-ha-postgresql
+                key: password
+          - name: PG_HOST
+            value: databases-postgresql-ha-postgresql-headless
+          - name: PG_DATABASE
+            value: "pokemon"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaskportpgha
+spec:
+  type: NodePort
+  selector:
+    app: {{ .Values.config.postgresqlha.name }}
+  ports:
+    - protocol: "TCP"
+      port: 5000
+      targetPort: 5000
+      nodePort: 30094
+{{- end }}
