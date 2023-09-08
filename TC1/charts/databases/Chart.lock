@@ -14,8 +14,8 @@ dependencies:
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami
   version: 12.10.0
-- name: eck-operator
-  repository: https://helm.elastic.co
-  version: 2.6.1
-digest: sha256:a1048cf78083e46057eb9072fd7d062197fab7ab7709cfbb721a7f23a5c096de
-generated: "2023-09-07T12:12:46.2776871-06:00"
+- name: prometheus-elasticsearch-exporter
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 5.2.0
+digest: sha256:4958c66b11349489879b583b1508a636bbc2da5d5de85e63a4405440475ebb94
+generated: "2023-09-08T07:57:47.7791792-06:00"

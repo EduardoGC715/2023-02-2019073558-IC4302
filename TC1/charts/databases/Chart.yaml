@@ -44,9 +44,8 @@ dependencies:
   version: "12.10.0"
   repository: https://charts.bitnami.com/bitnami
   condition: postgresql.enabled
-# Elastic Search Operator (includes CRDs)
-# https://www.elastic.co/guide/en/cloud-on-k8s/master/k8s-install-helm.html
-- name: eck-operator
-  version: "2.6.1"
-  repository: https://helm.elastic.co
-  condition: elastic.enabled
+- name: prometheus-elasticsearch-exporter
+  alias: elasticprometheus
+  version: "5.2.0"
+  repository: https://prometheus-community.github.io/helm-charts
+  condition: elasticsearch.enabled
