@@ -150,13 +150,16 @@ def updatePokemon(id):
             logger.debug("No se pudo actualizar. ", e)
         return f"Pokemon Update {formPokemon['Id']} failed"
 
+# borrar pokemon
 @app.route("/deletePokemon/<id>", methods=["DELETE"]) 
 def delete(id):
     if request.method == "DELETE":
         REQUEST_COUNT.inc()
         try:
+            # buscamos el pokemon
             results = es.search(index=ESINDEX, query={"term":  { "Id": id}}, size=1)
             if len(results['hits']['hits']) != 0:
+                # si lo encuentra, lo borra
                 pokemonFound = results["hits"]["hits"][0]
                 delete_result = es.delete(index=ESINDEX, id=pokemonFound['_id'])
                 if delete_result['result'] == "deleted":
