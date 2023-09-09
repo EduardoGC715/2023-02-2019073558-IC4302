@@ -1,0 +1,47 @@
+{{- if .Values.elastic.enabled }}
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: {{ .Values.elastic.name }}
+spec:
+  version: {{ .Values.elastic.version }}
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
+  nodeSets:
+  - name: default
+    count: {{ .Values.elastic.replicas }}
+    podTemplate:
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              memory: 2Gi
+              cpu: 1
+            limits:
+              memory: 2Gi
+    config:
+      node.store.allow_mmap: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdp-data-nodeport
+  namespace: default
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 9200
+      targetPort: 9200
+    - name: transport
+      protocol: TCP
+      port: 9300
+      targetPort: 9300
+  selector:
+    app.kubernetes.io/instance: opensearch
+    app.kubernetes.io/name: opensearch
+  type: NodePort
+{{- end }}

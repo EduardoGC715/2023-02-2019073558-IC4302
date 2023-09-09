@@ -17,21 +17,11 @@ mariadb:
     serviceMonitor: 
       enabled: true
       namespace: monitoring
-elasticsearch: 
+elastic:
   enabled: false
-  master: 
-    replicaCount: 1
-  data:
-    replicaCount: 0
-  ingest:
-    enabled: false
-  coordinating:
-    replicaCount: 0
-  metrics: 
-    enabled: true
-    serviceMonitor:
-      enabled: true
-      namespace: monitoring
+  version: 8.6.1
+  replicas: 1
+  name: ic4302
 mongodb: 
   enabled: false
   auth:
@@ -55,6 +45,12 @@ postgresql-ha:
   enabled: true
   postgresql:
     database: "pokemon"
+  pgpool:
+    pgpool:
+      maxPool: 25
+  persistence:
+    enabled: false
+    size: "2Gi"
   metrics:
     enabled: true
     serviceMonitor:
@@ -70,6 +66,11 @@ mariadb-galera:
       namespace: monitoring
 postgresql:
   enabled: false
+  primary:
+    resources:
+      limits:
+        cpu: "1"
+        memory: "4Gi"
   auth:
     database: "Pokemon"
     username: "admin"

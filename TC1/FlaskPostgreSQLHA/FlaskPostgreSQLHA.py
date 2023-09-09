@@ -1,9 +1,12 @@
 import pg8000.native as pg
 import os
 from flask import Flask, request, jsonify
+from prometheus_client import start_http_server, Counter
 import logging
 
 app = Flask(__name__)
+
+REQUEST_COUNT = Counter('flask_http_requests', 'Number of HTTP requests received')
 
 # Function to connect to PostgreSQL using pg8000
 def connectPostgreSQL():
@@ -100,8 +103,7 @@ def dictToSQLUpdate(tableName, id, data):
 
         # Construct the SQL UPDATE statement
         setClause = ", ".join([f"{column} = '{value}'" for column, value in data.items()])
-        updateQuery = f"UPDATE {tableName} SET {setClause} WHERE {id};"
-        return updateQuery
+        updateQuery = f"UPDATE {tableName} SET {setClause} WHERE PokemonId = (SELECT PokemonId FROM pokemons WHERE Id = \'{id}\' LIMIT 1);"
 
     except Exception as e:
         raise Exception("Error transforming data to SQLUpdate: " + str(e))
@@ -109,41 +111,60 @@ def dictToSQLUpdate(tableName, id, data):
 @app.route("/postPokemon", methods=['POST'])
 def postData():
     try:
-        # Parse the form-encoded request data
-        data = request.form.to_dict()
+        REQUEST_COUNT.inc()
 
         # Connect to the PostgreSQL database
         conn = connectPostgreSQL()  # Use the PostgreSQL connection function
 
         # Define the table to insert to (adjust table name as needed)
-        tableName = 'pokemons'
+        data = {
+            "Id": request.form["Id"],
+            "Name": request.form["Name"],
+            "Type1": request.form["Type1"],
+            "Type2": request.form["Type2"],
+            "Category": request.form["Category"],
+            "Heightf": request.form["Heightf"],
+            "Heightm": request.form["Heightm"],
+            "Weightlbs": request.form["Weightlbs"],
+            "Weightkg": request.form["Weightkg"],
+            "CaptureRate": request.form["CaptureRate"],
+            "EggSteps": request.form["EggSteps"],
+            "ExpGroup": request.form["ExpGroup"],
+            "Total": request.form["Total"],
+            "HP": request.form["HP"],
+            "Attack": request.form["Attack"],
+            "Defense": request.form["Defense"],
+            "SpAttack": request.form["SpAttack"],
+            "SpDefense": request.form["SpDefense"],
+            "Speed": request.form["Speed"]}
 
-        # Get the list of column names from the table schema (adjust function call as needed)
-        columns = [
-            "Id",
-            "Name",
-            "Type1",
-            "Type2",
-            "Category",
-            "Heightf",
-            "Heightm",
-            "Weightlbs",
-            "Weightkg",
-            "CaptureRate",
-            "EggSteps",
-            "ExpGroup",
-            "Total",
-            "HP",
-            "Attack",
-            "Defense",
-            "SpAttack",
-            "SpDefense",
-            "Speed"]
-
-        # Transform the HTTP request data to a PostgreSQL SQL query (use the PostgreSQL function)
-        transform = dictToSQLInsert(data, tableName, columns)
-
-        conn.run(transform)
+        insertQuery = """
+                INSERT INTO pokemons (Id, Name, Type1, Type2, Category, Heightf, Heightm, Weightlbs, Weightkg, CaptureRate, EggSteps, ExpGroup, Total, HP, Attack, Defense, SpAttack, SpDefense, Speed)
+                VALUES
+                (:Id, :Name, :Type1, :Type2, :Category, :Heightf, :Heightm, :Weightlbs, :Weightkg, :CaptureRate, :EggSteps, :ExpGroup, :Total, :HP, :Attack, :Defense, :SpAttack, :SpDefense, :Speed)
+                """
+        conn.run("SET default_transaction_read_only = OFF")   
+        conn.run(insertQuery,
+                Id = data["Id"],
+                Name = data["Name"],
+                Type1 = data["Type1"],
+                Type2 = data["Type2"],
+                Category = data["Category"],
+                Heightf = data["Heightf"],
+                Heightm = data["Heightm"],
+                Weightlbs = data["Weightlbs"],
+                Weightkg = data["Weightkg"],
+                CaptureRate = data["CaptureRate"],
+                EggSteps = data["EggSteps"],
+                ExpGroup = data["ExpGroup"],
+                Total = data["Total"],
+                HP = data["HP"],
+                Attack = data["Attack"],
+                Defense = data["Defense"],
+                SpAttack = data["SpAttack"],
+                SpDefense = data["SpDefense"],
+                Speed = data["Speed"]
+                )
 
         disconnectPostgreSQL(conn)
 
@@ -154,17 +175,11 @@ def postData():
 @app.route("/deletePokemon/<id>", methods=['DELETE'])
 def deleteData(id):
     try:
+        REQUEST_COUNT.inc()
         # Connect to the PostgreSQL database
         conn = connectPostgreSQL()  # Use the PostgreSQL connection function
 
-        # Define the table to delete from (adjust table name as needed)
-        tableName = "pokemons"
-
-        # Construct the SQL DELETE statement
-        deleteQuery = ("DELETE FROM  "+tableName+" WHERE PokemonId = "+str(id))
-
-        # Execute the SQL DELETE statement
-        conn.run(deleteQuery)
+        conn.run("DELETE FROM pokemons WHERE PokemonId = (SELECT PokemonId from Pokemons where Id = :Id LIMIT 1)", Id = id)
 
         disconnectPostgreSQL(conn)
 
@@ -175,20 +190,76 @@ def deleteData(id):
 @app.route("/putPokemon/<id>", methods=['PUT'])
 def putData(id):
     try:
-        # Parse the form-encoded request data
-        data = request.form.to_dict()
-
-        # Define the table to update (adjust table name as needed)
-        tableName = 'pokemons'
-
-        # Call the function to transform the data into a PostgreSQL SQL update statement
-        updateQuery, values = dictToSQLUpdate(tableName, id, data)
+        REQUEST_COUNT.inc()
 
         # Connect to the PostgreSQL database
         conn = connectPostgreSQL()  # Use the PostgreSQL connection function
 
         # Execute the SQL UPDATE statement
-        conn.run(updateQuery)
+        data = {
+            "Id": request.form["Id"],
+            "Name": request.form["Name"],
+            "Type1": request.form["Type1"],
+            "Type2": request.form["Type2"],
+            "Category": request.form["Category"],
+            "Heightf": request.form["Heightf"],
+            "Heightm": request.form["Heightm"],
+            "Weightlbs": request.form["Weightlbs"],
+            "Weightkg": request.form["Weightkg"],
+            "CaptureRate": request.form["CaptureRate"],
+            "EggSteps": request.form["EggSteps"],
+            "ExpGroup": request.form["ExpGroup"],
+            "Total": request.form["Total"],
+            "HP": request.form["HP"],
+            "Attack": request.form["Attack"],
+            "Defense": request.form["Defense"],
+            "SpAttack": request.form["SpAttack"],
+            "SpDefense": request.form["SpDefense"],
+            "Speed": request.form["Speed"]}
+
+        updateQuery = """
+                UPDATE pokemons 
+                SET Name = :Name,
+                Type1 = :Type1,
+                Type2 = :Type2,
+                Category = :Category,
+                Heightf = :Heightf,
+                Heightm = :Heightm,
+                Weightlbs = :Weightlbs,
+                Weightkg = :Weightkg,
+                CaptureRate = :CaptureRate,
+                EggSteps = :EggSteps,
+                ExpGroup = :ExpGroup,
+                Total = :Total,
+                HP = :HP,
+                Attack = :Attack,
+                Defense = :Defense,
+                SpAttack = :SpAttack,
+                SpDefense = :SpDefense,
+                Speed = :Speed
+                WHERE PokemonId = (SELECT PokemonId from Pokemons where Id = :Id LIMIT 1)
+                """
+        conn.run(updateQuery,
+                    Id = id,
+                    Name = data["Name"],
+                    Type1 = data["Type1"],
+                    Type2 = data["Type2"],
+                    Category = data["Category"],
+                    Heightf = data["Heightf"],
+                    Heightm = data["Heightm"],
+                    Weightlbs = data["Weightlbs"],
+                    Weightkg = data["Weightkg"],
+                    CaptureRate = data["CaptureRate"],
+                    EggSteps = data["EggSteps"],
+                    ExpGroup = data["ExpGroup"],
+                    Total = data["Total"],
+                    HP = data["HP"],
+                    Attack = data["Attack"],
+                    Defense = data["Defense"],
+                    SpAttack = data["SpAttack"],
+                    SpDefense = data["SpDefense"],
+                    Speed = data["Speed"]
+                )
 
         disconnectPostgreSQL(conn)
 
@@ -199,6 +270,7 @@ def putData(id):
 @app.route("/getAllPokemon", methods=['GET'])
 def getAllData():
     try:
+        REQUEST_COUNT.inc()
         # Connect to the PostgreSQL database
         conn = connectPostgreSQL()  # Use the PostgreSQL connection function
 
@@ -209,6 +281,7 @@ def getAllData():
         select_query = ("SELECT * FROM "+tableName)
 
         # Execute the SELECT query using pg8000
+        conn.run("SET default_transaction_read_only = OFF")
         result = conn.run(select_query)
 
         disconnectPostgreSQL(conn)
@@ -221,6 +294,7 @@ def getAllData():
 @app.route("/getPokemon/<id>", methods=['GET'])
 def getData(id):
     try:
+        REQUEST_COUNT.inc()
         # Connect to the PostgreSQL database
         conn = connectPostgreSQL()  # Use the PostgreSQL connection function
 
@@ -253,6 +327,7 @@ def getData(id):
         select_query = ("SELECT * FROM "+tableName+" WHERE PokemonId = "+str(id))
 
         # Execute the query
+        conn.run("SET default_transaction_read_only = OFF")
         result = conn.run(select_query)
         result = result[0]
 
@@ -279,4 +354,5 @@ if __name__ == '__main__':
     disconnectPostgreSQL(conn)  # Disconnect from the PostgreSQL database
 
     # Run the Flask app
+    start_http_server(8000)
     app.run()

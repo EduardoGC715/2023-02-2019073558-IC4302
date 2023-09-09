@@ -19,6 +19,7 @@ config:
   mongodb:
     enabled: false
     name: mongodb
+    namespace: mongodb
     image: dandiego2356/mongoflask
     database: "Pokemon"
     user: "admin"

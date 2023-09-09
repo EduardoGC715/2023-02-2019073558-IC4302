@@ -35,13 +35,53 @@ apiVersion: v1
 kind: Service
 metadata:
   name: flask-port-mariadb
+  namespace: default
+  labels:
+    app: {{ .Values.config.flaskmariadb.name }}
 spec:
   selector:
     app: {{ .Values.config.flaskmariadb.name }}
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 5000
       targetPort: 5000
       nodePort: 30091
   type: NodePort 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaskservice
+  namespace: default
+  annotations:
+    prometheus.io/port: "metrics"
+    prometheus.io/scrape: "true"
+  labels:
+    app.kubernetes.io/part-of: dms
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .Values.config.flaskmariadb.name }}
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: "metrics"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flaskservicemonitor
+  namespace: monitoring
+spec:
+  endpoints:
+    - interval: 10s
+      port: metrics
+  namespaceSelector:
+    matchNames:
+      - default
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: dms
 {{- end }}

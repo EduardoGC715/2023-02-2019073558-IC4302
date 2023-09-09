@@ -1,9 +1,12 @@
 import mariadb
 import os
 from flask import Flask, request, jsonify
+from prometheus_client import start_http_server, Counter
 import logging
 
 app = Flask(__name__)
+
+REQUEST_COUNT = Counter('flask_http_requests', 'Number of HTTP requests received')
 
 # Function to connect to MariaDB
 def connectMariaDB():
@@ -152,7 +155,7 @@ def dictToSQLUpdate(tableName, id, data):
         # Construct the SQL UPDATE statement
         updateQuery = f"UPDATE {tableName} SET "
         updateQuery += ", ".join([f"{column} = %s" for column in columns])
-        updateQuery += f" WHERE PokemonId = {id}"
+        updateQuery += f" WHERE PokemonId = (SELECT Id FROM pokemons WHERE PokemonId = {id} LIMIT 1);"
 
         # Prepare the values from the dictionary
         values = [data.get(column) for column in columns]
@@ -164,6 +167,7 @@ def dictToSQLUpdate(tableName, id, data):
 @app.route("/postPokemon", methods=['POST'] )
 def postData():
     try:
+        REQUEST_COUNT.inc()
         # Parse the JSON request data
         data = request.form.to_dict()
 
@@ -192,6 +196,7 @@ def postData():
 @app.route("/deletePokemon/<id>", methods=['DELETE'] )
 def deleteData(id):
     try:
+        REQUEST_COUNT.inc()
         # Connect to the MariaDB database
         conn = connectMariaDB()
         cursor = conn.cursor()
@@ -200,10 +205,10 @@ def deleteData(id):
         tableName = "pokemons"
 
         # Construct the SQL DELETE statement
-        deleteQuery = f"DELETE FROM {tableName} WHERE PokemonId = %s"
+        deleteQuery = f"DELETE FROM {tableName} WHERE PokemonId = (SELECT Id FROM pokemons WHERE PokemonId = {id} LIMIT 1);"
 
         # Execute the SQL DELETE statement
-        cursor.execute(deleteQuery, (id,))
+        cursor.execute(deleteQuery)
         commitMariaDB(conn)
         cursor.close()
         disconnectMariaDB(conn)
@@ -216,6 +221,7 @@ def deleteData(id):
 @app.route("/putPokemon/<id>", methods=['PUT'])
 def putData(id):
     try:
+        REQUEST_COUNT.inc()
         # Parse the Form request data
         data = request.form.to_dict()
 
@@ -242,6 +248,7 @@ def putData(id):
 @app.route("/getAllPokemon", methods=['GET'] )
 def getAllData():
     try:
+        REQUEST_COUNT.inc()
         # Connect to the MariaDB database
         conn = connectMariaDB()
         cursor = conn.cursor()
@@ -269,6 +276,7 @@ def getAllData():
 @app.route("/getPokemon/<id>", methods=['GET'] )
 def getData(id):
     try:
+        REQUEST_COUNT.inc()
         # Connect to the MariaDB database
         conn = connectMariaDB()
         cursor = conn.cursor()
@@ -308,4 +316,5 @@ if __name__ == '__main__':
     disconnectMariaDB(conn)
 
     # Run the Flask app
+    start_http_server(8000)
     app.run()

@@ -1,24 +1,15 @@
 package Test;
 
+import io.gatling.javaapi.core.ChainBuilder;
+import io.gatling.javaapi.core.FeederBuilder;
+import io.gatling.javaapi.core.ScenarioBuilder;
+import io.gatling.javaapi.core.Simulation;
+import io.gatling.javaapi.http.HttpProtocolBuilder;
+
 import static io.gatling.javaapi.core.CoreDsl.*;
-import static io.gatling.javaapi.http.HttpDsl.*;
+import static io.gatling.javaapi.http.HttpDsl.http;
 
-import com.fasterxml.jackson.databind.type.CollectionType;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import io.gatling.javaapi.core.*;
-import io.gatling.javaapi.http.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Random;
-
-
-import java.util.concurrent.ThreadLocalRandom;
-
-public class testFlask extends Simulation {
+public class gets extends Simulation {
     // Http Protocol
     HttpProtocolBuilder httpProtocol =
             http.baseUrl("http://127.0.0.1:59628")
@@ -35,10 +26,10 @@ public class testFlask extends Simulation {
     private static ChainBuilder getPokemonId =
             feed(jsonFeeder)
                     .exec(http("Get one Pokemon #{Id}")
-                    .get("/getPokemon/#{Id}")
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .formParam("Id", "#{Id}")
-                    .formParam("Name", "#{Name}"));
+                            .get("/getPokemon/#{Id}")
+                            .header("Content-Type", "application/x-www-form-urlencoded")
+                            .formParam("Id", "#{Id}")
+                            .formParam("Name", "#{Name}"));
 
     private static ChainBuilder addPokemon =
             feed(jsonFeeder)
@@ -65,7 +56,7 @@ public class testFlask extends Simulation {
                             .formParam("SpAttack", "#{SpAttack}")
                             .formParam("SpDefense", "#{SpDefense}")
                             .formParam("Speed", "#{Speed}")
-                            );
+                    );
 
     private static ChainBuilder updatePokemon =
             feed(jsonFeeder)
@@ -102,27 +93,19 @@ public class testFlask extends Simulation {
                     );
 
     // Scenario
-    ScenarioBuilder scn = scenario("Database stress test with every request type").forever().on(
-            pace(15)
-                    .feed(jsonFeeder)
-                    .exec(addPokemon)
-                    .pause(2)
+    ScenarioBuilder scn = scenario("Database stress test with gets").forever().on(
+            pace(2)
                     .feed(jsonFeeder)
                     .exec(getPokemonId)
-                    .pause(2)
-                    .feed(jsonFeeder)
-                    .exec(updatePokemon)
-                    .pause(2)
-                    .exec(getAllPokemon)
-                    .pause(2)
-                    .feed(jsonFeeder)
-                    .exec(deleteLastPostedPokemon)
                     .pause(2)
     );
 
     {
         setUp(
-                scn.injectOpen(rampUsers(20).during(30))
+                scn.injectOpen(
+                        nothingFor(5),
+                        rampUsers(20).during(30)
+                )
         ).protocols(httpProtocol).maxDuration(900);
     }
 }
