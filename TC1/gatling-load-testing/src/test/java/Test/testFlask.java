@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class testFlask extends Simulation {
     // Http Protocol
     HttpProtocolBuilder httpProtocol =
-            http.baseUrl("http://127.0.0.1:55348")
+            http.baseUrl("http://127.0.0.1:61577")
                     .acceptHeader("application/json")
                     .contentTypeHeader("application/json");
 

@@ -45,6 +45,12 @@ postgresql-ha:
   enabled: false
   postgresql:
     database: "pokemon"
+  pgpool:
+    pgpool:
+      maxPool: 25
+  persistence:
+    enabled: false
+    size: "2Gi"
   metrics:
     enabled: true
     serviceMonitor:
