@@ -1,2 +1,3 @@
 flask
 pg8000
+prometheus_client
