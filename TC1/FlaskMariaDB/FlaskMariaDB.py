@@ -7,7 +7,7 @@ import logging
 app = Flask(__name__)
 
 REQUEST_COUNT = Counter('flask_http_requests', 'Number of HTTP requests received')
-
+# Código basado en ejemplos y documentación de la libreria oficial https://mariadb.com/resources/blog/how-to-connect-python-programs-to-mariadb/
 # Function to connect to MariaDB
 def connectMariaDB():
     try:

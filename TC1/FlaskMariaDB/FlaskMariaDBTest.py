@@ -1,104 +1,38 @@
 import unittest
 import FlaskMariaDB
 
-class FlaskMariaDBTest(unittest.TestCase):
-		
-    response = None
-    
-    def setUp(self):
+class TestDictToSQLFunctions(unittest.TestCase):
+    def test_dict_to_sql_insert(self):
         data = {
-        "Id": "001",
-        "Name": "Bulbasaur",
-        "Type 1": "Grass",
-        "Type 2": "Poison",
-        "Category": "Seed Pok\u00e9mon",
-        "Height (ft)": "2'04\"",
-        "Height (m)": "0.7",
-        "Weight (lbs)": "15.2",
-        "Weight (kg)": "6.9",
-        "Capture Rate": "45",
-        "Egg Steps": "5120",
-        "Exp Group": "Medium Slow",
-        "Total": "318",
-        "HP": "45",
-        "Attack": "49",
-        "Defense": "49",
-        "Sp. Attack": "65",
-        "Sp. Defense": "65",
-        "Speed": "45"
+            "Id": 1,
+            "Name": "Test",
+            "Type1": "TypeA",
+            "Type2": "TypeB"
         }
-        columns= [
-        "Id",
-        "Name",
-        "Type 1",
-        "Type 2",
-        "Category",
-        "Height (ft)",
-        "Height (m)",
-        "Weight (lbs)",
-        "Weight (kg)",
-        "Capture Rate",
-        "Egg Steps",
-        "Exp Group",
-        "Total",
-        "HP",
-        "Attack",
-        "Defense",
-        "Sp. Attack",
-        "Sp. Defense",
-        "Speed"
-        ]
-        response = FlaskMariaDB.jsonToSQL(data, "pokemons", columns )
-      
-    def testNoneResponse(self):
-        self.assertIsNone(self.response, )
+        tableName = "TestTable"
+        columns = ["Id", "Name", "Type1", "Type2"]
+        result = FlaskMariaDB.dictToSQLInsert(data, tableName, columns)
 
-    def tearDown(self):
-        response = None
+        expected_query = "INSERT INTO TestTable (`Id`, `Name`, `Type1`, `Type2`) VALUES (%s, %s, %s, %s)"
+        expected_values = [1, "Test", "TypeA", "TypeB"]
+
+        self.assertEqual(result["insertQuery"], expected_query)
+        self.assertEqual(result["values"], expected_values)
+
+    def test_dict_to_sql_update(self):
+        tableName = "TestTable"
+        id = 1
+        data = {
+            "Name": "UpdatedName",
+            "Type1": "UpdatedType"
+        }
+        result = FlaskMariaDB.dictToSQLUpdate(tableName, id, data)
+
+        expected_query = "UPDATE TestTable SET Name = %s, Type1 = %s WHERE PokemonId = (SELECT Id FROM pokemons WHERE PokemonId = 1 LIMIT 1);"
+        expected_values = ["UpdatedName", "UpdatedType"]
+
+        self.assertEqual(result[0], expected_query)
+        self.assertEqual(result[1], expected_values)
 
 if __name__ == '__main__':
-    data = {
-        "Id": "001",
-        "Name": "Bulbasaur",
-        "Type 1": "Grass",
-        "Type 2": "Poison",
-        "Category": "Seed Pok\u00e9mon",
-        "Height (ft)": "2'04\"",
-        "Height (m)": "0.7",
-        "Weight (lbs)": "15.2",
-        "Weight (kg)": "6.9",
-        "Capture Rate": "45",
-        "Egg Steps": "5120",
-        "Exp Group": "Medium Slow",
-        "Total": "318",
-        "HP": "45",
-        "Attack": "49",
-        "Defense": "49",
-        "Sp. Attack": "65",
-        "Sp. Defense": "65",
-        "Speed": "45"
-        }
-    columns= [
-        "Id",
-        "Name",
-        "Type 1",
-        "Type 2",
-        "Category",
-        "Height (ft)",
-        "Height (m)",
-        "Weight (lbs)",
-        "Weight (kg)",
-        "Capture Rate",
-        "Egg Steps",
-        "Exp Group",
-        "Total",
-        "HP",
-        "Attack",
-        "Defense",
-        "Sp. Attack",
-        "Sp. Defense",
-        "Speed"
-        ]
-    response = FlaskMariaDB.jsonToSQL(data, "pokemons", columns )
-    print(response)
     unittest.main()
