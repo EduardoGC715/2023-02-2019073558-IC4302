@@ -22,3 +22,11 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.16.0"
+
+dependencies:
+  # Elastic Search Operator (includes CRDs)
+  # https://www.elastic.co/guide/en/cloud-on-k8s/master/k8s-install-helm.html
+  - name: eck-operator
+    version: "2.6.1"
+    repository: https://helm.elastic.co
+    condition: elasticsearch.enabled
