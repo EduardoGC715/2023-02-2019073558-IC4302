@@ -18,6 +18,11 @@ spec:
       containers:
       - name: {{ .Values.config.flaskmariadbgal.name }}
         image: {{ .Values.config.flaskmariadbgal.image }}
+        ports:
+          - name: "flask"
+            containerPort: 5000
+          - name: "metrics"
+            containerPort: 8000
         env:
           - name: MDB_USERNAME
             value: "root"
@@ -58,7 +63,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: {{ .Values.config.flaskmariadbgal.name }}
+    app: {{ .Values.config.postgresql.name }}
   ports:
     - port: 8000
       targetPort: 8000
