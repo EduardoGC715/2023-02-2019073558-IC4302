@@ -1,11 +1,12 @@
 config:
   flaskmariadb:
-    enabled: true
+    enabled: false
     replicas: 1
     name: flaskmariadb
     image: dado715/flask-mariadb:latest
   postgresql:
     enabled: false
+    replicas: 1
     name: postgreflask
     image: dandiego235/postgreflask
     database: "Pokemon"
@@ -30,3 +31,10 @@ config:
     replicas: 1
     name: flaskmariadbgal
     image: dado715/flask-mariadb:latest
+  elasticsearch:
+    enabled: true
+    name: elasticflask
+    image: dandiego235/elasticflask
+    index: "pokemones"
+    username: "elastic"
+    service: "ic4302-es-http"

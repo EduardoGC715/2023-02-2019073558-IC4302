@@ -11,7 +11,7 @@ spec:
         disabled: true
   nodeSets:
   - name: master
-    count: 1
+    count: {{ .Values.elasticsearch.elastic.mastercount }}
     podTemplate:
       spec:
         containers:
@@ -26,7 +26,7 @@ spec:
       node.roles: [master]
       node.store.allow_mmap: false
   - name: data
-    count: 3
+    count: {{ .Values.elasticsearch.elastic.datacount }}
     podTemplate:
       spec:
         containers:

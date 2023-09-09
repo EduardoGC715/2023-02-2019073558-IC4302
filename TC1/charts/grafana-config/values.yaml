@@ -4,11 +4,11 @@ dashboards:
   mariadb: 
     name: mariadb
     file: mariadb.json
-    enable: true
+    enable: false
   elasticsearch: 
     name: elasticsearch
     file: elasticsearch.json
-    enable: false
+    enable: true
   mongodb: 
     name: mongodb
     file: mongodb.json

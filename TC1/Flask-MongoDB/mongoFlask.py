@@ -3,7 +3,9 @@ from flask_pymongo import PyMongo
 from os import environ
 import logging
 from prometheus_client import start_http_server, Counter
-from flask import Flask
+
+# Codigo basado en https://www.digitalocean.com/community/tutorials/how-to-set-up-flask-with-mongodb-and-docker
+# https://github.com/prometheus/client_python
 
 # Create a metric to track time spent and requests made.
 REQUEST_COUNT = Counter('flask_http_requests', 'Number of HTTP requests received')

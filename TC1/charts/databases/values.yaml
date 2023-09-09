@@ -1,5 +1,5 @@
 mariadb:
-  enabled: true
+  enabled: false
   architecture: replication
   primary:
     resources:
@@ -22,9 +22,10 @@ elasticsearch:
   elastic:
     version: 8.6.1
     mastercount: 1
-    datacount: 1
+    datacount: 2
     name: ic4302
   kibana:
+    enabled: false
     version: 8.6.1
     replicas: 1
     name: ic4302
@@ -40,7 +41,7 @@ elasticprometheus:
   serviceMonitor:
     enabled: true
     namespace: monitoring
-    
+
 mongodb: 
   enabled: false
   auth:
