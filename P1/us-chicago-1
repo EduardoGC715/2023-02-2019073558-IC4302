@@ -1,0 +1,7 @@
+[DEFAULT]
+user=ocid1.user.oc1..aaaaaaaaxmr6fc3rqsoest3yfqamz3yjrulxovyua2xuwibxb6bdjlyj6lmq
+fingerprint=22:d9:3a:40:96:38:d6:e5:b2:2f:79:bc:1b:11:ef:5d
+key_file=C:\Users\joseg\.oci\oci_api_key.pem
+tenancy=ocid1.tenancy.oc1..aaaaaaaab2j6gk2b33sutg2bhoga5zekg3j5su23tygzw6nw5es4jxdts4ya
+region=us-chicago-1
+pass_phrase=ocikey
