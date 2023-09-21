@@ -12,10 +12,10 @@ data "cloudinit_config" "vm01" {
 }
 
 resource "oci_core_instance" "vm01" {
-    availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+    availability_domain = data.oci_identity_availability_domains.ads.availability_domains[1].name
     compartment_id = var.compartment_id
     display_name = "vm01"
-    shape = "VM.Standard.A1.Flex"
+    shape = "VM.Standard.E4.Flex"
     shape_config {
         memory_in_gbs = "6"
         ocpus         = "1"
