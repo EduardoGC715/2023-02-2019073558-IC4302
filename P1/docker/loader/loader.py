@@ -44,33 +44,57 @@ wf4QTCyd9noRs4piFx6/9A0=
  }
 
 if __name__:
-   logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-   logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
 
-   oci.config.validate_config(config)
-   object_storage = oci.object_storage.ObjectStorageClient(config)
-   compartment_id = config['tenancy']
-   namespace = object_storage.get_namespace().data
-   bucket_name = "bibliotec"
-   # upload_manager = oci.object_storage.UploadManager(object_storage, max_parallel_uploads=10)
-   # upload_manager.upload_file(namespace, 'nereo', 'oc.py', 'oc.py')
+    oci.config.validate_config(config)
+    object_storage = oci.object_storage.ObjectStorageClient(config)
+    compartment_id = config['tenancy']
+    namespace = object_storage.get_namespace().data
+    bucket_name = "bibliotec"
+    # upload_manager = oci.object_storage.UploadManager(object_storage, max_parallel_uploads=10)
+    # upload_manager.upload_file(namespace, 'nereo', 'oc.py', 'oc.py')
 
-   list_objects_response = object_storage.list_objects(namespace, bucket_name, fields="timeCreated")
-   objectList = sorted(list_objects_response.data.objects, key=lambda x: x.time_created, reverse=True)
-   print(objectList)
+    list_objects_response = object_storage.list_objects(namespace, bucket_name, fields="timeCreated")
+    objectList = sorted(list_objects_response.data.objects, key=lambda x: x.time_created, reverse=True)
+    print(objectList)
 
-   i = 0
-   for objectReference in objectList:
-      if i == 2:
-         break
-      # if (objectReference.name == "enwiki-latest-abstract10.xml"): #"enwiki-latest-pages-articles-multistream10.xml-p4045403p5399366"):
-      #    continue
-      print(objectReference.name)
-      xmlFile = object_storage.get_object(namespace, bucket_name, objectReference.name).data
-      print("decoding")
-      print(type(xmlFile))
-      xmlDump = mwxml.Dump.from_bytes(xmlFile)
-      print("success")
+    i = 0
+    for objectReference in objectList:
+        if i == 1:
+            break
+        # if (objectReference.name == "enwiki-latest-abstract10.xml"): #"enwiki-latest-pages-articles-multistream10.xml-p4045403p5399366"):
+        #    continue
+        print(objectReference.name)
+        xmlReference = object_storage.get_object(namespace, bucket_name, objectReference.name).data
+        
+        xmlFile = open(f"{objectReference.name}", 'wb')
+        xmlFile.write(xmlReference.content)
+        xmlFile.close()
+        print("written")
+    #   print(type(xmlFile))
+
+        xmlDump = mwxml.Dump.from_file(open(objectReference.name, 'rb'))
+        siteInfo = xmlDump.site_info
+        print("siteInfo:", siteInfo.name, siteInfo.dbname, siteInfo)
+        j=0
+        for page in xmlDump.pages:
+            try:
+                print(page.id)
+                print(page.title)
+                print(page.namespace)
+                print(page.redirect)
+                print(page.restrictions)
+            except Exception as e:
+                continue
+            for revision in page:
+                print(revision.id, revision.timestamp, revision.user)
+                print("bytes: ", revision.bytes, "text: ", revision.text)
+
+            if j == 10:
+                break
+            j += 1
+        i += 1
 
 
 
