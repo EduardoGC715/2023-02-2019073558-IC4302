@@ -39,7 +39,7 @@ def get_db():
 
 # Use LocalProxy to read the global db instance with just `db`
 db = LocalProxy(get_db)
-"""
+
 # Codigo basado en https://www.digitalocean.com/community/tutorials/how-to-set-up-flask-with-mongodb-and-docker
 # https://github.com/prometheus/client_python
 
@@ -49,7 +49,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger(__name__)
 # 
 app = Flask(__name__)
-
+"""
 pokemon = []
 # logger.debug('mongodb://' + environ['MONGODB_USERNAME'] + ':' + environ['MONGODB_PASSWORD'] + '@' + environ['MONGODB_HOSTNAME'] + ':27017/' + environ['MONGODB_DATABASE'])
 app.config["MONGO_URI"] = uri
@@ -59,7 +59,7 @@ logger.debug(mongo)
 logger.debug(db)
 if mongo.db.client:
     logger.debug("Connected to MongoDB successfully!")
-
+"""
 
 @app.route("/")
 def home():
@@ -80,8 +80,8 @@ def getOnePokemon(id):
         REQUEST_COUNT.inc()
         try:
             pokemonFound = db.pokemon.find_one({"Id": id})
-            logger.debug(f"Get One: {pokemonFound}")
-            return f"Get one {pokemonFound}"
+            logger.debug(f"Get One:")
+            return f"Get one "
         except Exception as e:
             logger.debug("No se pudo encontrar el pokemon: ", e)
 
@@ -90,32 +90,9 @@ def getAllPokemon():
     if request.method == "GET":
         REQUEST_COUNT.inc()
         pokemones = db.pokemon.find()
-        pokemonGet = []
-        for species in pokemones:
-            item = {
-            "Id": str(species["Id"]),
-            "Name": str(species["Name"]),
-            "Type1": str(species["Type1"]),
-            "Type2": str(species["Type2"]),
-            "Category": str(species["Category"]),
-            "Heightf": str(species["Heightf"]),
-            "Heightm": str(species["Heightm"]),
-            "Weightlbs": str(species["Weightlbs"]),
-            "Weightkg": str(species["Weightkg"]),
-            "CaptureRate": str(species["CaptureRate"]),
-            "EggSteps": str(species["EggSteps"]),
-            "ExpGroup": str(species["ExpGroup"]),
-            "Total": str(species["Total"]),
-            "HP": str(species["HP"]),
-            "Attack": str(species["Attack"]),
-            "Defense": str(species["Defense"]),
-            "SpAttack": str(species["SpAttack"]),
-            "SpDefense": str(species["SpDefense"]),
-            "Speed": str(species["Speed"])
-            }
-            pokemonGet.append(item)
-        logger.debug(f"Pokemones Get All {pokemonGet}")
-        return f"Pokemones Get All {pokemonGet}"
+        
+        logger.debug(f"Pokemones Get All")
+        return f"Pokemones Get All"
 
 @app.route("/postPokemon", methods=["POST"]) 
 def insertPokemon():
@@ -183,23 +160,12 @@ def updatePokemon(id):
             logger.debug("No se pudo actualizar. ", e)
         return f"Pokemon Update {formPokemon['$set']}"
 
-@app.route("/deletePokemon/<id>", methods=["DELETE"]) 
-def delete(id):
-    if request.method == "DELETE":
-        REQUEST_COUNT.inc()
-        try:
-            pokemonFound = db.pokemon.delete_one({"Id": id})
-            logger.debug(f"Delete One: {pokemonFound}")
-            return f"Delete one {pokemonFound}"
-        except Exception as e:
-            logger.debug("No se pudo eliminar pokemon: ", e)
-            return f"Delete failed"
+
             
 
-"""
 if __name__ == "__main__":
     # Start up the server to expose the metrics.
-    app = Flask(__name__)
+    
     app.config['MONGO_URI']  = uri
     start_http_server(8000)
     app.run()
