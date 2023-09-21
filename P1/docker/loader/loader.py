@@ -55,7 +55,7 @@ if __name__:
     # upload_manager = oci.object_storage.UploadManager(object_storage, max_parallel_uploads=10)
     # upload_manager.upload_file(namespace, 'nereo', 'oc.py', 'oc.py')
 
-    list_objects_response = object_storage.list_objects(namespace, bucket_name, fields="timeCreated")
+    list_objects_response = object_storage.list_objects(namespace, bucket_name, prefix="enwiki-latest-pages-articles-multistream", fields="timeCreated")
     objectList = sorted(list_objects_response.data.objects, key=lambda x: x.time_created, reverse=True)
     print(objectList)
 
