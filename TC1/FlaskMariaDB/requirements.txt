@@ -1,2 +1,3 @@
 mariadb
 flask
+prometheus_client

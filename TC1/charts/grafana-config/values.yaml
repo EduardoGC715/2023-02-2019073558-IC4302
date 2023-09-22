@@ -8,7 +8,7 @@ dashboards:
   elasticsearch: 
     name: elasticsearch
     file: elasticsearch.json
-    enable: false
+    enable: true
   mongodb: 
     name: mongodb
     file: mongodb.json
@@ -20,8 +20,20 @@ dashboards:
   postgresql: 
     name: postgresql
     file: postgresql.json
-    enable: true
+    enable: false
+  postgresql2: 
+    name: postgresql2
+    file: postgresql2.json
+    enable: false
+  postgresql3: 
+    name: postgresql3
+    file: postgresql3.json
+    enable: false
   mariadbgal: 
     name: mariadbgal
     file: mariadbgal.json
     enable: false
+  flaskapp:
+    name: flaskapp
+    file: flaskapp.json
+    enable: true

@@ -1,14 +1,76 @@
-from flask import Flask
+from flask import Flask, request
+from prometheus_client import start_http_server, Counter
 import pg8000.native
 from os import environ
 import logging
 
 # código basado en https://pypi.org/project/pg8000/#installation
+# y en https://github.com/prometheus/client_python
 app = Flask(__name__)
+
+REQUEST_COUNT = Counter('flask_http_requests', 'Number of HTTP requests received')
+
+# Function to connect to PostGreSQL
+def connectPostGreSQL():
+    try:
+        databasePG = environ.get("PGDATABASE")
+        username = environ.get("PGUSER")
+        passwordPG = environ.get("PGPASSWORD")
+        servicePG = environ.get("PGSERVICE")
+        
+        conn = pg8000.native.Connection(username, password=passwordPG, host=servicePG, database=databasePG)
+        return conn
+    except Exception as e:
+        logger.error(e)
+        return None
+        
+def disconnectPostGreSQL(conn):
+    try:
+        conn.close()
+    except Exception as e:
+        logger.error(e)
+
+def createTablePostGreSQL(conn):
+    try:
+        tableName = "pokemons"
+
+        createTableQuery = f"""
+            CREATE TABLE IF NOT EXISTS {tableName} (
+                primaryKey SERIAL PRIMARY KEY,
+                pokemonId VARCHAR(255),
+                PokemonName VARCHAR(255),
+                Type1 VARCHAR(255),
+                Type2 VARCHAR(255),
+                Category VARCHAR(255),
+                Heightf VARCHAR(255),
+                Heightm VARCHAR(255),
+                Weightlbs VARCHAR(255),
+                Weightkg VARCHAR(255),
+                CaptureRate VARCHAR(255),
+                EggSteps VARCHAR(255),
+                ExpGroup VARCHAR(255),
+                Total VARCHAR(255),
+                HP VARCHAR(255),
+                Attack VARCHAR(255),
+                Defense VARCHAR(255),
+                SpAttack VARCHAR(255),
+                SpDefense VARCHAR(255),
+                Speed VARCHAR(255)
+            )
+            """
+        conn.run(createTableQuery)
+        logger.debug("Table created...")
+
+    except Exception as e:
+        logger.error(e)
+
+@app.route("/")
+def home():
+    return "<h1>PostGreSQL Flask App</h1>"
 
 @app.route('/test')
 def test():
-    return 'Hello World! I am from docker!'
+    return 'Hello World! I am the PostGreSQL Flask app!'
 
 @app.route('/test_db')
 def test_db():
@@ -35,10 +97,194 @@ def test_db():
     con.close()
     return "<h1> Connected successfully. </h1>"
 
+@app.route("/getPokemon/<id>", methods=["GET"])
+def getPokemon(id):
+    REQUEST_COUNT.inc()
+    if request.method == "GET":
+        try:
+            conn = connectPostGreSQL()
+            conn.run("""SELECT pokemonId, PokemonName, Type1, Type2, Category, Heightf,
+                     Heightm, Weightlbs, Weightkg, CaptureRate, EggSteps, ExpGroup, Total,
+                     HP, Attack, Defense,SpAttack, SpDefense, Speed
+                     FROM pokemons
+                     WHERE pokemonId = :pokemonId""", pokemonId = id)
+            logger.debug(f"Got Pokemon Id {id}")
+            disconnectPostGreSQL(conn)
+        except Exception as e:
+            logger.error(e)
+    return "getAllPokemon..."
+
+@app.route("/getAllPokemon", methods=["GET"])
+def getAllPokemon():
+    REQUEST_COUNT.inc()
+    if request.method == "GET":
+        try:
+            conn = connectPostGreSQL()
+            conn.run("""SELECT pokemonId, PokemonName, Type1, Type2, Category, Heightf,
+                     Heightm, Weightlbs, Weightkg, CaptureRate, EggSteps, ExpGroup, Total,
+                     HP, Attack, Defense,SpAttack, SpDefense, Speed
+                     FROM pokemons""")
+            logger.debug("Got All Pokemon")
+            disconnectPostGreSQL(conn)
+        except Exception as e:
+            logger.error(e)
+    return "getAllPokemon..."
+
+@app.route("/postPokemon", methods=["POST"])
+def postPokemon():
+    REQUEST_COUNT.inc()
+    if request.method == "POST":
+        try:
+            conn = connectPostGreSQL()
+            data = {
+            "Id": request.form["Id"],
+            "Name": request.form["Name"],
+            "Type1": request.form["Type1"],
+            "Type2": request.form["Type2"],
+            "Category": request.form["Category"],
+            "Heightf": request.form["Heightf"],
+            "Heightm": request.form["Heightm"],
+            "Weightlbs": request.form["Weightlbs"],
+            "Weightkg": request.form["Weightkg"],
+            "CaptureRate": request.form["CaptureRate"],
+            "EggSteps": request.form["EggSteps"],
+            "ExpGroup": request.form["ExpGroup"],
+            "Total": request.form["Total"],
+            "HP": request.form["HP"],
+            "Attack": request.form["Attack"],
+            "Defense": request.form["Defense"],
+            "SpAttack": request.form["SpAttack"],
+            "SpDefense": request.form["SpDefense"],
+            "Speed": request.form["Speed"]}
+
+            insertQuery = """
+                INSERT INTO pokemons (pokemonId, PokemonName, Type1, Type2, Category, Heightf, Heightm, Weightlbs, Weightkg, CaptureRate, EggSteps, ExpGroup, Total, HP, Attack, Defense, SpAttack, SpDefense, Speed)
+                VALUES
+                (:pokemonId, :PokemonName, :Type1, :Type2, :Category, :Heightf, :Heightm, :Weightlbs, :Weightkg, :CaptureRate, :EggSteps, :ExpGroup, :Total, :HP, :Attack, :Defense, :SpAttack, :SpDefense, :Speed)
+                """
+            conn.run(insertQuery,
+                    pokemonId = data["Id"],
+                    PokemonName = data["Name"],
+                    Type1 = data["Type1"],
+                    Type2 = data["Type2"],
+                    Category = data["Category"],
+                    Heightf = data["Heightf"],
+                    Heightm = data["Heightm"],
+                    Weightlbs = data["Weightlbs"],
+                    Weightkg = data["Weightkg"],
+                    CaptureRate = data["CaptureRate"],
+                    EggSteps = data["EggSteps"],
+                    ExpGroup = data["ExpGroup"],
+                    Total = data["Total"],
+                    HP = data["HP"],
+                    Attack = data["Attack"],
+                    Defense = data["Defense"],
+                    SpAttack = data["SpAttack"],
+                    SpDefense = data["SpDefense"],
+                    Speed = data["Speed"]
+                    )
+            logger.debug(f"Inserted {data['Id']} Name: {data['Name']}")
+            disconnectPostGreSQL(conn)
+        except Exception as e:
+            logger.error(e)
+    return "PostPokemon..."
+    
+
+@app.route("/putPokemon/<id>", methods=["PUT"])
+def putPokemon(id):
+    REQUEST_COUNT.inc()
+    if request.method == "PUT":
+        try:
+            conn = connectPostGreSQL()
+            data = {
+            "Id": request.form["Id"],
+            "Name": request.form["Name"],
+            "Type1": request.form["Type1"],
+            "Type2": request.form["Type2"],
+            "Category": request.form["Category"],
+            "Heightf": request.form["Heightf"],
+            "Heightm": request.form["Heightm"],
+            "Weightlbs": request.form["Weightlbs"],
+            "Weightkg": request.form["Weightkg"],
+            "CaptureRate": request.form["CaptureRate"],
+            "EggSteps": request.form["EggSteps"],
+            "ExpGroup": request.form["ExpGroup"],
+            "Total": request.form["Total"],
+            "HP": request.form["HP"],
+            "Attack": request.form["Attack"],
+            "Defense": request.form["Defense"],
+            "SpAttack": request.form["SpAttack"],
+            "SpDefense": request.form["SpDefense"],
+            "Speed": request.form["Speed"]}
+
+            updateQuery = """
+                UPDATE pokemons 
+                SET PokemonName = :PokemonName,
+                Type1 = :Type1,
+                Type2 = :Type2,
+                Category = :Category,
+                Heightf = :Heightf,
+                Heightm = :Heightm,
+                Weightlbs = :Weightlbs,
+                Weightkg = :Weightkg,
+                CaptureRate = :CaptureRate,
+                EggSteps = :EggSteps,
+                ExpGroup = :ExpGroup,
+                Total = :Total,
+                HP = :HP,
+                Attack = :Attack,
+                Defense = :Defense,
+                SpAttack = :SpAttack,
+                SpDefense = :SpDefense,
+                Speed = :Speed
+                WHERE pokemonId = :pokemonId
+                """
+            conn.run(updateQuery,
+                    pokemonId = data["Id"],
+                    PokemonName = data["Name"],
+                    Type1 = data["Type1"],
+                    Type2 = data["Type2"],
+                    Category = data["Category"],
+                    Heightf = data["Heightf"],
+                    Heightm = data["Heightm"],
+                    Weightlbs = data["Weightlbs"],
+                    Weightkg = data["Weightkg"],
+                    CaptureRate = data["CaptureRate"],
+                    EggSteps = data["EggSteps"],
+                    ExpGroup = data["ExpGroup"],
+                    Total = data["Total"],
+                    HP = data["HP"],
+                    Attack = data["Attack"],
+                    Defense = data["Defense"],
+                    SpAttack = data["SpAttack"],
+                    SpDefense = data["SpDefense"],
+                    Speed = data["Speed"]
+                    )
+            logger.debug(f"Updated {data['Id']} Name: {data['Name']}")
+            disconnectPostGreSQL(conn)
+        except Exception as e:
+            logger.error(e)
+    return "putPokemon PostGreSQL"
+
+@app.route("/deletePokemon/<id>", methods=["DELETE"])
+def deletePokemon(id):
+    REQUEST_COUNT.inc()
+    if request.method == "DELETE":
+        try:
+            conn = connectPostGreSQL()
+            conn.run("DELETE FROM pokemons WHERE primaryKey = (SELECT primaryKey from Pokemons where pokemonId = :pokemonId LIMIT 1)", pokemonId = id)
+            logger.debug(f"Delete One: {id}")
+            disconnectPostGreSQL(conn)
+        except Exception as e:
+            logger.debug("No se pudo eliminar el pokemon: ", e)
+            return f"Delete failed"
+        return f"Delete one {id}"
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
-
-   #connect()
+    conn = connectPostGreSQL()
+    createTablePostGreSQL(conn)
+    conn.close()
+    start_http_server(8000)
     app.run()

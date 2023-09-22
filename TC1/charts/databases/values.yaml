@@ -17,23 +17,33 @@ mariadb:
     serviceMonitor: 
       enabled: true
       namespace: monitoring
-elasticsearch: 
-  enabled: false
-  master: 
-    replicaCount: 1
-  data:
-    replicaCount: 0
-  ingest:
-    enabled: false
-  coordinating:
-    replicaCount: 0
-  metrics: 
-    enabled: true
-    serviceMonitor:
-      enabled: true
-      namespace: monitoring
-mongodb: 
+elasticsearch:
   enabled: true
+  elastic:
+    version: 8.6.1
+    mastercount: 1
+    datacount: 2
+    name: ic4302
+  kibana:
+    enabled: false
+    version: 8.6.1
+    replicas: 1
+    name: ic4302
+elasticprometheus:
+  env:
+    ES_USERNAME: elastic
+  extraEnvSecrets:
+    ES_PASSWORD:
+      secret: ic4302-es-elastic-user
+      key: elastic
+  es:
+    uri: http://ic4302-es-http:9200
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+
+mongodb: 
+  enabled: false
   auth:
     usernames: ["admin"]
     passwords: ["admin"]
@@ -54,10 +64,14 @@ mongodb:
 postgresql-ha:
   enabled: false
   postgresql:
-    replicaCount: 1
+    database: "pokemon"
   pgpool:
-    replicaCount: 0
-  metrics: 
+    pgpool:
+      maxPool: 25
+  persistence:
+    enabled: false
+    size: "2Gi"
+  metrics:
     enabled: true
     serviceMonitor:
       enabled: true
@@ -70,9 +84,13 @@ mariadb-galera:
     serviceMonitor:
       enabled: true
       namespace: monitoring
-
 postgresql:
   enabled: false
+  primary:
+    resources:
+      limits:
+        cpu: "1"
+        memory: "4Gi"
   auth:
     database: "Pokemon"
     username: "admin"

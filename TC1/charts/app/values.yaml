@@ -6,22 +6,35 @@ config:
     image: dado715/flask-mariadb:latest
   postgresql:
     enabled: false
+    replicas: 1
     name: postgreflask
     image: dandiego235/postgreflask
-    database: "testing"
+    database: "Pokemon"
     user: "admin"
     password: "admin"
     service: "databases-postgresql"
+  postgresqlha:
+    enabled: false
+    name: flaskpostgresqlha
+    image: dado715/flask-postgresqlha:latest
   mongodb:
-    enabled: true
+    enabled: false
     name: mongodb
+    namespace: mongodb
     image: dandiego2356/mongoflask
     database: "Pokemon"
     user: "admin"
     password: "admin"
     service: "databases-mongodb-headless"
   flaskmariadbgal:
-    enabled: true
+    enabled: false
     replicas: 1
     name: flaskmariadbgal
     image: dado715/flask-mariadb:latest
+  elasticsearch:
+    enabled: true
+    name: elasticflask
+    image: dandiego235/elasticflask
+    index: "pokemones"
+    username: "elastic"
+    service: "ic4302-es-http"

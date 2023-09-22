@@ -1,0 +1,3 @@
+docker login
+docker build -t nereo08/helloflask .
+docker push nereo08/helloflask

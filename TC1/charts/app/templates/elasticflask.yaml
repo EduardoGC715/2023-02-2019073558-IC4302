@@ -1,0 +1,93 @@
+{{- if .Values.config.elasticsearch.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.elasticsearch.name }}
+  labels:
+    app: {{ .Values.config.elasticsearch.name }}
+spec:
+  replicas: {{ .Values.config.elasticsearch.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.elasticsearch.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.elasticsearch.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.elasticsearch.name }}
+        image: {{ .Values.config.elasticsearch.image }}
+        ports:
+          - name: "flask"
+            containerPort: 5000
+          - name: "metrics"
+            containerPort: 8000
+        env:
+          - name: ESINDEX
+            value: {{ .Values.config.elasticsearch.index }}
+          - name: ESUSERNAME
+            value: {{ .Values.config.elasticsearch.username }}
+          - name: ESPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ic4302-es-elastic-user
+                key: elastic
+                optional: false
+          - name: ESENDPOINT
+            value: {{ .Values.config.elasticsearch.service }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaskport
+  namespace: default
+  labels:
+    app: {{ .Values.config.elasticsearch.name }}
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30090
+  selector:
+    app: {{ .Values.config.elasticsearch.name }}
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaskservice
+  namespace: default
+  annotations:
+    prometheus.io/port: "metrics"
+    prometheus.io/scrape: "true"
+  labels:
+    app.kubernetes.io/part-of: dms
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .Values.config.elasticsearch.name }}
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: "metrics"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flaskservicemonitor
+  namespace: monitoring
+spec:
+  endpoints:
+    - interval: 10s
+      port: metrics
+  namespaceSelector:
+    matchNames:
+      - default
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: dms
+{{- end }}
