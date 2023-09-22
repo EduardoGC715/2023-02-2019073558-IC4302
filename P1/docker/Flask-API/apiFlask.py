@@ -10,24 +10,88 @@ from pymongo.server_api import ServerApi
 from pymongo.errors import DuplicateKeyError, OperationFailure
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
+import oci
+import datetime
+import logging
+from borneo.iam import SignatureProvider
+from borneo import (Regions, NoSQLHandle, NoSQLHandleConfig, PutRequest,
+                    TableRequest, GetRequest, TableLimits, State)
+import time
+import json
+import random
 
+# Código basado de
+# https://docs.oracle.com/en-us/iaas/tools/python/2.112.0/api/object_storage/client/oci.object_storage.ObjectStorageClient.html
+# https://docs.oracle.com/en-us/iaas/tools/python-sdk-examples/2.112.0/objectstorage/get_object.py.html
+# https://docs.oracle.com/en-us/iaas/tools/python-sdk-examples/2.112.0/objectstorage/list_objects.py.html
+# https://apexapps.oracle.com/pls/apex/r/dbpm/livelabs/run-workshop?p210_wid=642
 
+config = {
+   "key_content": """-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDM7xOlheMG9Jvn
+DUOry1A+XuB6zuCi5nRSiGOqmbQfR/2/20wKteKTbIfRVe6MGGdHdpFTM1ZFZCPd
+Vpru6KBk6Aona+iQWXK7tMKfhNjOTkpj88oeFBPx07mELTQLednaZDaojUhPmWZ6
+/tE0BgzAVeu4nyu0KyxmFAL8x2ncXi/BFJgEsRaU0OkUns/VfUtFEUWD8BIzlPbR
+L/Gi36ZxhqkMPpMs6FwUikYT1eU9KJ4oFgnxX3D4Vi9Fzcg0wrgRFYnNfEOGJZYE
+rOLnrqFeowARYAH+nzowjkQ6CSb1QadGq7hzjismxQmxRs56SASKYkrVYVCSBG37
+BMwfYDjrAgMBAAECggEAA8NIBbwFmnUXVRC7SLDnp52FBaboHQBE69cGmB/7sgSt
+C2lyu1JHohQAvRPqLgxXU8qWNIQ2y04MEoj/40Rw3X7H4PLBnGo9XxDx7zfjOzaD
+ddOzcbCbWnoGvVSPJhQgrzqJKQ3JtsccSJnb1tay7pJ6ojMvUZQ8BnZ2ROnsbwK1
+62uoZG7XmHaqQJY7z2JZ1a/6Tt6YP2ufaAZxs8tqbfqKM369LIL/QKJNxkEsAncN
+/eAiKjyhgPMPfOLxGnS/dWZgPdNjy92+Nw9iYs+5NVqRGiJpiGf4ovWNNPiIG3oL
+KbVDhXt3ynwqIS6g6j5ILWicpiUmtstKOeU4oMIOAQKBgQD/sDU/BZ7ljjTQpb/p
+YJvRGITpHcXovyH5z/GK6s3gCaJq9/tUihXzaZH5s1V5UOUFVb923KYbUKalyGlF
+GRusMF5GWiI55cqFXI3R9KFlu4UJAglXuCxsWHejweRBV2a4DiVOlj45WuyLeJLR
+jsL4CvflVMTZsgVIrObB/Ti9awKBgQDNLweqq44ksVDGMKWEZIlIz0PjPUSWhIDa
+eUMjuazjLxiJ8yiUmf4AE7vK6SoiP9uudx2xWnnZyVIe/PJXseFbINuBh0k9jU6R
+H8SOSLFS85TcrCl+ImNDygHiczxaVuiykjYpLIaPqT/BTayXnGiX+xBSwweA9Ng1
+pZni2fXSgQKBgGfMM8Fy2a+dDEnLj94BDyBSUNqF8KrstLFCPm9DpPIXVy0PoKMQ
+L5sSN2Vj7QYD1gVVaxWou3IJSq2wbzPS3o4HUK5EtvJEG/QJv7UFF2RCPN6MShin
+NrmBLIh5FN2FyrhbXb/KdFY6WB7Cgu+5geLKKRqbUBKEF2sKbd9AmgEjAoGATg93
+ZjnwUQtYhJ4bSlwJUrbvx/MWNgFhGD0MCvpnyOKw/kKRDL/tP1BCoLbGPdN3m09b
+745RT0blRD7NYAmfh9DfUc8LUSyCWHnyiIMlWz6qQq4I9yDUDQU8ZE+dBW2NB+rS
+SiXTZ7JnO/52DBQIQtHUavgh0bDU1MwU2JY9jIECgYEA4GumexTeBxhwomIKd4bn
+5wbYGAgdg6TPym7mGHpEVwVc/SYg1mTeOp988ZIbzdLcjQLY9E5Kpd/dZzVZ5izs
+IzI5Mtbaa6QFL3QyhFnyiANbyfuw4rJTGdkUgKlP/jsabVVfMw2x+w5lwPI8oU5E
+wf4QTCyd9noRs4piFx6/9A0=
+-----END PRIVATE KEY-----""",
+  "user": "ocid1.user.oc1..aaaaaaaaxmr6fc3rqsoest3yfqamz3yjrulxovyua2xuwibxb6bdjlyj6lmq",
+  "fingerprint": "aa:4e:83:38:68:4d:38:90:7c:14:b7:84:64:f6:c3:e1",
+  "tenancy": "ocid1.tenancy.oc1..aaaaaaaab2j6gk2b33sutg2bhoga5zekg3j5su23tygzw6nw5es4jxdts4ya",
+  "region": "us-chicago-1"
+ }
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+oci.config.validate_config(config)
+object_storage = oci.object_storage.ObjectStorageClient(config)
+compartment_id = config['tenancy']
+namespace = object_storage.get_namespace().data
+bucket_name = "bibliotec"
+
+at_provider = SignatureProvider(tenant_id=config["tenancy"],
+                                user_id=config["user"],
+                                private_key=config["key_content"], 
+                                fingerprint=config["fingerprint"])
+
+region = Regions.US_CHICAGO_1
+
+config2 = NoSQLHandleConfig(region, at_provider)
+
+handle = NoSQLHandle(config2)
 uri = "mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/?retryWrites=true&w=majority"
 
-# Create a new client and connect to the server
+# Código basado en
+
 client = MongoClient(uri, server_api=ServerApi('1'))
 
-# Send a ping to confirm a successful connection
 try:
     client.admin.command('ping')
-    print("Pinged your deployment. You successfully connected to MongoDB!")
+    print("Conexión con MongoDB exitosa")
 except Exception as e:
     print(e)
 
 def get_db():
-    """
-    Configuration method to return db instance
-    """
     db = getattr(g, "_database", None)
 
     if db is None:
@@ -36,8 +100,13 @@ def get_db():
        
     return db
 
+# Método para escribir en la base de datos NoSQL en Oracle Cloud
+def write_a_record(handle, table_name, record):
+    request = PutRequest().set_table_name(table_name)
+    request.set_value(record)
+    handle.put(request)
+    return
 
-# Use LocalProxy to read the global db instance with just `db`
 db = LocalProxy(get_db)
 
 # Codigo basado en https://www.digitalocean.com/community/tutorials/how-to-set-up-flask-with-mongodb-and-docker
@@ -49,17 +118,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger(__name__)
 # 
 app = Flask(__name__)
-"""
-pokemon = []
-# logger.debug('mongodb://' + environ['MONGODB_USERNAME'] + ':' + environ['MONGODB_PASSWORD'] + '@' + environ['MONGODB_HOSTNAME'] + ':27017/' + environ['MONGODB_DATABASE'])
-app.config["MONGO_URI"] = uri
-mongo = PyMongo(app)
-db = mongo.db
-logger.debug(mongo)
-logger.debug(db)
-if mongo.db.client:
-    logger.debug("Connected to MongoDB successfully!")
-"""
+
 
 @app.route("/")
 def home():
@@ -84,6 +143,8 @@ def getOnePokemon(id):
             return f"Get one "
         except Exception as e:
             logger.debug("No se pudo encontrar el pokemon: ", e)
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "test", 'bagInfo': json.dumps({"id": 1, "text": "test"})}
+    write_a_record(handle, 'ic4302_logs', record)       
 
 @app.route("/getAllPokemon", methods=["GET"])
 def getAllPokemon():
@@ -119,7 +180,7 @@ def insertPokemon():
         "SpDefense": request.form["SpDefense"],
         "Speed": request.form["Speed"]
         }
-        pokemon.append(formPokemon)
+        #pokemon.append(formPokemon)
         try:
             db.pokemon.insert_one(formPokemon)
             logger.debug(f"Pokemon Post {formPokemon}")
