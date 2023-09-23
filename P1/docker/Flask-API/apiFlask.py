@@ -1,3 +1,9 @@
+import firebase_admin
+from firebase_admin import credentials, auth
+
+cred = credentials.Certificate("bibliotec-98a06-firebase-adminsdk-qiahh-ea76f83463.json")
+firebase_admin.initialize_app(cred)
+
 import bson
 from flask import Flask, request, render_template_string, current_app, g
 from werkzeug.local import LocalProxy
@@ -7,18 +13,14 @@ import logging
 from prometheus_client import start_http_server, Counter
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from pymongo.errors import DuplicateKeyError, OperationFailure
-from bson.objectid import ObjectId
-from bson.errors import InvalidId
 import oci
-import datetime
 import logging
 from borneo.iam import SignatureProvider
-from borneo import (Regions, NoSQLHandle, NoSQLHandleConfig, PutRequest,
-                    TableRequest, GetRequest, TableLimits, State)
+from borneo import (Regions, NoSQLHandle, NoSQLHandleConfig, PutRequest)
 import time
 import json
 import random
+import requests
 
 # Código basado de
 # https://docs.oracle.com/en-us/iaas/tools/python/2.112.0/api/object_storage/client/oci.object_storage.ObjectStorageClient.html
@@ -133,12 +135,16 @@ def home():
 </html>
 ''')
 
-@app.route("/getPokemon/<id>", methods=["GET"])
-def getOnePokemon(id):
+@app.route("/getMongo/", methods=["GET"])
+def getFromMongo():
     if request.method == "GET":
         REQUEST_COUNT.inc()
+        
+        form = {
+            
+        }
         try:
-            pokemonFound = db.pokemon.find_one({"Id": id})
+            pokemonFound = db.find_one({"Id": id})
             logger.debug(f"Get One:")
             return f"Get one "
         except Exception as e:
@@ -146,8 +152,8 @@ def getOnePokemon(id):
     record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "test", 'bagInfo': json.dumps({"id": 1, "text": "test"})}
     write_a_record(handle, 'ic4302_logs', record)       
 
-@app.route("/getAllPokemon", methods=["GET"])
-def getAllPokemon():
+@app.route("/getAutonomous", methods=["GET"])
+def getFromAutonomous():
     if request.method == "GET":
         REQUEST_COUNT.inc()
         pokemones = db.pokemon.find()
@@ -155,71 +161,46 @@ def getAllPokemon():
         logger.debug(f"Pokemones Get All")
         return f"Pokemones Get All"
 
-@app.route("/postPokemon", methods=["POST"]) 
-def insertPokemon():
+# Código basado de 
+# https://stackoverflow.com/questions/58676559/how-to-authenticate-to-firebase-using-python/71398321#71398321
+# https://datagy.io/python-requests-response-object/
+
+@app.route("/login", methods=["POST"]) 
+def login():
     if request.method == "POST":
         REQUEST_COUNT.inc()
-        formPokemon = {
-        "Id": request.form["Id"],
-        "Name": request.form["Name"],
-        "Type1": request.form["Type1"],
-        "Type2": request.form["Type2"],
-        "Category": request.form["Category"],
-        "Heightf": request.form["Heightf"],
-        "Heightm": request.form["Heightm"],
-        "Weightlbs": request.form["Weightlbs"],
-        "Weightkg": request.form["Weightkg"],
-        "CaptureRate": request.form["CaptureRate"],
-        "EggSteps": request.form["EggSteps"],
-        "ExpGroup": request.form["ExpGroup"],
-        "Total": request.form["Total"],
-        "HP": request.form["HP"],
-        "Attack": request.form["Attack"],
-        "Defense": request.form["Defense"],
-        "SpAttack": request.form["SpAttack"],
-        "SpDefense": request.form["SpDefense"],
-        "Speed": request.form["Speed"]
-        }
-        #pokemon.append(formPokemon)
-        try:
-            db.pokemon.insert_one(formPokemon)
-            logger.debug(f"Pokemon Post {formPokemon}")
-        except Exception as e:
-            logger.debug("No se pudo insertar. ", e)
-        return f"Pokemon {formPokemon}"
-
-@app.route("/putPokemon/<id>", methods=["PUT"]) 
-def updatePokemon(id):
-    if request.method == "PUT":
-        REQUEST_COUNT.inc()
-        formPokemon = {"$set": {
-        "Id": request.form["Id"],
-        "Name": request.form["Name"],
-        "Type1": request.form["Type1"],
-        "Type2": request.form["Type2"],
-        "Category": request.form["Category"],
-        "Heightf": request.form["Heightf"],
-        "Heightm": request.form["Heightm"],
-        "Weightlbs": request.form["Weightlbs"],
-        "Weightkg": request.form["Weightkg"],
-        "CaptureRate": request.form["CaptureRate"],
-        "EggSteps": request.form["EggSteps"],
-        "ExpGroup": request.form["ExpGroup"],
-        "Total": request.form["Total"],
-        "HP": request.form["HP"],
-        "Attack": request.form["Attack"],
-        "Defense": request.form["Defense"],
-        "SpAttack": request.form["SpAttack"],
-        "SpDefense": request.form["SpDefense"],
-        "Speed": request.form["Speed"]
-        }}
+        
         
         try:
-            db.pokemon.update_one({"Id": id}, formPokemon)
-            logger.debug(f"Pokemon Update {formPokemon['$set']}")
+            
+            email =request.form["email"]
+            password = request.form["password"]
+            userInfo = json.dumps({"email": email, "password": password, "return_secure_token":True})
+            r = requests.post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyAFj0oFcEqOdCL1NFlbGVhvirpxrKqx_LY", userInfo)
+            if r:
+                logger.debug("El usuario sí existe")
+            else:
+                logger.debug("El usuario no existe")
         except Exception as e:
-            logger.debug("No se pudo actualizar. ", e)
-        return f"Pokemon Update {formPokemon['$set']}"
+            logger.debug("Ese correo electrónico no está registado", e)
+        return f"Pokemon"
+
+@app.route("/register", methods=["POST"]) 
+def register():
+    if request.method == "POST":
+        logger.debug("Llegó el request")
+        REQUEST_COUNT.inc()
+        pEmail = request.form["email"]
+        pPassword = request.form["password"]
+        pPhone = request.form["phone"]
+        pDisplayName = request.form["name"] + " " + request.form["last_name1"] + " " + request.form["last_name2"]        
+        try:
+            user = auth.create_user(email = pEmail, password = pPassword, phone_number = pPhone, display_name = pDisplayName)
+        except Exception as e:
+            logger.debug(str(e))
+            logger.debug("El usuario ya está registrado.", e)
+        return "Usuario registrado"
+
 
 
             
