@@ -1,0 +1,16 @@
+{
+  index: "mainIndex",
+  text: {
+    path: {
+      wildcard: "*"
+    },
+    query: "content",
+  },
+  highlight: {
+    path: {
+      wildcard: "*"
+    },
+  }
+}
+
+reads all fields that are strings

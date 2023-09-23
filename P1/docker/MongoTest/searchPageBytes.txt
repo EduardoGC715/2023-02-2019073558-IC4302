@@ -1,0 +1,12 @@
+{
+  index: "mainIndex",
+  equals: {
+    path: "PageBytes",
+    value: 200,
+  },
+  highlight: {
+    path: "PageBytes",
+  },
+}
+
+remember to add a string type to the search index for numbers and dates.

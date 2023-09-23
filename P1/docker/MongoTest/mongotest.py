@@ -6,42 +6,42 @@ app = Flask(__name__)
 
 documents = [
     {
-        "PageId": 2,
-        "PageTitle": "Sample Page 2",
-        "PageNamespace": "Sample Namespace",
-        "PageRedirect": "Redirected Page",
+        "PageId": 4,
+        "PageTitle": "Special Page 4",
+        "PageNamespace": "Unique Namespace",
+        "PageRedirect": "Custom Redirect",
         "PageHasRedirect": True,
-        "PageRestrictions": ["Restriction A", "Restriction B"],
-        "PageLastModified": "2023-09-23",
-        "PageLastModifiedUser": "John Doe",
-        "PageBytes": 200,
-        "PageText": "Sample content for Page 2",
-        "PageWikipediaLink": "https://en.wikipedia.org/sample_page_2",
-        "pageWikipediaGenerated": "https://en.wikipedia.org/sample_page_2/generated",
-        "PageLinks": ["Link 1", "Link 2", "Link 3"],
-        "PageNumberLinks": 3,
-        "SiteInfoName": "Sample Site",
-        "SiteInfoDBName": "sample_db",
-        "SiteLanguage": "English"
+        "PageRestrictions": ["Restriction E", "Restriction F"],
+        "PageLastModified": "2023-09-26",
+        "PageLastModifiedUser": "Alice Smith",
+        "PageBytes": 400,
+        "PageText": "Special content for Page 4",
+        "PageWikipediaLink": "https://en.wikipedia.org/special_page_4",
+        "pageWikipediaGenerated": "https://en.wikipedia.org/special_page_4/generated",
+        "PageLinks": ["Linkingpark", "Link Y", "Link Z"],
+        "PageNumberLinks": 6,
+        "SiteInfoName": "Unique Site",
+        "SiteInfoDBName": "unique_db",
+        "SiteLanguage": "German"
     },
     {
-        "PageId": 3,
-        "PageTitle": "Sample Page 3",
-        "PageNamespace": "Sample Namespace",
-        "PageRedirect": "Redirected Page",
+        "PageId": 5,
+        "PageTitle": "Extraordinary Page 5",
+        "PageNamespace": "Unique Namespace",
+        "PageRedirect": "Custom Redirect",
         "PageHasRedirect": False,
-        "PageRestrictions": ["Restriction C", "Restriction D"],
-        "PageLastModified": "2023-09-24",
-        "PageLastModifiedUser": "Jane Doe",
-        "PageBytes": 300,
-        "PageText": "Sample content for Page 3",
-        "PageWikipediaLink": "https://en.wikipedia.org/sample_page_3",
-        "pageWikipediaGenerated": "https://en.wikipedia.org/sample_page_3/generated",
-        "PageLinks": ["Link A", "Link B", "Link C"],
-        "PageNumberLinks": 3,
-        "SiteInfoName": "Sample Site",
-        "SiteInfoDBName": "sample_db",
-        "SiteLanguage": "English"
+        "PageRestrictions": ["Restriction G", "Restriction H"],
+        "PageLastModified": "2023-09-27",
+        "PageLastModifiedUser": "Bob Johnson",
+        "PageBytes": 500,
+        "PageText": "Extraordinary content for Page 5",
+        "PageWikipediaLink": "https://en.wikipedia.org/extraordinary_page_5",
+        "pageWikipediaGenerated": "https://en.wikipedia.org/extraordinary_page_5/generated",
+        "PageLinks": ["Link P", "Link Q", "Link R"],
+        "PageNumberLinks": 7,
+        "SiteInfoName": "Unique Site",
+        "SiteInfoDBName": "unique_db",
+        "SiteLanguage": "Spanish"
     },
     # Add more documents as needed
 ]
@@ -75,10 +75,10 @@ def home():
 </html>
 ''')
 
-def searchQuery(searchQuery):
+def textSearchQuery(searchQuery):
     pipeline = [
   {
-    "$searchMeta": {
+    "$search": {
       "index": "mainIndex",
       "facet": {
         "operator": {
@@ -86,7 +86,7 @@ def searchQuery(searchQuery):
             "must": [
               {
                 "text": {
-                  "query": "wikipedia",
+                  "query": searchQuery,
                   "path": {
                     "wildcard": "*"
                   }
@@ -151,8 +151,7 @@ def searchQuery(searchQuery):
 
 if __name__ == "__main__":
     mongo = mongoDBConnection()
-    print(searchQuery("Doe"))
-    results = list(mongo.db.pages.aggregate(searchQuery("Doe")))
+    results = list(mongo.db.pages.aggregate(textSearchQuery("Doe")))
     print(results)
     for i, item in enumerate(results, 1):
         print(f"Item {i}: {item}")
