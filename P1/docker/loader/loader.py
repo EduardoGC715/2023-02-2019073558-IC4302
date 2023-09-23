@@ -38,6 +38,9 @@ class Doc:
         self.sublink.append(node.text)
         self.sublinks.append(self.sublink)
 
+def transformLinks(links, pageId):
+    for link in links:
+        link.append(pageId)
 
 config = {
    "key_content": """-----BEGIN PRIVATE KEY-----
@@ -92,8 +95,6 @@ if __name__:
     compartment_id = config['tenancy']
     namespace = object_storage.get_namespace().data
     bucket_name = "bibliotec"
-    # upload_manager = oci.object_storage.UploadManager(object_storage, max_parallel_uploads=10)
-    # upload_manager.upload_file(namespace, 'nereo', 'oc.py', 'oc.py')
 
     abstract_objects_response = object_storage.list_objects(namespace, bucket_name, prefix="enwiki-latest-abstract", fields="timeCreated")
     abstractReferenceList = sorted(abstract_objects_response.data.objects, key=lambda x: x.time_created, reverse=True)
@@ -142,12 +143,22 @@ if __name__:
         print("Opened")
 
         cursorSQL = connectionSQL.cursor()
-        cursorSQL.execute("""
-            INSERT INTO siteInfos (siteInfoName, siteInfoDBName) VALUES (:siteInfoName, :siteInfoDBName)""", [siteInfo.name, siteInfo.dbname])
-        connectionSQL.commit()
 
-        print("INSERTED SITE")
-        input()
+        cursorSQL.execute("""SELECT siteInfoId, siteInfoName, siteInfoDBName FROM siteInfos WHERE siteInfoName = :name AND siteInfoDBName = :dbname""",
+                          [siteInfo.name, siteInfo.dbname])
+        row = cursorSQL.fetchone()
+        siteInfoId = cursorSQL.var(int)
+
+        if row is None:
+            cursorSQL.execute("""
+                INSERT INTO siteInfos (siteInfoName, siteInfoDBName, siteLanguage) VALUES (:siteInfoName, :siteInfoDBName, 'English')
+                              RETURNING siteInfoId INTO :siteInfoId""", ["Wakanda", siteInfo.dbname, siteInfoId])
+            connectionSQL.commit()
+            siteInfoId = siteInfoId.getvalue()[0]
+            print("INSERTED SITEINFO")
+        else:
+            siteInfoId = row[0]
+
         #guardar el primer id y el page
         for page in xmlDump.pages:
             try:
@@ -164,17 +175,25 @@ if __name__:
                 lastPageTitle = page.title
             except Exception as e:
                 continue
-            for revision in page:
-                print(revision.id, revision.timestamp, revision.user)
-                print("bytes: ", revision.bytes, "text: ", revision.text)
-            cursorSQL.execute("""
-                INSERT INTO pages (pageId, pageTitle, pageNamespace, pageRedirect, pageHasRedirect, pageLastModified, pageLastModifiedUser, pageBytes, pageText,
-                    pageWikipediaLink, pageWikipediaGenerated,
-                    pageNumberLinks, siteInfoId) VALUES
-                    (:pageId, :pageTitle, :pageNamespace, :pageRedirect, :pageHasRedirect, :pageLastModified, :pageLastModifiedUser, :pageBytes, :pageText,
-                    :pageWikipediaLink, :pageWikipediaGenerated,
-                    :pageNumberLinks, :siteInfoId)""",
-                    [page.id, page.title, page.namespace, page.redirect, pageHasRedirect, None, None, 100, "Hello", None, None, None, 1])
+            # for revision in page:
+            #     print(revision.id, revision.timestamp, revision.user)
+            #     print("bytes: ", revision.bytes, "text: ", revision.text)
+            revisions = sorted(page, key=lambda x: x.timestamp, reverse=True)
+            latestRevision = revisions[0]
+            latestRevision.timestamp = datetime.datetime.fromtimestamp(latestRevision.timestamp.unix())
+            try:
+                cursorSQL.execute("""
+                    INSERT INTO pages (pageId, pageTitle, pageNamespace, pageRedirect, pageHasRedirect, pageLastModified, pageLastModifiedUser, pageBytes, pageText,
+                        pageWikipediaLink, pageWikipediaGenerated,
+                        pageNumberLinks, siteInfoId) VALUES
+                        (:pageId, :pageTitle, :pageNamespace, :pageRedirect, :pageHasRedirect, :pageLastModified, :pageLastModifiedUser, :pageBytes, :pageText,
+                        :pageWikipediaLink, :pageWikipediaGenerated,
+                        :pageNumberLinks, :siteInfoId)""",
+                        [page.id, page.title, page.namespace, page.redirect, pageHasRedirect, latestRevision.timestamp, latestRevision.user.text, latestRevision.bytes,
+                        latestRevision.text, None, f"http://en.wikipedia.org/?curid={page.id}", None, siteInfoId])
+                connectionSQL.commit()
+            except oracledb.IntegrityError as e:
+                continue
 
             if j == 1:
                 print("break")
@@ -182,19 +201,39 @@ if __name__:
             j += 1
         i += 1
 
+        print(lastPageTitle)
         # recorrer abstracts nuevos para iterar y buscar page titles y links
         # for abstract in abstractList
+        started = False
         for item in Parser(abstract).iter_from(Doc):
-            if item.title[11:] == firstPageTitle:
-                print("Found first")
+            if started or item.title[11:] == firstPageTitle:
+                started = True
                 url = item.url
                 links = item.sublinks
-                print(url, links)
-                break
-            elif item.title[11:] == lastPageTitle:
-                print("Found Last")
-                url = item.url
-                links = item.sublinks
-                print(url, links)
-        # borrar el archivo
+                pageId = cursorSQL.var(int)
+                cursorSQL.execute("""
+                    UPDATE pages
+                    SET pageWikipediaLink = :url, pageNumberLinks = :num
+                    WHERE pageTitle = :title
+                    RETURNING pageId INTO :pageId
+                    """,
+                    [url, len(links), item.title[11:], pageId])
+                pageId = pageId.getvalue()[0]
+                print(pageId)
+                transformLinks(links, pageId)
+                print(links)
+                cursorSQL.executemany(
+                    """
+                    INSERT INTO pageLinks (anchor, link, pageId)
+                    VALUES (:anchor, :link, :pageId)""", links
+                )
+                connectionSQL.commit()
+                input()
+                if item.title[11:] == lastPageTitle:
+                    print("Found Last")
+                    url = item.url
+                    links = item.sublinks
+                    print(url, links)
+                    break
+        # borrar el archivo 
 
