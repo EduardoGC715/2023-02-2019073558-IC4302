@@ -1,2 +1,4 @@
 oci
+oracledb
 mwxml
+bigxml

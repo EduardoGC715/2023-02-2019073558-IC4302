@@ -1,6 +1,9 @@
-FROM python:3.11.4-alpine3.18
+FROM python:3.11-slim
 
 WORKDIR /app
+
+RUN apt-get update
+RUN apt-get install -y build-essential
 
 COPY requirements.txt .
 COPY loader.py .
