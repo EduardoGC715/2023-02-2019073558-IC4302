@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template_string
 from flask_pymongo import PyMongo
 from datetime import datetime
+import json
 
 app = Flask(__name__)
 
@@ -192,8 +193,17 @@ def textSearchQuery(searchQuery):
       pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageLastModified", "value": datetime.strptime(searchQuery, "%Y-%m-%d")}}) 
     return pipeline
 
+def pretty_print_dict(d, indent=0):
+    for key, value in d.items():
+        if isinstance(value, dict):
+            print('  ' * indent + f'{key}:')
+            pretty_print_dict(value, indent + 1)
+        else:
+            print('  ' * indent + f'{key}: {value}')
+
 if __name__ == "__main__":
     mongo = mongoDBConnection()
-    results = list(mongo.db.pages.aggregate(textSearchQuery("4")))[0]
-    print(results["docs"])
+    results = list(mongo.db.pages.aggregate(textSearchQuery("Sample")))[0]
+    for highlight in results["highlights"]:
+      pretty_print_dict(highlight)
     #app.run()
