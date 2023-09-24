@@ -75,84 +75,125 @@ def home():
 </html>
 ''')
 
+def isValidDate(dateStr):
+    try:
+        datetime.strptime(dateStr, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
 def textSearchQuery(searchQuery):
     pipeline = [
-  {
-    "$search": {
-      "index": "mainIndex",
-      "facet": {
-        "operator": {
-          "compound": {
-            "must": [
-              {
-                "text": {
-                  "query": searchQuery,
-                  "path": {
-                    "wildcard": "*"
-                  }
+    {
+        '$search': {
+            'index': 'mainIndex', 
+            'facet': {
+                'operator': {
+                    "compound": {
+                        "should": [
+                            {
+                                "text":{
+                                    "path":{
+                                        "wildcard": "*"
+                                    },
+                                    "query": str(searchQuery)
+                                }
+                            },
+                        ],
+                        "minimumShouldMatch": 1
+                    }
+                }, 
+                'facets': {
+                    'PageLastModifiedUserFacet': {
+                        'type': 'string', 
+                        'path': 'PageLastModifiedUser'
+                    }, 
+                    'PageNamespaceFacet': {
+                        'type': 'string', 
+                        'path': 'PageNamespace'
+                    }, 
+                    'SiteInfoNameFacet': {
+                        'type': 'string', 
+                        'path': 'SiteInfoName'
+                    }, 
+                    'SiteInfoDBNameFacet': {
+                        'type': 'string', 
+                        'path': 'SiteInfoDBName'
+                    }, 
+                    'SiteLanguageFacet': {
+                        'type': 'string', 
+                        'path': 'SiteLanguage'
+                    }, 
+                    'PageRestrictionsFacet': {
+                        'type': 'string', 
+                        'path': 'PageRestrictions'
+                    },
+                      'PageBytesFacet': {
+                        'type': 'number', 
+                        'path': 'PageBytes',
+                        'boundaries': [0, 1000, 10000, 20000, 30000, 40000, 50000]
+                    }, 
+                      'PageNumberLinksFacet': {
+                        'type': 'number', 
+                        'path': 'PageNumberLinks',
+                        'boundaries': [1, 2, 3, 4, 5]
+                    },
+                      "PageLastModifiedFacet": {
+                        "type": "date",
+                        "path": "PageLastModified",
+                        "boundaries": [ 
+                            datetime(2000, 1, 1, 0, 0, 0),
+                            datetime(2005, 1, 1, 0, 0, 0),
+                            datetime(2010, 1, 1, 0, 0, 0),
+                            datetime(2015, 1, 1, 0, 0, 0),
+                            datetime(2020, 1, 1, 0, 0, 0),
+                            datetime(2025, 1, 1, 0, 0, 0)
+                        ]
+                    }, 
+                      'PageHasRedirectFacet': {
+                        'type': 'string', 
+                        'path': 'PageHasRedirect',
+                    }
                 }
-              }
-            ]
-          }
-        },
-        "facets": {
-          "PageNamespaceFacet": {
-            "type": "string",
-            "path": "PageNamespace"
-          },
-          "PageBytesFacet": {
-            "type": "number",
-            "path": "PageBytes",
-            "boundaries": [0, 1000, 5000, 10000]
-          },
-          "PageHasRedirectFacet": {
-            "type": "string",
-            "path": "PageHasRedirect"
-          },
-          "PageRestrictionsFacet": {
-            "type": "string",
-            "path": "PageRestrictions"
-          },
-          "SiteInfoNameFacet": {
-            "type": "string",
-            "path": "SiteInfoName"
-          },
-          "SiteInfoDBNameFacet": {
-            "type": "string",
-            "path": "SiteInfoDBName"
-          },
-          "SiteLanguageFacet": {
-            "type": "string",
-            "path": "SiteLanguage"
-          },
-          "PageLastModifiedFacet": {
-            "type": "date",
-            "path": "PageLastModified",
-            "boundaries": [
-              datetime(2023, 9, 1),
-              datetime(2023, 9, 18)
-            ]
-          },
-          "PageLastModifiedUserFacet": {
-            "type": "string",
-            "path": "PageLastModifiedUser"
-          },
-          "PageNumberLinksFacet": {
-            "type": "number",
-            "path": "PageNumberLinks",
-            "boundaries": [0, 10, 20]
-          },
+            }, 
+            'highlight': {
+                'path': {
+                    'wildcard': '*'
+                }
+            }
         }
-      }
+    }, {
+        '$facet': {
+            'docs': [], 
+            'facets': [
+                {
+                    '$replaceWith': '$$SEARCH_META'
+                }, {
+                    '$limit': 1
+                }
+            ], 
+            'highlights': [
+                {
+                    '$project': {
+                        'highlights': {
+                            '$meta': 'searchHighlights'
+                        }
+                    }
+                }
+            ]
+        }
     }
-  }
-]
+]   
+    if searchQuery.isnumeric():
+      pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageBytes", "value": int(searchQuery)}})
+      pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageId", "value": int(searchQuery)}})
+      pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageNumberLinks", "value": int(searchQuery)}})
+    elif isValidDate(searchQuery):
+      pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageLastModified", "value": datetime.strptime(searchQuery, "%Y-%m-%d")}}) 
     return pipeline
 
 if __name__ == "__main__":
     mongo = mongoDBConnection()
-    results = list(mongo.db.pages.aggregate(textSearchQuery("Doe")))
-    print(results)
-    for i, item in enumerate(results, 1):
-        print(f"Item {i}: {item}")
+    results = list(mongo.db.pages.aggregate(textSearchQuery("4")))[0]
+    print(results["docs"])
     #app.run()

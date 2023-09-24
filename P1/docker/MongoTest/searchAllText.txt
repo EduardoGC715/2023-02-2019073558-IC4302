@@ -1,16 +1,99 @@
-{
-  index: "mainIndex",
-  text: {
-    path: {
-      wildcard: "*"
-    },
-    query: "content",
-  },
-  highlight: {
-    path: {
-      wildcard: "*"
-    },
-  }
-}
-
-reads all fields that are strings
+[
+    {
+        '$search': {
+            'index': 'mainIndex', 
+            'facet': {
+                'operator': {
+                    "compound": {
+                        "should": [
+                            {
+                                "text":{
+                                    "path":{
+                                        wildcard: "*"
+                                    },
+                                    "query": "3"
+                                }
+                            },
+                        ],
+                        "minimumShouldMatch": 1
+                    }
+                }, 
+                'facets': {
+                    'PageLastModifiedUserFacet': {
+                        'type': 'string', 
+                        'path': 'PageLastModifiedUser'
+                    }, 
+                    'PageNamespaceFacet': {
+                        'type': 'string', 
+                        'path': 'PageNamespace'
+                    }, 
+                    'SiteInfoNameFacet': {
+                        'type': 'string', 
+                        'path': 'SiteInfoName'
+                    }, 
+                    'SiteInfoDBNameFacet': {
+                        'type': 'string', 
+                        'path': 'SiteInfoDBName'
+                    }, 
+                    'SiteLanguageFacet': {
+                        'type': 'string', 
+                        'path': 'SiteLanguage'
+                    }, 
+                    'PageRestrictionsFacet': {
+                        'type': 'string', 
+                        'path': 'PageRestrictions'
+                    },
+                      'PageBytesFacet': {
+                        'type': 'number', 
+                        'path': 'PageBytes',
+                        'boundaries': [0, 1000, 10000, 20000, 30000, 40000, 50000]
+                    }, 
+                      'PageNumberLinksFacet': {
+                        'type': 'number', 
+                        'path': 'PageNumberLinks',
+                        'boundaries': [1, 2, 3, 4, 5]
+                    },
+                      "PageLastModifiedFacet": {
+                        "type": "date",
+                        "path": "PageLastModified",
+                        "boundaries": [ 
+                            ISODate('2000-01-01T00:00:00Z'),
+                            ISODate('2001-01-01T00:00:00Z'),
+                            ISODate('2002-01-01T00:00:00Z'),
+                            ISODate('2003-01-01T00:00:00Z')
+                        ]
+                    }, 
+                      'PageHasRedirectFacet': {
+                        'type': 'string', 
+                        'path': 'PageHasRedirect',
+                    }
+                }
+            }, 
+            'highlight': {
+                'path': {
+                    'wildcard': '*'
+                }
+            }
+        }
+    }, {
+        '$facet': {
+            'docs': [], 
+            'facets': [
+                {
+                    '$replaceWith': '$$SEARCH_META'
+                }, {
+                    '$limit': 1
+                }
+            ], 
+            'highlights': [
+                {
+                    '$project': {
+                        'highlights': {
+                            '$meta': 'searchHighlights'
+                        }
+                    }
+                }
+            ]
+        }
+    }
+]

@@ -1,0 +1,10 @@
+{
+  index: "mainIndex",
+  equals: {
+    path: "PageHasRedirect",
+    value: true, //change to vaue to search
+  },
+  highlight: {
+    path: "PageHasRedirect",
+  },
+}
