@@ -3,7 +3,7 @@
   "PageTitle": "wikipagetitle",
   "PageNamespace": "wikinamespace",
   "PageRedirect": "wikiredirect",
-  "PageHasRedirect": false,
+  "PageHasRedirect": "false",
   "PageRestrictions": ["wikirest1", "wikirest2"],
   "PageLastModified": "wikidate",
   "PageLastModifiedUser": "wikiuser",

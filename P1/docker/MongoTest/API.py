@@ -102,22 +102,39 @@ def textSearchQuery(searchQuery):
         }
     }, {
         '$facet': {
-            'docs': [], 
+            'docs': [
+                { 
+                    "$project": {
+                        "_id": {
+                            "$toString": "$_id"
+                        },
+                        "PageBytes": 1,
+                        "PageHasRedirect": 1,
+                        "PageId": 1,
+                        "PageLastModified": 1,
+                        "PageLastModifiedUser": 1,
+                        "PageLinks": 1,
+                        "PageNamespace": 1,
+                        "PageNumberLinks": 1,
+                        "PageRedirect": 1,
+                        "PageRestrictions": 1,
+                        "PageText": 1,
+                        "PageTitle": 1,
+                        "PageWikipediaLink": 1,
+                        "SiteInfoDBName": 1,
+                        "SiteInfoName": 1,
+                        "SiteLanguage": 1,
+                        "pageWikipediaGenerated": 1,
+                        "highlights": { "$meta": "searchHighlights" }
+                    }
+                }
+            ], 
             'facets': [
                 {
                     '$replaceWith': '$$SEARCH_META'
                 }, {
                     '$limit': 1
-                }
-            ], 
-            'highlights': [
-                {
-                    '$project': {
-                        'highlights': {
-                            '$meta': 'searchHighlights'
-                        }
-                    }
-                }
+                },
             ]
         }
     }
@@ -130,20 +147,20 @@ def textSearchQuery(searchQuery):
       pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageLastModified", "value": dt.datetime.strptime(searchQuery, "%Y-%m-%d")}}) 
     return pipeline
 
-def filteredTextSearchQuery(searchQuery, PageLastModifiedUser="", PageNamespace="", SiteInfoName="", SiteInfoDBName="", SiteLanguage="", PageRestrictions="", PageBytes="", PageNumberLinks="", PageLastModified="", PageHasRedirect="" ):
+def filteredTextSearchQuery(searchQuery, PageLastModifiedUser, PageNamespace, SiteInfoName, SiteInfoDBName, SiteLanguage, PageRestrictions, PageBytes, PageNumberLinks, PageLastModified, PageHasRedirect):
     pipeline = textSearchQuery(searchQuery)
     if PageLastModifiedUser:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "PageLastModifiedUser", "query": PageLastModifiedUser}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "PageLastModifiedUser", "query": PageLastModifiedUser}})
     if PageNamespace:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "PageNamespace", "query": PageNamespace}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "PageNamespace", "query": PageNamespace}})
     if SiteInfoName:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "SiteInfoName", "query": SiteInfoName}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "SiteInfoName", "query": SiteInfoName}})
     if SiteInfoDBName:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "SiteInfoDBName", "query": SiteInfoDBName}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "SiteInfoDBName", "query": SiteInfoDBName}})
     if SiteLanguage:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "SiteLanguage", "query": SiteLanguage}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "SiteLanguage", "query": SiteLanguage}})
     if PageRestrictions:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "PageRestrictions", "query": PageRestrictions}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "PageRestrictions", "query": PageRestrictions}})
     if PageBytes:
         pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"equals": {"path": "PageBytes", "value": int(PageBytes)}})
     if PageNumberLinks:
@@ -154,7 +171,7 @@ def filteredTextSearchQuery(searchQuery, PageLastModifiedUser="", PageNamespace=
         newIsoDate = newDate.isoformat()
         pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"range": {"path": "PageLastModified", "lt": PageLastModified, "gt": newIsoDate}})
     if PageHasRedirect:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "PageHasRedirect", "query": PageHasRedirect}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "PageHasRedirect", "query": PageHasRedirect}})
     return pipeline
 
 @app.route("/")
@@ -169,9 +186,19 @@ def home():
     </body>
 </html>
 ''')
+@app.route("/mongodb/get_data/<query>", methods=["GET"])
+def get_data (query):
+    filters = request.get_json()
+    pipeline = filteredTextSearchQuery(query, filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
+    results = list(mongo.db.pages.aggregate(pipeline))[0]
+    print(pipeline)
+    print(results)
+    print(query)
+    print(filters)
+    
+    return results
+
 
 if __name__ == "__main__":
     mongo = mongoDBConnection()
-    results = list(mongo.db.pages.aggregate(filteredTextSearchQuery("content", PageLastModifiedUser="\"John Doe\"")))[0]
-    print(results)
-    #app.run()
+    app.run()
