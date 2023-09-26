@@ -1,51 +1,8 @@
 from flask import Flask, request, render_template_string
 from flask_pymongo import PyMongo
-from datetime import datetime
-import json
+import datetime as dt
 
 app = Flask(__name__)
-
-documents = [
-    {
-        "PageId": 4,
-        "PageTitle": "Special Page 4",
-        "PageNamespace": "Unique Namespace",
-        "PageRedirect": "Custom Redirect",
-        "PageHasRedirect": True,
-        "PageRestrictions": ["Restriction E", "Restriction F"],
-        "PageLastModified": "2023-09-26",
-        "PageLastModifiedUser": "Alice Smith",
-        "PageBytes": 400,
-        "PageText": "Special content for Page 4",
-        "PageWikipediaLink": "https://en.wikipedia.org/special_page_4",
-        "pageWikipediaGenerated": "https://en.wikipedia.org/special_page_4/generated",
-        "PageLinks": ["Linkingpark", "Link Y", "Link Z"],
-        "PageNumberLinks": 6,
-        "SiteInfoName": "Unique Site",
-        "SiteInfoDBName": "unique_db",
-        "SiteLanguage": "German"
-    },
-    {
-        "PageId": 5,
-        "PageTitle": "Extraordinary Page 5",
-        "PageNamespace": "Unique Namespace",
-        "PageRedirect": "Custom Redirect",
-        "PageHasRedirect": False,
-        "PageRestrictions": ["Restriction G", "Restriction H"],
-        "PageLastModified": "2023-09-27",
-        "PageLastModifiedUser": "Bob Johnson",
-        "PageBytes": 500,
-        "PageText": "Extraordinary content for Page 5",
-        "PageWikipediaLink": "https://en.wikipedia.org/extraordinary_page_5",
-        "pageWikipediaGenerated": "https://en.wikipedia.org/extraordinary_page_5/generated",
-        "PageLinks": ["Link P", "Link Q", "Link R"],
-        "PageNumberLinks": 7,
-        "SiteInfoName": "Unique Site",
-        "SiteInfoDBName": "unique_db",
-        "SiteLanguage": "Spanish"
-    },
-    # Add more documents as needed
-]
 
 def mongoDBConnection (): 
     try:
@@ -55,30 +12,9 @@ def mongoDBConnection ():
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def addDocuments(documents, mongo):
-    try:
-        db = mongo.db  # Get the database object
-        result = db["pages"].insert_many(documents)
-        return result.inserted_ids
-    except Exception as e:
-        raise e
-    
-@app.route("/")
-def home():
-    return render_template_string('''<!doctype html>
-<html>
-    <head>
-        <link rel="stylesheet" href="css url"/>
-    </head>
-    <body>
-        <p>Aplicación de Mongo!</p>
-    </body>
-</html>
-''')
-
 def isValidDate(dateStr):
     try:
-        datetime.strptime(dateStr, "%Y-%m-%d")
+        dt.datetime.strptime(dateStr, "%Y-%m-%d")
         return True
     except ValueError:
         return False
@@ -91,6 +27,7 @@ def textSearchQuery(searchQuery):
             'facet': {
                 'operator': {
                     "compound": {
+                        "must":[],
                         "should": [
                             {
                                 "text":{
@@ -143,12 +80,12 @@ def textSearchQuery(searchQuery):
                         "type": "date",
                         "path": "PageLastModified",
                         "boundaries": [ 
-                            datetime(2000, 1, 1, 0, 0, 0),
-                            datetime(2005, 1, 1, 0, 0, 0),
-                            datetime(2010, 1, 1, 0, 0, 0),
-                            datetime(2015, 1, 1, 0, 0, 0),
-                            datetime(2020, 1, 1, 0, 0, 0),
-                            datetime(2025, 1, 1, 0, 0, 0)
+                            dt.datetime(2000, 1, 1, 0, 0, 0),
+                            dt.datetime(2005, 1, 1, 0, 0, 0),
+                            dt.datetime(2010, 1, 1, 0, 0, 0),
+                            dt.datetime(2015, 1, 1, 0, 0, 0),
+                            dt.datetime(2020, 1, 1, 0, 0, 0),
+                            dt.datetime(2025, 1, 1, 0, 0, 0)
                         ]
                     }, 
                       'PageHasRedirectFacet': {
@@ -190,20 +127,51 @@ def textSearchQuery(searchQuery):
       pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageId", "value": int(searchQuery)}})
       pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageNumberLinks", "value": int(searchQuery)}})
     elif isValidDate(searchQuery):
-      pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageLastModified", "value": datetime.strptime(searchQuery, "%Y-%m-%d")}}) 
+      pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageLastModified", "value": dt.datetime.strptime(searchQuery, "%Y-%m-%d")}}) 
     return pipeline
 
-def pretty_print_dict(d, indent=0):
-    for key, value in d.items():
-        if isinstance(value, dict):
-            print('  ' * indent + f'{key}:')
-            pretty_print_dict(value, indent + 1)
-        else:
-            print('  ' * indent + f'{key}: {value}')
+def filteredTextSearchQuery(searchQuery, PageLastModifiedUser="", PageNamespace="", SiteInfoName="", SiteInfoDBName="", SiteLanguage="", PageRestrictions="", PageBytes="", PageNumberLinks="", PageLastModified="", PageHasRedirect="" ):
+    pipeline = textSearchQuery(searchQuery)
+    if PageLastModifiedUser:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "PageLastModifiedUser", "query": PageLastModifiedUser}})
+    if PageNamespace:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "PageNamespace", "query": PageNamespace}})
+    if SiteInfoName:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "SiteInfoName", "query": SiteInfoName}})
+    if SiteInfoDBName:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "SiteInfoDBName", "query": SiteInfoDBName}})
+    if SiteLanguage:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "SiteLanguage", "query": SiteLanguage}})
+    if PageRestrictions:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "PageRestrictions", "query": PageRestrictions}})
+    if PageBytes:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"equals": {"path": "PageBytes", "value": int(PageBytes)}})
+    if PageNumberLinks:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"equals": {"path": "PageNumberLinks", "value": int(PageNumberLinks)}})
+    if PageLastModified:
+        dateObj = dt.datetime.fromisoformat(PageLastModified)
+        newDate = dateObj - dt.timedelta(days=365*5)
+        newIsoDate = newDate.isoformat()
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"range": {"path": "PageLastModified", "lt": PageLastModified, "gt": newIsoDate}})
+    if PageHasRedirect:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"text": {"path": "PageHasRedirect", "query": PageHasRedirect}})
+    return pipeline
+
+@app.route("/")
+def home():
+    return render_template_string('''<!doctype html>
+<html>
+    <head>
+        <link rel="stylesheet" href="css url"/>
+    </head>
+    <body>
+        <p>Aplicación de Mongo!</p>
+    </body>
+</html>
+''')
 
 if __name__ == "__main__":
     mongo = mongoDBConnection()
-    results = list(mongo.db.pages.aggregate(textSearchQuery("Sample")))[0]
-    for highlight in results["highlights"]:
-      pretty_print_dict(highlight)
+    results = list(mongo.db.pages.aggregate(filteredTextSearchQuery("content", PageLastModifiedUser="\"John Doe\"")))[0]
+    print(results)
     #app.run()
