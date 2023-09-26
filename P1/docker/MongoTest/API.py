@@ -37,7 +37,7 @@ def textSearchQuery(searchQuery):
                                 }
                             },
                         ],
-                        "must":[],
+                        "filter":[],
                         "minimumShouldMatch": 1
                     }
                 }, 
@@ -150,28 +150,28 @@ def textSearchQuery(searchQuery):
 def filteredTextSearchQuery(searchQuery, PageLastModifiedUser, PageNamespace, SiteInfoName, SiteInfoDBName, SiteLanguage, PageRestrictions, PageBytes, PageNumberLinks, PageLastModified, PageHasRedirect):
     pipeline = textSearchQuery(searchQuery)
     if PageLastModifiedUser:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "PageLastModifiedUser", "query": PageLastModifiedUser}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageLastModifiedUser", "query": PageLastModifiedUser}})
     if PageNamespace:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "PageNamespace", "query": PageNamespace}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageNamespace", "query": PageNamespace}})
     if SiteInfoName:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "SiteInfoName", "query": SiteInfoName}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "SiteInfoName", "query": SiteInfoName}})
     if SiteInfoDBName:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "SiteInfoDBName", "query": SiteInfoDBName}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "SiteInfoDBName", "query": SiteInfoDBName}})
     if SiteLanguage:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "SiteLanguage", "query": SiteLanguage}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "SiteLanguage", "query": SiteLanguage}})
     if PageRestrictions:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "PageRestrictions", "query": PageRestrictions}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageRestrictions", "query": PageRestrictions}})
     if PageBytes:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"equals": {"path": "PageBytes", "value": int(PageBytes)}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"equals": {"path": "PageBytes", "value": int(PageBytes)}})
     if PageNumberLinks:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"equals": {"path": "PageNumberLinks", "value": int(PageNumberLinks)}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"equals": {"path": "PageNumberLinks", "value": int(PageNumberLinks)}})
     if PageLastModified:
         dateObj = dt.datetime.fromisoformat(PageLastModified)
         newDate = dateObj - dt.timedelta(days=365*5)
         newIsoDate = newDate.isoformat()
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"range": {"path": "PageLastModified", "lt": PageLastModified, "gt": newIsoDate}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageLastModified", "lt": PageLastModified, "gt": newIsoDate}})
     if PageHasRedirect:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["must"].append({"phrase": {"path": "PageHasRedirect", "query": PageHasRedirect}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageHasRedirect", "query": PageHasRedirect}})
     return pipeline
 
 @app.route("/")
