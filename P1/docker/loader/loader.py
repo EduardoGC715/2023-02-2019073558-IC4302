@@ -10,7 +10,7 @@ import os
 import oracledb
 import json
 import time
-import flask_pymongo
+from pymongo import MongoClient
 
 # Código basado de
 # https://docs.oracle.com/en-us/iaas/tools/python/2.112.0/api/object_storage/client/oci.object_storage.ObjectStorageClient.html
@@ -174,7 +174,6 @@ if __name__:
                     INSERT INTO siteInfos (siteInfoName, siteInfoDBName, siteLanguage) VALUES (:siteInfoName, :siteInfoDBName, 'English')
                                 RETURNING siteInfoId INTO :siteInfoId""", ["Wakanda", siteInfo.dbname, siteInfoId])
                 connectionSQL.commit()
-                # TODO: aca estan los datos de site info
                 siteInfoId = siteInfoId.getvalue()[0]
                 print("INSERTED SITEINFO")
             # si ya hay un siteInfo con ese nombre y dbname, guarda el siteInfoId para insertarlo como FK.
@@ -216,7 +215,7 @@ if __name__:
                             [page.id, page.title, page.namespace, page.redirect, pageHasRedirect, latestRevision.timestamp, latestRevision.user.text, latestRevision.bytes,
                             latestRevision.text, None, f"http://en.wikipedia.org/?curid={page.id}", None, siteInfoId])
                     connectionSQL.commit()
-                    # TODO: aca estan los campos del multistream
+                    # TODO: TODOS MENOS Links
                 except oracledb.IntegrityError as e:
                     continue
 
@@ -265,7 +264,7 @@ if __name__:
                             WHERE pageTitle = :title
                             RETURNING pageId INTO :pageId
                             """,
-                            [url, len(links), item.title[11:], pageId])
+                            [url, len(links), item.title[11:], pageId]) #TODO: INFO DE LINKS
                         pageId = pageId.getvalue()[0]
                         # print(pageId)
                         transformLinks(links, pageId)
@@ -276,7 +275,6 @@ if __name__:
                             VALUES (:anchor, :link, :pageId)""", links
                         )
                         connectionSQL.commit()
-                        #TODO: aca esta los values de links
                         if item.title[11:] == lastPageTitle:
                             print("Found Last")
                             url = item.url
@@ -295,4 +293,3 @@ if __name__:
         
         logger.debug("Finished checking Object Storage...")
         time.sleep(120)
-
