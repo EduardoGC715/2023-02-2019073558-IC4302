@@ -27,7 +27,6 @@ def textSearchQuery(searchQuery):
             'facet': {
                 'operator': {
                     "compound": {
-                        "must":[],
                         "should": [
                             {
                                 "text":{
@@ -38,6 +37,7 @@ def textSearchQuery(searchQuery):
                                 }
                             },
                         ],
+                        "must":[],
                         "minimumShouldMatch": 1
                     }
                 }, 
@@ -191,13 +191,11 @@ def get_data (query):
     filters = request.get_json()
     pipeline = filteredTextSearchQuery(query, filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
     results = list(mongo.db.pages.aggregate(pipeline))[0]
-    print(pipeline)
-    print(results)
-    print(query)
-    print(filters)
+    for doc in results["docs"]:
+        for highlight in doc["highlights"]:
+            doc[highlight["path"]] = highlight["texts"]
     
     return results
-
 
 if __name__ == "__main__":
     mongo = mongoDBConnection()
