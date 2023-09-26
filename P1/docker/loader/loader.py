@@ -1,5 +1,6 @@
 import oci
-import datetime
+import pytz
+from datetime import datetime, timedelta, timezone
 import logging
 import mwxml
 from bigxml import Parser, xml_handle_element, xml_handle_text, BigXmlError, HandlerTypeHelper, XMLElement, XMLText
@@ -7,6 +8,8 @@ from dataclasses import dataclass, field
 from typing import List
 import os
 import oracledb
+import json
+import time
 
 # Código basado de
 # https://docs.oracle.com/en-us/iaas/tools/python/2.112.0/api/object_storage/client/oci.object_storage.ObjectStorageClient.html
@@ -87,153 +90,205 @@ if __name__:
      password="thisiswrongNereo08",
      dsn=cs)
 
-    if not os.path.exists("abstracts"):
-        os.mkdir("abstracts")
-
     oci.config.validate_config(config)
     object_storage = oci.object_storage.ObjectStorageClient(config)
     compartment_id = config['tenancy']
     namespace = object_storage.get_namespace().data
     bucket_name = "bibliotec"
 
-    abstract_objects_response = object_storage.list_objects(namespace, bucket_name, prefix="enwiki-latest-abstract", fields="timeCreated")
-    abstractReferenceList = sorted(abstract_objects_response.data.objects, key=lambda x: x.time_created, reverse=True)
-    print("", "abstract reference list")
-    print(abstractReferenceList)
-    abstractFileList = []
-    for abstractReference in abstractReferenceList:
-        # validar limite de procesamiento
-        abstractFileList.append(abstractReference.name)
-        if not os.path.exists(f"abstracts/{abstractReference.name}"):
-            abstractObject = object_storage.get_object(namespace, bucket_name, abstractReference.name).data
-            abstractFile = open(f"abstracts/{abstractReference.name}", 'wb')
-            abstractFile.write(abstractObject.content)
-            abstractFile.close()
-
+    # crea el folder donde se almacenarán los abstracts
+    if not os.path.exists("abstracts"):
+        os.mkdir("abstracts")
+    # Crea el folder donde se almacenarán los multistreams
     if not os.path.exists("multistreams"):
         os.mkdir("multistreams")
+    
+    while True:
+        try:
+            # lee el último timestamp procesado.
+            with open("processedLog.json", 'r') as processedLog:
+                data = json.load(processedLog)
+                lastProcessedTimestamp = datetime.fromisoformat(data["lastProcessedTimestamp"])
+        except Exception as e:
+            print(e)
+            tz = pytz.timezone('UTC')
+            lastProcessedTimestamp = tz.localize(datetime(1970, 1, 1, 0, 0)) # inicia con el valor del epoch
 
-    list_objects_response = object_storage.list_objects(namespace, bucket_name, prefix="enwiki-latest-pages-articles-multistream", fields="timeCreated")
-    objectList = sorted(list_objects_response.data.objects, key=lambda x: x.time_created, reverse=True)
-    print(objectList)
-    # recorremos todos los objetos y subimos
-    i = 0
-    for objectReference in objectList:
-        if i == 1:
-            break
-        # if (objectReference.name == "enwiki-latest-abstract10.xml"): #"enwiki-latest-pages-articles-multistream10.xml-p4045403p5399366"):
-        #    continue
-        print(objectReference.name)
-        if not os.path.exists(f"multistreams/{objectReference.name}"):
-            xmlReference = object_storage.get_object(namespace, bucket_name, objectReference.name).data
-            
-            xmlFile = open(f"multistreams/{objectReference.name}", 'wb')
-            xmlFile.write(xmlReference.content)
-            xmlFile.close()
-            print("written")
-    #   print(type(xmlFile))
+        logger.debug("Checking Object Storage...")
 
-        xmlDump = mwxml.Dump.from_file(open(f"multistreams/{objectReference.name}", 'rb'))
-        siteInfo = xmlDump.site_info
-        print("siteInfo:", siteInfo.name, siteInfo.dbname, siteInfo)
-        j=0
+        abstract_objects_response = object_storage.list_objects(namespace, bucket_name, prefix="enwiki-latest-abstract", fields="timeCreated")
+        abstractReferenceList = sorted(abstract_objects_response.data.objects, key=lambda x: x.time_created, reverse=True)
+        print("", "abstract reference list")
+        print(abstractReferenceList)
 
-        print("opening...")
-        abstract = open("abstracts/enwiki-latest-abstract3.xml", 'rb')
-        print("Opened")
 
-        cursorSQL = connectionSQL.cursor()
+        list_objects_response = object_storage.list_objects(namespace, bucket_name, prefix="enwiki-latest-pages-articles-multistream", fields="timeCreated")
+        objectList = sorted(list_objects_response.data.objects, key=lambda x: x.time_created, reverse=True)
+        print(objectList)
 
-        cursorSQL.execute("""SELECT siteInfoId, siteInfoName, siteInfoDBName FROM siteInfos WHERE siteInfoName = :name AND siteInfoDBName = :dbname""",
-                          [siteInfo.name, siteInfo.dbname])
-        row = cursorSQL.fetchone()
-        siteInfoId = cursorSQL.var(int)
+        objectProcessList = [] # lista donde se guardará el orden de los archivos a procesar.
 
-        if row is None:
-            cursorSQL.execute("""
-                INSERT INTO siteInfos (siteInfoName, siteInfoDBName, siteLanguage) VALUES (:siteInfoName, :siteInfoDBName, 'English')
-                              RETURNING siteInfoId INTO :siteInfoId""", ["Wakanda", siteInfo.dbname, siteInfoId])
-            connectionSQL.commit()
-            siteInfoId = siteInfoId.getvalue()[0]
-            print("INSERTED SITEINFO")
-        else:
-            siteInfoId = row[0]
-
-        #guardar el primer id y el page
-        for page in xmlDump.pages:
-            try:
-                if not j:
-                    firstPageId = page.id
-                    firstPageTitle = page.title
-                print(page.id)
-                print(page.title)
-                print(page.namespace)
-                print(page.redirect)
-                print(page.restrictions)
-                pageHasRedirect = 1 if page.redirect else 0
-                lastPageId = page.id
-                lastPageTitle = page.title
-            except Exception as e:
-                continue
-            # for revision in page:
-            #     print(revision.id, revision.timestamp, revision.user)
-            #     print("bytes: ", revision.bytes, "text: ", revision.text)
-            revisions = sorted(page, key=lambda x: x.timestamp, reverse=True)
-            latestRevision = revisions[0]
-            latestRevision.timestamp = datetime.datetime.fromtimestamp(latestRevision.timestamp.unix())
-            try:
-                cursorSQL.execute("""
-                    INSERT INTO pages (pageId, pageTitle, pageNamespace, pageRedirect, pageHasRedirect, pageLastModified, pageLastModifiedUser, pageBytes, pageText,
-                        pageWikipediaLink, pageWikipediaGenerated,
-                        pageNumberLinks, siteInfoId) VALUES
-                        (:pageId, :pageTitle, :pageNamespace, :pageRedirect, :pageHasRedirect, :pageLastModified, :pageLastModifiedUser, :pageBytes, :pageText,
-                        :pageWikipediaLink, :pageWikipediaGenerated,
-                        :pageNumberLinks, :siteInfoId)""",
-                        [page.id, page.title, page.namespace, page.redirect, pageHasRedirect, latestRevision.timestamp, latestRevision.user.text, latestRevision.bytes,
-                        latestRevision.text, None, f"http://en.wikipedia.org/?curid={page.id}", None, siteInfoId])
-                connectionSQL.commit()
-            except oracledb.IntegrityError as e:
-                continue
-
-            if j == 1:
-                print("break")
+        # recorremos todos los objetos y agregamos a la lista de iteración solo a los que son más nuevos que el último límite de procesamiento
+        for objectReference in objectList:
+            print(objectReference.time_created, lastProcessedTimestamp, objectReference.time_created > lastProcessedTimestamp)
+            if objectReference.time_created > lastProcessedTimestamp:
+                objectProcessList.insert(0, objectReference)
+            else:
                 break
-            j += 1
-        i += 1
 
-        print(lastPageTitle)
-        # recorrer abstracts nuevos para iterar y buscar page titles y links
-        # for abstract in abstractList
-        started = False
-        for item in Parser(abstract).iter_from(Doc):
-            if started or item.title[11:] == firstPageTitle:
-                started = True
-                url = item.url
-                links = item.sublinks
-                pageId = cursorSQL.var(int)
+        print("objectList", objectProcessList)
+        # input()
+        for objectReference in objectProcessList:
+            print(objectReference.name)
+
+            # Descargamos el archivo del object storage. Escribimos los bytes en un archivo para que pueda ser procesado por mwxml.
+            if not os.path.exists(f"multistreams/{objectReference.name}"):
+                xmlReference = object_storage.get_object(namespace, bucket_name, objectReference.name).data
+                xmlFile = open(f"multistreams/{objectReference.name}", 'wb')
+                xmlFile.write(xmlReference.content)
+                xmlFile.close()
+                print("written")
+        #   print(type(xmlFile))
+
+            # abrimos el archivo para procesarlo con mwxml.
+            xmlFile = open(f"multistreams/{objectReference.name}", 'rb')
+            xmlDump = mwxml.Dump.from_file(xmlFile)
+
+            # extraemos siteinfo
+            siteInfo = xmlDump.site_info
+            print("siteInfo:", siteInfo.name, siteInfo.dbname, siteInfo)
+
+            # cursor para los operaciones de SQL
+            cursorSQL = connectionSQL.cursor()
+
+            # revisamos si ya hay un siteinfo igual en la base de datos, para usar ese mismo como FK.
+            cursorSQL.execute("""SELECT siteInfoId, siteInfoName, siteInfoDBName FROM siteInfos WHERE siteInfoName = :name AND siteInfoDBName = :dbname""",
+                            [siteInfo.name, siteInfo.dbname])
+            row = cursorSQL.fetchone()
+            siteInfoId = cursorSQL.var(int)
+
+            # si no hay un siteinfo, lo inserta a la base de datos y guadra el id generado en siteInfoId.
+            if row is None:
                 cursorSQL.execute("""
-                    UPDATE pages
-                    SET pageWikipediaLink = :url, pageNumberLinks = :num
-                    WHERE pageTitle = :title
-                    RETURNING pageId INTO :pageId
-                    """,
-                    [url, len(links), item.title[11:], pageId])
-                pageId = pageId.getvalue()[0]
-                print(pageId)
-                transformLinks(links, pageId)
-                print(links)
-                cursorSQL.executemany(
-                    """
-                    INSERT INTO pageLinks (anchor, link, pageId)
-                    VALUES (:anchor, :link, :pageId)""", links
-                )
+                    INSERT INTO siteInfos (siteInfoName, siteInfoDBName, siteLanguage) VALUES (:siteInfoName, :siteInfoDBName, 'English')
+                                RETURNING siteInfoId INTO :siteInfoId""", ["Wakanda", siteInfo.dbname, siteInfoId])
                 connectionSQL.commit()
-                input()
-                if item.title[11:] == lastPageTitle:
-                    print("Found Last")
-                    url = item.url
-                    links = item.sublinks
-                    print(url, links)
+                siteInfoId = siteInfoId.getvalue()[0]
+                print("INSERTED SITEINFO")
+            # si ya hay un siteInfo con ese nombre y dbname, guarda el siteInfoId para insertarlo como FK.
+            else:
+                siteInfoId = row[0]
+
+            first = False
+            #guardar el primer id y el page
+            for page in xmlDump.pages:
+                try:
+                    if not first:
+                        firstPageId = page.id
+                        firstPageTitle = page.title
+                        first = True
+                    # print(page.id)
+                    # print(page.title)
+                    # print(page.namespace)
+                    # print(page.redirect)
+                    # print(page.restrictions)
+                    pageHasRedirect = 1 if page.redirect else 0
+                    lastPageId = page.id
+                    lastPageTitle = page.title
+                except Exception as e:
+                    continue
+                # for revision in page:
+                #     print(revision.id, revision.timestamp, revision.user)
+                #     print("bytes: ", revision.bytes, "text: ", revision.text)
+                revisions = sorted(page, key=lambda x: x.timestamp, reverse=True)
+                latestRevision = revisions[0]
+                latestRevision.timestamp = datetime.fromtimestamp(latestRevision.timestamp.unix())
+                try:
+                    cursorSQL.execute("""
+                        INSERT INTO pages (pageId, pageTitle, pageNamespace, pageRedirect, pageHasRedirect, pageLastModified, pageLastModifiedUser, pageBytes, pageText,
+                            pageWikipediaLink, pageWikipediaGenerated,
+                            pageNumberLinks, siteInfoId) VALUES
+                            (:pageId, :pageTitle, :pageNamespace, :pageRedirect, :pageHasRedirect, :pageLastModified, :pageLastModifiedUser, :pageBytes, :pageText,
+                            :pageWikipediaLink, :pageWikipediaGenerated,
+                            :pageNumberLinks, :siteInfoId)""",
+                            [page.id, page.title, page.namespace, page.redirect, pageHasRedirect, latestRevision.timestamp, latestRevision.user.text, latestRevision.bytes,
+                            latestRevision.text, None, f"http://en.wikipedia.org/?curid={page.id}", None, siteInfoId])
+                    connectionSQL.commit()
+                except oracledb.IntegrityError as e:
+                    continue
+
+            print(firstPageTitle, lastPageTitle)
+
+            abstractFileList = []
+            varianceInterval = 5
+            for abstractReference in abstractReferenceList:
+                # validar limite de procesamiento
+                # si es más nuevo que el last processed timestamp, lo agrega al final para que luego se
+                # empiece a leer a partir del más cercano al timestamp que sea más nuevo.
+                if abstractReference.time_created > (objectReference.time_created - timedelta(minutes=varianceInterval)):
+                    abstractFileList.insert(0, abstractReference)
+                else:
+                    # si es más viejo, se agrega al final, porque igual puede ser posible leerlo.
+                    abstractFileList.append(abstractReference)
+
+            print(abstractFileList)
+            #input()
+            started = False
+            finished = False
+            # recorrer abstracts nuevos para iterar y buscar page titles y links
+            for abstractReference in abstractFileList:
+                # si el abstract no está descargado todavía en la máquina virtual, lo descarga.
+                if not os.path.exists(f"abstracts/{abstractReference.name}"):
+                    abstractObject = object_storage.get_object(namespace, bucket_name, abstractReference.name).data
+                    abstractFile = open(f"abstracts/{abstractReference.name}", 'wb')
+                    abstractFile.write(abstractObject.content)
+                    abstractFile.close()
+
+                print("opening...")
+                abstract = open(f"abstracts/{abstractReference.name}", 'rb')
+                print("Opened")
+                
+                for item in Parser(abstract).iter_from(Doc):
+                    if started or item.title[11:] == firstPageTitle:
+                        if item.title[11:] == firstPageTitle:
+                            print("First found...")
+                        started = True
+                        url = item.url
+                        links = item.sublinks
+                        pageId = cursorSQL.var(int)
+                        cursorSQL.execute("""
+                            UPDATE pages
+                            SET pageWikipediaLink = :url, pageNumberLinks = :num
+                            WHERE pageTitle = :title
+                            RETURNING pageId INTO :pageId
+                            """,
+                            [url, len(links), item.title[11:], pageId])
+                        pageId = pageId.getvalue()[0]
+                        # print(pageId)
+                        transformLinks(links, pageId)
+                        # print(links)
+                        cursorSQL.executemany(
+                            """
+                            INSERT INTO pageLinks (anchor, link, pageId)
+                            VALUES (:anchor, :link, :pageId)""", links
+                        )
+                        connectionSQL.commit()
+                        if item.title[11:] == lastPageTitle:
+                            print("Found Last")
+                            url = item.url
+                            links = item.sublinks
+                            finished = True
+                            break
+                # si no ha leido todas las pages, continúa con el siguiente archivo de abstracts de la lista.
+                if finished:
                     break
-        # borrar el archivo 
+            # borrar el archivo
+            xmlFile.close()
+            os.remove(f"multistreams/{objectReference.name}")
+            with open("processedLog.json", 'w') as processedLog:
+                data = {'lastProcessedTimestamp': objectReference.time_created.isoformat()}
+                json.dump(data, processedLog)
+        
+        logger.debug("Finished checking Object Storage...")
+        time.sleep(120)
 
