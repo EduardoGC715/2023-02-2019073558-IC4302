@@ -1,0 +1,19 @@
+{
+  "PageId": 1,
+  "PageTitle": "wikipagetitle",
+  "PageNamespace": "wikinamespace",
+  "PageRedirect": "wikiredirect",
+  "PageHasRedirect": "false",
+  "PageRestrictions": ["wikirest1", "wikirest2"],
+  "PageLastModified": "wikidate",
+  "PageLastModifiedUser": "wikiuser",
+  "PageBytes": 100,
+  "PageText": "wikitext",
+  "PageWikipediaLink": "wikilink",
+  "pageWikipediaGenerated": "wikigenlink",
+  "PageLinks": ["wikilink1", "wiklink2"],
+  "PageNumberLinks": 2,
+  "SiteInfoName": "wikisite",
+  "SiteInfoDBName": "wikisitedb",
+  "SiteLanguage": "English"
+}
