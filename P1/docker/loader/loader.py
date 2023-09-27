@@ -81,6 +81,29 @@ wf4QTCyd9noRs4piFx6/9A0=
   "region": "us-chicago-1"
 }
 
+def mongoDBConnection (): 
+    try:
+        mongo = MongoClient("mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec")
+        return mongo
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def addDocuments(documents, mongo):
+    try:
+        db = mongo.db  # Get the database object
+        result = db["pages"].insert_many(documents)
+        return result.inserted_ids
+    except Exception as e:
+        raise e
+
+def updateDocumentsLinks(query, mongo):
+    try:
+        db = mongo.db  # Get the database object
+        result = db["pages"].insert_many(query)
+        return result.inserted_ids
+    except Exception as e:
+        raise e
+
 if __name__:
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
@@ -90,6 +113,8 @@ if __name__:
      user="ADMIN",
      password="thisiswrongNereo08",
      dsn=cs)
+
+     
 
     oci.config.validate_config(config)
     object_storage = oci.object_storage.ObjectStorageClient(config)

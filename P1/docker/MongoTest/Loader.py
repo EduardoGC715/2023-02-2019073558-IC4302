@@ -15,6 +15,14 @@ def addDocuments(documents, mongo):
     except Exception as e:
         raise e
     
+def updateDocumentsLinks(query, mongo):
+    try:
+        db = mongo.db  # Get the database object
+        result = db["pages"].insert_many(query)
+        return result.inserted_ids
+    except Exception as e:
+        raise e
+    
 # Cada documento tiene la soguiente estructura:
 """{
       "PageBytes": int
