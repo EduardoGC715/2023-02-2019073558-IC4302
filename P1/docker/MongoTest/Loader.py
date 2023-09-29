@@ -7,39 +7,34 @@ def mongoDBConnection ():
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def addDocuments(documents, mongo):
+def upsertDocument(insert_id, values, mongo):
     try:
-        db = mongo.db  # Get the database object
-        result = db["pages"].insert_many(documents)
-        return result.inserted_ids
+        db = mongo["bibliotec"]
+        query = {"_id": insert_id}
+        if len(values) > 3:
+            update = {
+                "PageId": values[0],
+                "PageTitle": values[1],
+                "PageNamespace": values[2],
+                "PageRedirect": [3],
+                "PageHasRedirect": values[4],
+                "PageLastModified": values[5],
+                "PageLastModifiedUser": values[6],
+                "PageBytes": values[7],
+                "PageText": values[8],
+                "SiteInfoDBName": values[9],
+                "SiteInfoName": values[10],
+                "SiteLanguage": values[11],
+                "pageWikipediaGenerated": values[12],
+                "PageRestrictions": values[13]}
+        else:
+            update = {
+                "PageWikipediaLink": values[0],
+                "PageLinks": values[1],
+                "PageNumberLinks": values[2]}
+        
+        updateQuery = {"$set": update}
+        
+        db["pages"].update_one(query, updateQuery, upsert=True)
     except Exception as e:
         raise e
-    
-def updateDocumentsLinks(query, mongo):
-    try:
-        db = mongo.db  # Get the database object
-        result = db["pages"].insert_many(query)
-        return result.inserted_ids
-    except Exception as e:
-        raise e
-    
-# Cada documento tiene la soguiente estructura:
-"""{
-      "PageBytes": int
-      "PageHasRedirect": "True" | "False", strings dependiendo del valor
-      "PageId": int
-      "PageLastModified": ISO format Date
-      "PageLastModifiedUser": "string"
-      "PageLinks": lista con los links, ["string"]
-      "PageNamespace": "string"
-      "PageNumberLinks": int
-      "PageRedirect": "string"
-      "PageRestrictions": lista con las restricciones, ["string"]
-      "PageText": "string"
-      "PageTitle": "string"
-      "PageWikipediaLink": "string"
-      "SiteInfoDBName": "string"
-      "SiteInfoName": "string"
-      "SiteLanguage": "string"
-      "pageWikipediaGenerated": "string"
-    }"""
