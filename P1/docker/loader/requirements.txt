@@ -2,3 +2,4 @@ oci
 oracledb
 mwxml
 bigxml
+pymongo

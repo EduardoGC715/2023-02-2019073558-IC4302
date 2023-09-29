@@ -11,6 +11,7 @@ import oracledb
 import json
 import time
 import hashlib
+from pymongo import MongoClient
 
 # Código basado de
 # https://docs.oracle.com/en-us/iaas/tools/python/2.112.0/api/object_storage/client/oci.object_storage.ObjectStorageClient.html
@@ -87,6 +88,45 @@ wf4QTCyd9noRs4piFx6/9A0=
   "region": "us-chicago-1"
 }
 
+def mongoDBConnection (): 
+    try:
+        mongo = MongoClient("mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec")
+        return mongo
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def upsertDocument(insert_id, values, mongo):
+    try:
+        db = mongo["bibliotec"]
+        query = {"_id": insert_id}
+        if len(values) > 3:
+            update = {
+                "PageId": values[0],
+                "PageTitle": values[1],
+                "PageNamespace": values[2],
+                "PageRedirect": [3],
+                "PageHasRedirect": values[4],
+                "PageLastModified": values[5],
+                "PageLastModifiedUser": values[6],
+                "PageBytes": values[7],
+                "PageText": values[8],
+                "SiteInfoDBName": values[9],
+                "SiteInfoName": values[10],
+                "SiteLanguage": values[11],
+                "pageWikipediaGenerated": values[12],
+                "PageRestrictions": values[13]}
+        else:
+            update = {
+                "PageWikipediaLink": values[0],
+                "PageLinks": values[1],
+                "PageNumberLinks": values[2]}
+        
+        updateQuery = {"$set": update}
+        
+        db["pages"].update_one(query, updateQuery, upsert=True)
+    except Exception as e:
+        raise e
+
 if __name__:
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
@@ -96,6 +136,9 @@ if __name__:
      user="ADMIN",
      password="thisiswrongNereo08",
      dsn=cs)
+    
+    #connection to Mongo Atlas
+    mongodb = mongoDBConnection()
 
     oci.config.validate_config(config)
     object_storage = oci.object_storage.ObjectStorageClient(config)
@@ -183,11 +226,34 @@ if __name__:
                 #guardar el primer id y el page
                 for page in xmlDump.pages:
                     pageHasRedirect = 1 if page.redirect else 0
+                    pageHasRedirect4Mongo = "True" if page.redirect else "False"
                     revisions = sorted(page, key=lambda x: x.timestamp, reverse=True)
                     latestRevision = revisions[0]
                     latestRevision.timestamp = datetime.fromtimestamp(latestRevision.timestamp.unix())
+                    latestRevision4Mongo = latestRevision.timestamp.isoformat()
                     hashkey = hashlib.md5(page.title.encode('UTF-8'))
                     pageTitleKey = hashkey.hexdigest()
+
+                    # Insert multistream data into Mongo Atlas
+                    data4MongoMS = [
+                        page.id, 
+                        page.title, 
+                        page.namespace, 
+                        page.redirect, 
+                        pageHasRedirect4Mongo, 
+                        latestRevision4Mongo, 
+                        latestRevision.user.text, 
+                        latestRevision.bytes,
+                        latestRevision.text,
+                        siteInfo.dbname,
+                        siteInfo.name,
+                        "English",
+                        f"http://en.wikipedia.org/?curid={page.id}",
+                        page.restrictions
+                    ]
+                    
+                    upsertDocument(pageTitleKey, data4MongoMS, mongodb)
+
                     try:
                         cursorSQL.execute("""
                             MERGE INTO pages
@@ -271,6 +337,15 @@ if __name__:
                     pageTitle = item.title[11:]
                     hashkey = hashlib.md5(pageTitle.encode('UTF-8'))
                     pageTitleKey = hashkey.hexdigest()
+
+                    # Insert abstract data into Mongo Atlas
+                    data4MongoA = [
+                        url,
+                        links,
+                        len(links)
+                    ]
+                    upsertDocument(pageTitleKey, data4MongoA, mongodb)
+
                     try:
                         cursorSQL.execute(
                             """
