@@ -255,6 +255,9 @@ if __name__:
                     upsertDocument(pageTitleKey, data4MongoMS, mongodb)
 
                     try:
+                        print(len(latestRevision.text))
+                        print([pageTitleKey, page.id, page.title, page.namespace, page.redirect, pageHasRedirect, latestRevision.timestamp, latestRevision.user.text, latestRevision.bytes,
+                            None, f"http://en.wikipedia.org/?curid={page.id}", None, siteInfoId, pageTitleKey])
                         cursorSQL.execute("""
                             MERGE INTO pages
                             USING (
@@ -268,14 +271,13 @@ if __name__:
                                     :pageLastModified AS pageLastModified,
                                     :pageLastModifiedUser AS pageLastModifiedUser,
                                     :pageBytes AS pageBytes,
-                                    :pageText AS pageText,
                                     :pageWikipediaLink AS pageWikipediaLink,
                                     :pageWikipediaGenerated AS pageWikipediaGenerated,
                                     :pageNumberLinks AS pageNumberLinks,
                                     :siteInfoId AS siteInfoId
                                 FROM dual
                             ) pageDump
-                            ON (pages.pageTitleKey = HEXTORAW(:pageTitleKey))
+                            ON (pages.pageTitleKey = HEXTORAW(pageDump.pageTitleKey))
                             WHEN MATCHED THEN
                                 UPDATE SET
                                     pages.pageId = pageDump.pageId,
@@ -285,22 +287,26 @@ if __name__:
                                     pages.pageLastModified = pageDump.pageLastModified,
                                     pages.pageLastModifiedUser = pageDump.pageLastModifiedUser,
                                     pages.pageBytes = pageDump.pageBytes,
-                                    pages.pageText = pageDump.pageText,
                                     pages.pageWikipediaGenerated = pageDump.pageWikipediaGenerated,
                                     pages.siteInfoId = pageDump.siteInfoId
                             WHEN NOT MATCHED THEN
-                                INSERT (pageTitleKey, pageId, pageTitle, pageNamespace, pageRedirect, pageHasRedirect, pageLastModified, pageLastModifiedUser, pageBytes, pageText,
+                                INSERT (pageTitleKey, pageId, pageTitle, pageNamespace, pageRedirect, pageHasRedirect, pageLastModified, pageLastModifiedUser, pageBytes,
                                     pageWikipediaLink, pageWikipediaGenerated,
                                     pageNumberLinks, siteInfoId) VALUES
                                     (pageDump.pageTitleKey, pageDump.pageId, pageDump.pageTitle, pageDump.pageNamespace, pageDump.pageRedirect, pageDump.pageHasRedirect,
                                     pageDump.pageLastModified,
-                                    pageDump.pageLastModifiedUser, pageDump.pageBytes, pageDump.pageText,
+                                    pageDump.pageLastModifiedUser, pageDump.pageBytes,
                                     pageDump.pageWikipediaLink, pageDump.pageWikipediaGenerated,
                                     pageDump.pageNumberLinks, pageDump.siteInfoId)
                             """,
                             [pageTitleKey, page.id, page.title, page.namespace, page.redirect, pageHasRedirect, latestRevision.timestamp, latestRevision.user.text, latestRevision.bytes,
-                            latestRevision.text, None, f"http://en.wikipedia.org/?curid={page.id}", None, siteInfoId, pageTitleKey]
+                            None, f"http://en.wikipedia.org/?curid={page.id}", None, siteInfoId]
                         )
+                        cursorSQL.execute("""
+                        UPDATE pages
+                        SET pageText = :pageText
+                        WHERE pageTitleKey = HEXTORAW(:pageTitleKey)      
+                        """, [latestRevision.text, pageTitleKey])
                         if len(page.restrictions):
                             restrictions = transformRestrictions(page.restrictions, pageTitleKey)
                             cursorSQL.executemany(
@@ -310,6 +316,8 @@ if __name__:
                                 """, restrictions
                             )
                         connectionSQL.commit()
+                        if latestRevision.bytes == 158291:
+                            input()
                     except oracledb.IntegrityError as e:
                         continue
 
