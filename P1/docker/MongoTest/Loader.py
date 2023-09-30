@@ -16,7 +16,7 @@ def upsertDocument(insert_id, values, mongo):
                 "PageId": values[0],
                 "PageTitle": values[1],
                 "PageNamespace": values[2],
-                "PageRedirect": [3],
+                "PageRedirect": values[3],
                 "PageHasRedirect": values[4],
                 "PageLastModified": values[5],
                 "PageLastModifiedUser": values[6],
