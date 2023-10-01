@@ -168,7 +168,6 @@ if __name__:
 
         list_objects_response = object_storage.list_objects(namespace, bucket_name, fields="timeCreated")
         objectList = sorted(list_objects_response.data.objects, key=lambda x: x.time_created, reverse=True)
-        print(objectList)
 
         objectProcessList = [] # lista donde se guardará el orden de los archivos a procesar.
 
@@ -180,9 +179,10 @@ if __name__:
             else:
                 break
 
-        print("objectList", objectProcessList)
+        logger.debug("Object process list:")
+        logger.debug(objectProcessList)
         for objectReference in objectProcessList:
-            print(objectReference.name)
+            logger.debug("Processing " + str(objectReference.name))
 
             if objectReference.name.find("abstract") == -1:
                 # Descargamos el archivo del object storage. Escribimos los bytes en un archivo para que pueda ser procesado por mwxml.
@@ -191,7 +191,7 @@ if __name__:
                     xmlFile = open(f"multistreams/{objectReference.name}", 'wb')
                     xmlFile.write(xmlReference.content)
                     xmlFile.close()
-                    print("written")
+                    logger.debug("Written file")
             #   print(type(xmlFile))
 
                 # abrimos el archivo para procesarlo con mwxml.
@@ -254,9 +254,6 @@ if __name__:
                     upsertDocument(pageTitleKey, data4MongoMS, mongodb)
 
                     try:
-                        print(len(latestRevision.text))
-                        print([pageTitleKey, page.id, page.title, page.namespace, page.redirect, pageHasRedirect, latestRevision.timestamp, latestRevision.user.text, latestRevision.bytes,
-                            None, f"http://en.wikipedia.org/?curid={page.id}", None, siteInfoId, pageTitleKey])
                         cursorSQL.execute("""
                             MERGE INTO pages
                             USING (
@@ -301,6 +298,7 @@ if __name__:
                             [pageTitleKey, page.id, page.title, page.namespace, page.redirect, pageHasRedirect, latestRevision.timestamp, latestRevision.user.text, latestRevision.bytes,
                             None, f"http://en.wikipedia.org/?curid={page.id}", None, siteInfoId]
                         )
+                        # Actualizamos el pageText, ya que este puede ser muy grande para la tabla DUAL.
                         cursorSQL.execute("""
                         UPDATE pages
                         SET pageText = :pageText
@@ -330,11 +328,11 @@ if __name__:
                     abstractFile = open(f"abstracts/{objectReference.name}", 'wb')
                     abstractFile.write(abstractReference.content)
                     abstractFile.close()
-                    print("written")
+                    logger.debug("Written abstract")
 
-                print("opening...")
+                logger.debug("Opening abstract...")
                 abstract = open(f"abstracts/{objectReference.name}", 'rb')
-                print("Opened")
+                logger.debug("Opened")
 
                 cursorSQL = connectionSQL.cursor()
 
