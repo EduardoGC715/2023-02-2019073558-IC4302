@@ -200,7 +200,6 @@ if __name__:
 
                 # extraemos siteinfo
                 siteInfo = xmlDump.site_info
-                print("siteInfo:", siteInfo.name, siteInfo.dbname, siteInfo)
 
                 # cursor para los operaciones de SQL
                 cursorSQL = connectionSQL.cursor()
@@ -218,7 +217,7 @@ if __name__:
                                     RETURNING siteInfoId INTO :siteInfoId""", ["Wakanda", siteInfo.dbname, siteInfoId])
                     connectionSQL.commit()
                     siteInfoId = siteInfoId.getvalue()[0]
-                    print("INSERTED SITEINFO")
+                    logger.info("INSERTED SITEINFO")
                 # si ya hay un siteInfo con ese nombre y dbname, guarda el siteInfoId para insertarlo como FK.
                 else:
                     siteInfoId = row[0]
