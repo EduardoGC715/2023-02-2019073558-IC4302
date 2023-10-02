@@ -1,0 +1,15 @@
+# Apuntes Clase 29/09/23
+## José Eduardo Gutiérrez Conejo - 2019073558
+
+### ALmacenamiento de datos en Elastic Search
+Se puede encontrar que desde la primera version de ES que hay tipos de nodos, cuando se define un stting con master, loq ue hace es forzar a la bases a tratar el nodo como dicho tipo, es decir, cada nodo tiene una tarea definida y no puede relizar los trabajos que deberia de realizar un nodo de otro tipos, se necesita al menos de un master y un data node para desarrollo, y para produccion se necesitan mínimo 3 master y 3 data nodes.
+
+Cuando se tiene un servidor de ES, lo que ocurre es que se mapea a una ubicaion geografica, y se tiene un punto de falla alto, ya que la ubicacion puede llegar a fllar y no se puede recuperar la información.
+
+Charts, se puede encontrar en bases de datos no SQL, son porcines de un data set que uno maneje, si se tiene un dataset, y se quiere tener una cantidad de 5 charts, al tener 5 en un solo servidor, no genera sentido, ayq ue los charts quedan en el mismo servidor, y no se gana nada en un punto de vista de alta disponibilidad. Aunque se haya particionado, no se gana da. Se tiene charts que son primary y otros que son replica. Si estos viven en el mismo servidor no se gana nada, la idea es que quedan distribuidas geográficamente.
+
+Cuando se pasa al mundo de produccion, se debe de hacer que la base de datos se cnfigure con los mínimos mencionados, y cuando se definen los datos, se debe de tener un dataset que ser charteado, y debemos de tener minimo 2 replicas de esos datos.
+
+Normalmente, ES, no va a dejar que los charts primarios esten en el mismo servidor, ademas este es el unico que puede recibir actualizaciones, y lo que hace es replicarlas a los demás charts, si se dejan todos los primarios en el mismo servidor, lo que puede pasar es que la capacidad del cluster no se utiliza correctamente, y lo que pasaria es que un servidor realiza la mayor cantidad de trabajo, y los demas muy poco. Cuando un servidor se muere y tiene un replica chart, cuando es primario, esto lo que pasa es que se necesitan al menos 3 y se procede a realizar un chart election, alguno de los 2 nodos vivos se convierte en el maestro y promueve el chart, y lo que ocurre es que inicia un votacion (hay factores que pueden influir en esto, como el timestamp), y alguien va a asumir mayoria, y se va a promover una de las replicas de las que estaban como un chart replica, se va a pasar a chart primario y la base de datos se recupera, un indice que tiene charts se tiene un status, green: todo bien, yellow: no se tiene todos los necesarios; puede que haya aalguna replica caida, red: cuando se cae un servidor y no se tenia replicas para solventar el problema.
+Si el nodo 3 se agrego mas temprano que uno, se puede elegir la eleccion del chart para que elija el mas reciente. Tambien puede ser afectado por la geolocalizacion (el más cercano). Tambien pueden afectar la cantidad de particiones que tiene los servidores.
+Se puede agregar un nuevo servidor y ES se va a encargar de distribuir los trabajos 
