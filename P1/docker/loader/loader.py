@@ -9,7 +9,7 @@ from typing import List
 import os
 import oracledb
 import json
-import time
+import time, random
 import hashlib
 from pymongo import MongoClient
 
@@ -88,12 +88,26 @@ wf4QTCyd9noRs4piFx6/9A0=
   "region": "us-chicago-1"
 }
 
-def mongoDBConnection (): 
-    try:
-        mongo = MongoClient("mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec")
-        return mongo
-    except Exception as e:
-        print(f"An error occurred: {e}")
+# Retry with backoff implementado con base en https://keestalkstech.com/2021/03/python-utility-function-retry-with-exponential-backoff/#without-typings.
+def retry_with_backoff(fn, backoff_in_seconds = 1):
+    x = 0
+    while True:
+        logger.info(x)
+        try:
+            return fn()
+        except:
+            # va subiendo de 1, 2, 4, ... hasta esperar 256 segundos entre intentos. Se queda esperando hasta que pueda conectar,
+            # porque de lo contrario, no podría trabajar bien.
+            sleep = backoff_in_seconds * 2 ** x + random.uniform(0, 1)
+            time.sleep(sleep)
+            if x < 8:
+                x += 1
+
+
+def mongoDBConnection ():
+    logger.info("mongo")
+    mongo = MongoClient("mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec")
+    return mongo
 
 def upsertDocument(insert_id, values, mongo):
     try:
@@ -127,7 +141,7 @@ def upsertDocument(insert_id, values, mongo):
     except Exception as e:
         raise e
 
-if __name__:
+if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
 
@@ -138,7 +152,7 @@ if __name__:
      dsn=cs)
     
     #connection to Mongo Atlas
-    mongodb = mongoDBConnection()
+    mongodb = retry_with_backoff(mongoDBConnection)
 
     oci.config.validate_config(config)
     object_storage = oci.object_storage.ObjectStorageClient(config)
@@ -146,25 +160,29 @@ if __name__:
     namespace = object_storage.get_namespace().data
     bucket_name = "bibliotec"
 
+    # crea el folder donde se almacenarán los contenidos del volumen
+    if not os.path.exists("volume"):
+        os.mkdir("volume")
+
     # crea el folder donde se almacenarán los abstracts
-    if not os.path.exists("abstracts"):
-        os.mkdir("abstracts")
+    if not os.path.exists("volume/abstracts"):
+        os.mkdir("volume/abstracts")
     # Crea el folder donde se almacenarán los multistreams
-    if not os.path.exists("multistreams"):
-        os.mkdir("multistreams")
+    if not os.path.exists("volume/multistreams"):
+        os.mkdir("volume/multistreams")
     
     while True:
         try:
             # lee el último timestamp procesado.
-            with open("processedLog.json", 'r') as processedLog:
+            with open("volume/processedLog.json", 'r') as processedLog:
                 data = json.load(processedLog)
                 lastProcessedTimestamp = datetime.fromisoformat(data["lastProcessedTimestamp"])
         except Exception as e:
-            print(e)
+            logger.error(e)
             tz = pytz.timezone('UTC')
             lastProcessedTimestamp = tz.localize(datetime(1970, 1, 1, 0, 0)) # inicia con el valor del epoch
 
-        logger.debug("Checking Object Storage...")
+        logger.info("Checking Object Storage...")
 
         list_objects_response = object_storage.list_objects(namespace, bucket_name, fields="timeCreated")
         objectList = sorted(list_objects_response.data.objects, key=lambda x: x.time_created, reverse=True)
@@ -173,29 +191,28 @@ if __name__:
 
         # recorremos todos los objetos y agregamos a la lista de iteración solo a los que son más nuevos que el último límite de procesamiento
         for objectReference in objectList:
-            print(objectReference.time_created, lastProcessedTimestamp, objectReference.time_created > lastProcessedTimestamp)
             if objectReference.time_created > lastProcessedTimestamp:
                 objectProcessList.insert(0, objectReference)
             else:
                 break
 
-        logger.debug("Object process list:")
-        logger.debug(objectProcessList)
+        logger.info("Object process list:")
+        logger.info(objectProcessList)
         for objectReference in objectProcessList:
-            logger.debug("Processing " + str(objectReference.name))
+            logger.info("Processing " + str(objectReference.name))
 
             if objectReference.name.find("abstract") == -1:
                 # Descargamos el archivo del object storage. Escribimos los bytes en un archivo para que pueda ser procesado por mwxml.
-                if not os.path.exists(f"multistreams/{objectReference.name}"):
+                if not os.path.exists(f"volume/multistreams/{objectReference.name}"):
                     xmlReference = object_storage.get_object(namespace, bucket_name, objectReference.name).data
-                    xmlFile = open(f"multistreams/{objectReference.name}", 'wb')
+                    xmlFile = open(f"volume/multistreams/{objectReference.name}", 'wb')
                     xmlFile.write(xmlReference.content)
                     xmlFile.close()
-                    logger.debug("Written file")
+                    logger.info("Written file")
             #   print(type(xmlFile))
 
                 # abrimos el archivo para procesarlo con mwxml.
-                xmlFile = open(f"multistreams/{objectReference.name}", 'rb')
+                xmlFile = open(f"volume/multistreams/{objectReference.name}", 'rb')
                 xmlDump = mwxml.Dump.from_file(xmlFile)
 
                 # extraemos siteinfo
@@ -214,7 +231,7 @@ if __name__:
                 if row is None:
                     cursorSQL.execute("""
                         INSERT INTO siteInfos (siteInfoName, siteInfoDBName, siteLanguage) VALUES (:siteInfoName, :siteInfoDBName, 'English')
-                                    RETURNING siteInfoId INTO :siteInfoId""", ["Wakanda", siteInfo.dbname, siteInfoId])
+                                    RETURNING siteInfoId INTO :siteInfoId""", [siteInfo.name, siteInfo.dbname, siteInfoId])
                     connectionSQL.commit()
                     siteInfoId = siteInfoId.getvalue()[0]
                     logger.info("INSERTED SITEINFO")
@@ -313,26 +330,24 @@ if __name__:
                                 """, restrictions
                             )
                         connectionSQL.commit()
-                        if latestRevision.bytes == 158291:
-                            input()
                     except oracledb.IntegrityError as e:
                         continue
 
                 # borrar el archivo
                 xmlFile.close()
-                os.remove(f"multistreams/{objectReference.name}")
+                os.remove(f"volume/multistreams/{objectReference.name}")
             else:
                 # Descargamos el archivo del object storage. Escribimos los bytes en un archivo para que pueda ser procesado por mwxml.
-                if not os.path.exists(f"abstracts/{objectReference.name}"):
+                if not os.path.exists(f"volume/abstracts/{objectReference.name}"):
                     abstractReference = object_storage.get_object(namespace, bucket_name, objectReference.name).data
-                    abstractFile = open(f"abstracts/{objectReference.name}", 'wb')
+                    abstractFile = open(f"volume/abstracts/{objectReference.name}", 'wb')
                     abstractFile.write(abstractReference.content)
                     abstractFile.close()
-                    logger.debug("Written abstract")
+                    logger.info("Written abstract")
 
-                logger.debug("Opening abstract...")
-                abstract = open(f"abstracts/{objectReference.name}", 'rb')
-                logger.debug("Opened")
+                logger.info("Opening abstract...")
+                abstract = open(f"volume/abstracts/{objectReference.name}", 'rb')
+                logger.info("Opened")
 
                 cursorSQL = connectionSQL.cursor()
 
@@ -387,11 +402,11 @@ if __name__:
                     except oracledb.IntegrityError as e:
                         continue
                 abstract.close()
-                os.remove(f"abstracts/{objectReference.name}")
-            with open("processedLog.json", 'w') as processedLog:
+                os.remove(f"volume/abstracts/{objectReference.name}")
+            with open("volume/processedLog.json", 'w') as processedLog:
                 data = {'lastProcessedTimestamp': objectReference.time_created.isoformat()}
                 json.dump(data, processedLog)
 
-        logger.debug("Finished checking Object Storage...")
+        logger.info("Finished checking Object Storage...")
         time.sleep(120)
 
