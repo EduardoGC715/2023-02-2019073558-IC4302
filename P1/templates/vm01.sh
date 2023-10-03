@@ -19,4 +19,4 @@ echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docke
 apt-get update -y
 apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
 mkdir "/home/ubuntu/app"
-docker run -d -v "/home/ubuntu/app":/app/volume --name wikiloader dandiego235/wikiloader:9
+docker run -d -v "/home/ubuntu/app":/app/volume --name wikiloader dandiego235/wikiloader:10

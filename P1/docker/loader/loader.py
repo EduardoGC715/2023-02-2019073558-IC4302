@@ -267,10 +267,10 @@ if __name__ == "__main__":
                         f"http://en.wikipedia.org/?curid={page.id}",
                         page.restrictions
                     ]
-                    
-                    upsertDocument(pageTitleKey, data4MongoMS, mongodb)
 
                     try:
+                        upsertDocument(pageTitleKey, data4MongoMS, mongodb)
+
                         cursorSQL.execute("""
                             MERGE INTO pages
                             USING (
@@ -332,6 +332,9 @@ if __name__ == "__main__":
                         connectionSQL.commit()
                     except oracledb.IntegrityError as e:
                         continue
+                    except Exception as e:
+                        logger.error(e)
+                        continue
 
                 # borrar el archivo
                 xmlFile.close()
@@ -364,9 +367,10 @@ if __name__ == "__main__":
                         links,
                         len(links)
                     ]
-                    upsertDocument(pageTitleKey, data4MongoA, mongodb)
 
                     try:
+                        upsertDocument(pageTitleKey, data4MongoA, mongodb)
+                        
                         cursorSQL.execute(
                             """
                             MERGE INTO pages
@@ -400,6 +404,9 @@ if __name__ == "__main__":
                         )
                         connectionSQL.commit()
                     except oracledb.IntegrityError as e:
+                        continue
+                    except Exception as e:
+                        logger.error(e)
                         continue
                 abstract.close()
                 os.remove(f"volume/abstracts/{objectReference.name}")
