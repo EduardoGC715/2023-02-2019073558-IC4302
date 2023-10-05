@@ -5,7 +5,7 @@ resource "oci_database_autonomous_database" "autonomous_database" {
   is_free_tier = true
   is_mtls_connection_required = false
 #  tls_authentication = "SERVER"
-  whitelisted_ips = [oci_core_instance.vm01.public_ip, "186.176.152.202"]
+  whitelisted_ips = [oci_core_instance.vm01.public_ip, "186.176.152.202", "201.204.89.116", "201.206.114.3","207.211.176.160","186.32.199.95"]
 }
 
 resource "oci_nosql_table" "logs_table" {
