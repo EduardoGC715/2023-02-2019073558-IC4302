@@ -32,3 +32,8 @@ terraform.rc
 
 #terraform lock
 .terraform.lock.hcl
+
+
+/docker/loader/abstracts
+/docker/loader/multistreams
+/docker/loader/volume
