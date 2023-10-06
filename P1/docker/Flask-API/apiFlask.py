@@ -164,15 +164,14 @@ def getFromAutonomous():
 # Código basado de 
 # https://stackoverflow.com/questions/58676559/how-to-authenticate-to-firebase-using-python/71398321#71398321
 # https://datagy.io/python-requests-response-object/
+# https://firebase.google.com/docs/reference/rest/auth
+# https://firebase.google.com/docs/auth/admin/manage-users
 
 @app.route("/login", methods=["POST"]) 
 def login():
     if request.method == "POST":
-        REQUEST_COUNT.inc()
-        
-        
+        REQUEST_COUNT.inc()        
         try:
-            
             email =request.form["email"]
             password = request.form["password"]
             userInfo = json.dumps({"email": email, "password": password, "return_secure_token":True})
