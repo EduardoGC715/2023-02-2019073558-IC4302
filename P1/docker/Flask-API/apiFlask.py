@@ -8,6 +8,7 @@ import bson
 from flask import Flask, request, render_template_string, current_app, g
 from werkzeug.local import LocalProxy
 from flask_pymongo import PyMongo
+from flask_cors import CORS
 from os import environ
 import logging
 from prometheus_client import start_http_server, Counter
@@ -121,6 +122,8 @@ logger = logging.getLogger(__name__)
 # 
 app = Flask(__name__)
 
+# enable cors
+CORS(app)
 
 @app.route("/")
 def home():
@@ -169,31 +172,37 @@ def getFromAutonomous():
 def login():
     if request.method == "POST":
         REQUEST_COUNT.inc()
-        
-        
+    
+        data = request.get_json()
         try:
             
-            email =request.form["email"]
-            password = request.form["password"]
+            email =data["email"]
+            password = data["password"]
+            logger.debug(email)
+            logger.debug(password)
             userInfo = json.dumps({"email": email, "password": password, "return_secure_token":True})
             r = requests.post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyAFj0oFcEqOdCL1NFlbGVhvirpxrKqx_LY", userInfo)
+            logger.debug(r)
             if r:
                 logger.debug("El usuario sí existe")
             else:
                 logger.debug("El usuario no existe")
+            logger.debug(r.json())
+            return r.json()
         except Exception as e:
             logger.debug("Ese correo electrónico no está registado", e)
-        return f"Pokemon"
+        return json.dumps({"error": {"code": 500, "message": "ERROR"}})
 
 @app.route("/register", methods=["POST"]) 
 def register():
     if request.method == "POST":
         logger.debug("Llegó el request")
         REQUEST_COUNT.inc()
-        pEmail = request.form["email"]
-        pPassword = request.form["password"]
-        pPhone = request.form["phone"]
-        pDisplayName = request.form["name"] + " " + request.form["last_name1"] + " " + request.form["last_name2"]        
+        data = request.get_json()
+        pEmail = data["email"]
+        pPassword = data["password"]
+        pPhone = data["phone"]
+        pDisplayName = data["name"] + " " + data["last_name1"] + " " + data["last_name2"]        
         try:
             user = auth.create_user(email = pEmail, password = pPassword, phone_number = pPhone, display_name = pDisplayName)
         except Exception as e:
@@ -210,5 +219,5 @@ if __name__ == "__main__":
     
     app.config['MONGO_URI']  = uri
     start_http_server(8000)
-    app.run()
+    app.run(debug = True)
     
