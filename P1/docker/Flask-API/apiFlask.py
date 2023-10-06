@@ -172,23 +172,29 @@ def textSearchQuery(searchQuery):
                       'PageBytesFacet': {
                         'type': 'number', 
                         'path': 'PageBytes',
-                        'boundaries': [0, 1000, 10000, 20000, 30000, 40000, 50000]
+                        'boundaries': [0, 200, 400, 600, 800, 1000, 2000]
                     }, 
                       'PageNumberLinksFacet': {
                         'type': 'number', 
                         'path': 'PageNumberLinks',
-                        'boundaries': [1, 2, 3, 4, 5]
+                        'boundaries': [2, 4, 6, 8, 10, 20]
                     },
                       "PageLastModifiedFacet": {
                         "type": "date",
                         "path": "PageLastModified",
                         "boundaries": [ 
-                            dt.datetime(2000, 1, 1, 0, 0, 0),
-                            dt.datetime(2005, 1, 1, 0, 0, 0),
-                            dt.datetime(2010, 1, 1, 0, 0, 0),
-                            dt.datetime(2015, 1, 1, 0, 0, 0),
-                            dt.datetime(2020, 1, 1, 0, 0, 0),
-                            dt.datetime(2025, 1, 1, 0, 0, 0)
+                            dt.datetime(2023, 1, 1, 0, 0, 0),
+                            dt.datetime(2023, 2, 1, 0, 0, 0),
+                            dt.datetime(2023, 3, 1, 0, 0, 0),
+                            dt.datetime(2023, 4, 1, 0, 0, 0),
+                            dt.datetime(2023, 5, 1, 0, 0, 0),
+                            dt.datetime(2023, 6, 1, 0, 0, 0),
+                            dt.datetime(2023, 7, 1, 0, 0, 0),
+                            dt.datetime(2023, 8, 1, 0, 0, 0),
+                            dt.datetime(2023, 9, 1, 0, 0, 0),
+                            dt.datetime(2023, 10, 1, 0, 0, 0),
+                            dt.datetime(2023, 11, 1, 0, 0, 0),
+                            dt.datetime(2023, 12, 1, 0, 0, 0)
                         ]
                     }, 
                       'PageHasRedirectFacet': {
