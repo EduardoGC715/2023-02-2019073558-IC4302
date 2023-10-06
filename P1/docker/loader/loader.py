@@ -246,7 +246,6 @@ if __name__ == "__main__":
                     revisions = sorted(page, key=lambda x: x.timestamp, reverse=True)
                     latestRevision = revisions[0]
                     latestRevision.timestamp = datetime.fromtimestamp(latestRevision.timestamp.unix())
-                    latestRevision4Mongo = latestRevision.timestamp.isoformat()
                     hashkey = hashlib.md5(page.title.encode('UTF-8'))
                     pageTitleKey = hashkey.hexdigest()
 
@@ -254,10 +253,10 @@ if __name__ == "__main__":
                     data4MongoMS = [
                         page.id, 
                         page.title, 
-                        page.namespace, 
+                        str(page.namespace), 
                         page.redirect, 
                         pageHasRedirect4Mongo, 
-                        latestRevision4Mongo, 
+                        latestRevision, 
                         latestRevision.user.text, 
                         latestRevision.bytes,
                         latestRevision.text,
