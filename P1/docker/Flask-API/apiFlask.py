@@ -3,7 +3,7 @@ from firebase_admin import credentials, auth
 
 cred = credentials.Certificate("bibliotec-98a06-firebase-adminsdk-qiahh-ea76f83463.json")
 firebase_admin.initialize_app(cred)
-
+import datetime as dt
 import bson
 from flask import Flask, request, render_template_string, current_app, g
 from werkzeug.local import LocalProxy
@@ -82,26 +82,6 @@ region = Regions.US_CHICAGO_1
 config2 = NoSQLHandleConfig(region, at_provider)
 
 handle = NoSQLHandle(config2)
-uri = "mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/?retryWrites=true&w=majority"
-
-# Código basado en
-
-client = MongoClient(uri, server_api=ServerApi('1'))
-
-try:
-    client.admin.command('ping')
-    print("Conexión con MongoDB exitosa")
-except Exception as e:
-    print(e)
-
-def get_db():
-    db = getattr(g, "_database", None)
-
-    if db is None:
-
-        db = g._database = PyMongo(current_app).db
-       
-    return db
 
 # Método para escribir en la base de datos NoSQL en Oracle Cloud
 def write_a_record(handle, table_name, record):
@@ -125,6 +105,178 @@ app = Flask(__name__)
 # enable cors
 CORS(app)
 
+# MONGO CONNECTION
+def mongoDBConnection (): 
+    try:
+        app.config["MONGO_URI"] = "mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec"
+        mongo = PyMongo(app)
+        return mongo
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# MONGO OPERATIONS
+def isValidDate(dateStr):
+    try:
+        dt.datetime.strptime(dateStr, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+def textSearchQuery(searchQuery):
+    pipeline = [
+    {
+        '$search': {
+            'index': 'mainIndex', 
+            'facet': {
+                'operator': {
+                    "compound": {
+                        "should": [
+                            {
+                                "text":{
+                                    "path":{
+                                        "wildcard": "*"
+                                    },
+                                    "query": str(searchQuery)
+                                }
+                            },
+                        ],
+                        "filter":[],
+                        "minimumShouldMatch": 1
+                    }
+                }, 
+                'facets': {
+                    'PageLastModifiedUserFacet': {
+                        'type': 'string', 
+                        'path': 'PageLastModifiedUser'
+                    }, 
+                    'PageNamespaceFacet': {
+                        'type': 'string', 
+                        'path': 'PageNamespace'
+                    }, 
+                    'SiteInfoNameFacet': {
+                        'type': 'string', 
+                        'path': 'SiteInfoName'
+                    }, 
+                    'SiteInfoDBNameFacet': {
+                        'type': 'string', 
+                        'path': 'SiteInfoDBName'
+                    }, 
+                    'SiteLanguageFacet': {
+                        'type': 'string', 
+                        'path': 'SiteLanguage'
+                    }, 
+                    'PageRestrictionsFacet': {
+                        'type': 'string', 
+                        'path': 'PageRestrictions'
+                    },
+                      'PageBytesFacet': {
+                        'type': 'number', 
+                        'path': 'PageBytes',
+                        'boundaries': [0, 1000, 10000, 20000, 30000, 40000, 50000]
+                    }, 
+                      'PageNumberLinksFacet': {
+                        'type': 'number', 
+                        'path': 'PageNumberLinks',
+                        'boundaries': [1, 2, 3, 4, 5]
+                    },
+                      "PageLastModifiedFacet": {
+                        "type": "date",
+                        "path": "PageLastModified",
+                        "boundaries": [ 
+                            dt.datetime(2000, 1, 1, 0, 0, 0),
+                            dt.datetime(2005, 1, 1, 0, 0, 0),
+                            dt.datetime(2010, 1, 1, 0, 0, 0),
+                            dt.datetime(2015, 1, 1, 0, 0, 0),
+                            dt.datetime(2020, 1, 1, 0, 0, 0),
+                            dt.datetime(2025, 1, 1, 0, 0, 0)
+                        ]
+                    }, 
+                      'PageHasRedirectFacet': {
+                        'type': 'string', 
+                        'path': 'PageHasRedirect',
+                    }
+                }
+            }, 
+            'highlight': {
+                'path': {
+                    'wildcard': '*'
+                }
+            }
+        }
+    }, {
+        '$facet': {
+            'docs': [
+                { 
+                    "$project": {
+                        "_id": {
+                            "$toString": "$_id"
+                        },
+                        "PageBytes": 1,
+                        "PageHasRedirect": 1,
+                        "PageId": 1,
+                        "PageLastModified": 1,
+                        "PageLastModifiedUser": 1,
+                        "PageLinks": 1,
+                        "PageNamespace": 1,
+                        "PageNumberLinks": 1,
+                        "PageRedirect": 1,
+                        "PageRestrictions": 1,
+                        "PageText": 1,
+                        "PageTitle": 1,
+                        "PageWikipediaLink": 1,
+                        "SiteInfoDBName": 1,
+                        "SiteInfoName": 1,
+                        "SiteLanguage": 1,
+                        "pageWikipediaGenerated": 1,
+                        "highlights": { "$meta": "searchHighlights" }
+                    }
+                }
+            ], 
+            'facets': [
+                {
+                    '$replaceWith': '$$SEARCH_META'
+                }, {
+                    '$limit': 1
+                },
+            ]
+        }
+    }
+]   
+    if searchQuery.isnumeric():
+      pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageBytes", "value": int(searchQuery)}})
+      pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageId", "value": int(searchQuery)}})
+      pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageNumberLinks", "value": int(searchQuery)}})
+    elif isValidDate(searchQuery):
+      pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageLastModified", "value": dt.datetime.strptime(searchQuery, "%Y-%m-%d")}}) 
+    return pipeline
+
+def filteredTextSearchQuery(searchQuery, PageLastModifiedUser, PageNamespace, SiteInfoName, SiteInfoDBName, SiteLanguage, PageRestrictions, PageBytes, PageNumberLinks, PageLastModified, PageHasRedirect):
+    pipeline = textSearchQuery(searchQuery)
+    if PageLastModifiedUser:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageLastModifiedUser", "query": PageLastModifiedUser}})
+    if PageNamespace:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageNamespace", "query": PageNamespace}})
+    if SiteInfoName:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "SiteInfoName", "query": SiteInfoName}})
+    if SiteInfoDBName:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "SiteInfoDBName", "query": SiteInfoDBName}})
+    if SiteLanguage:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "SiteLanguage", "query": SiteLanguage}})
+    if PageRestrictions:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageRestrictions", "query": PageRestrictions}})
+    if PageBytes:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"equals": {"path": "PageBytes", "value": int(PageBytes)}})
+    if PageNumberLinks:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"equals": {"path": "PageNumberLinks", "value": int(PageNumberLinks)}})
+    if PageLastModified:
+        dateObj = dt.datetime.fromisoformat(PageLastModified)
+        newDate = dateObj - dt.timedelta(days=365*5)
+        newIsoDate = newDate.isoformat()
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageLastModified", "lt": PageLastModified, "gt": newIsoDate}})
+    if PageHasRedirect:
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageHasRedirect", "query": PageHasRedirect}})
+    return pipeline
+
 @app.route("/")
 def home():
     return render_template_string('''<!doctype html>
@@ -138,22 +290,6 @@ def home():
 </html>
 ''')
 
-@app.route("/getMongo/", methods=["GET"])
-def getFromMongo():
-    if request.method == "GET":
-        REQUEST_COUNT.inc()
-        
-        form = {
-            
-        }
-        try:
-            pokemonFound = db.find_one({"Id": id})
-            logger.debug(f"Get One:")
-            return f"Get one "
-        except Exception as e:
-            logger.debug("No se pudo encontrar el pokemon: ", e)
-    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "test", 'bagInfo': json.dumps({"id": 1, "text": "test"})}
-    write_a_record(handle, 'ic4302_logs', record)       
 
 @app.route("/getAutonomous", methods=["GET"])
 def getFromAutonomous():
@@ -209,15 +345,24 @@ def register():
             logger.debug(str(e))
             logger.debug("El usuario ya está registrado.", e)
         return "Usuario registrado"
+    
+@app.route("/mongodb/get_data/<query>", methods=["GET"])
+def get_data (query):
+    REQUEST_COUNT.inc()
+    filters = request.get_json()
+    pipeline = filteredTextSearchQuery(query, filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
+    results = list(mongo.db.pages.aggregate(pipeline))[0]
+    for doc in results["docs"]:
+        for highlight in doc["highlights"]:
+            doc[highlight["path"]] = highlight["texts"]
+    
+    return results
 
-
-
-            
 
 if __name__ == "__main__":
     # Start up the server to expose the metrics.
     
-    app.config['MONGO_URI']  = uri
+    mongo = mongoDBConnection()
     start_http_server(8000)
     app.run(debug = True)
     
