@@ -133,6 +133,8 @@ def textSearchQuery(searchQuery):
                         "pageWikipediaGenerated": 1,
                         "highlights": { "$meta": "searchHighlights" }
                     }
+                }, {
+                    "$limit": 1250
                 }
             ], 
             'facets': [
