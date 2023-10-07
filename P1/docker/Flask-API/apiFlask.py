@@ -84,13 +84,21 @@ config2 = NoSQLHandleConfig(region, at_provider)
 
 handle = NoSQLHandle(config2)
 
+def get_db():
+    db = getattr(g, "_database", None)
+
+    if db is None:
+
+        db = g._database = PyMongo(current_app).db
+       
+    return db
+
 # Método para escribir en la base de datos NoSQL en Oracle Cloud
 def write_a_record(handle, table_name, record):
     request = PutRequest().set_table_name(table_name)
     request.set_value(record)
     handle.put(request)
     return
-
 db = LocalProxy(get_db)
 
 # Codigo basado en https://www.digitalocean.com/community/tutorials/how-to-set-up-flask-with-mongodb-and-docker
@@ -523,7 +531,6 @@ def login():
 @app.route("/register", methods=["POST"]) 
 def register():
     if request.method == "POST":
-        logger.debug("Llegó el request")
         REQUEST_COUNT.inc()
         data = request.get_json()
         pEmail = data["email"]
@@ -532,10 +539,12 @@ def register():
         pDisplayName = data["name"] + " " + data["last_name1"] + " " + data["last_name2"]        
         try:
             user = auth.create_user(email = pEmail, password = pPassword, phone_number = pPhone, display_name = pDisplayName)
+            return {"success": {"code": 200, "message": "The user has been registered correctly"}}
         except Exception as e:
             logger.debug(str(e))
             logger.debug("El usuario ya está registrado.", e)
-        return "Usuario registrado"
+            return json.dumps({"error": {"code": 500, "message": "The user has already been registered"}})
+        
     
 @app.route("/mongodb/get_data/<query>", methods=["GET"])
 def get_data (query):

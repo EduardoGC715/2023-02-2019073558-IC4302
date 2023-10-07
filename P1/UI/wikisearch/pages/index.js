@@ -2,12 +2,13 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { useState } from 'react';
 import { getLogin } from '../lib/loginAPI';
+import Link from 'next/link'
 
 export default function Home() {
   const [email, setEmail] = useState(null)
   const [password, setPassword] = useState(null)
 
-  async function handleOnSubmit(e){
+  async function handleOnSubmit(e) {
     e.preventDefault();
     console.log(email, password);
     const login = await getLogin(email, password);
@@ -19,8 +20,11 @@ export default function Home() {
     }
   }
 
-  function handleSignUp(e){
-    // Moverse a pag de Sign Up
+  function handleSignUp(e) {
+    // Moverse a pagina de Sign Up
+
+
+    console.log('hola');
   }
 
   return (
@@ -36,22 +40,22 @@ export default function Home() {
         </h1>
 
         <p className={styles.description}>
-          Get started with <span style={{fontWeight: 700, color: "purple"}}>WikiSearch</span> today!
+          Get started with <span style={{ fontWeight: 700, color: "purple" }}>WikiSearch</span> today!
         </p>
 
         <div className={styles.formulario}>
           <form method="post" onSubmit={handleOnSubmit}>
-            <input className={styles.inputT1} type="text" placeholder="Email" required 
-              onChange = {e => setEmail(e.target.value)}
+            <input className={styles.inputT1} type="text" placeholder="Email" required
+              onChange={e => setEmail(e.target.value)}
             />
 
-            <input className={styles.inputT1} type="password" placeholder="Password" required 
-              onChange = {e => setPassword(e.target.value)}
+            <input className={styles.inputT1} type="password" placeholder="Password" required
+              onChange={e => setPassword(e.target.value)}
             />
-            <button className={styles.buttonT1} type="submit">Iniciar Sesión</button>
+            <button className={styles.buttonT1} type="submit">Login</button>
           </form>
         </div>
-        <button className={styles.buttonT1} onClick={handleSignUp}>Sign Up</button>
+        < Link href="/register"><button className={styles.buttonT1}>Sign Up</button></Link>
       </main>
 
       <footer>
@@ -65,5 +69,6 @@ export default function Home() {
         </a>
       </footer>
     </div>
+
   );
 }
