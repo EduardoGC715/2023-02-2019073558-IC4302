@@ -1,10 +1,52 @@
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getLogin } from '../lib/loginAPI';
 import Link from 'next/link'
+import Bus from '../utils/Bus'
+
+// Código basado de:
+// https://medium.com/@jaouad_45834/building-a-flash-message-component-with-react-js-6288da386d53
+
+export const Flash = () => {
+  let [visibility, setVisibility] = useState(false);
+  let [message, setMessage] = useState('');
+  let [type, setType] = useState('');
+
+  useEffect(() => {
+    Bus.addListener('flash', ({ message, type }) => {
+      setVisibility(true);
+      setMessage(message);
+      setType(type);
+      setTimeout(() => {
+        setVisibility(false);
+      }, 4000);
+    });
+
+
+  }, []);
+
+  useEffect(() => {
+    if (document.querySelector('.close') !== null) {
+      document.
+        querySelector('.close').
+        addEventListener('click', () => setVisibility(false));
+    }
+  })
+
+  return (
+    visibility && <div className={`alert alert-${type}`}>
+      <span className="close"><strong>X</strong></span>
+      <p>{message}</p>
+    </div>
+  )
+}
 
 export default function Home() {
+  if (typeof window !== 'undefined') {
+    window.flash = (message, type = "success") => Bus.emit('flash', ({ message, type }));
+  }
+
   const [email, setEmail] = useState(null)
   const [password, setPassword] = useState(null)
 
@@ -16,15 +58,10 @@ export default function Home() {
     if (!login.hasOwnProperty("error")) {
       console.log("Logged in");
     } else {
+      window.flash('ERROR: The user does not exist', 'error')
       console.log('User does not exist');
+
     }
-  }
-
-  function handleSignUp(e) {
-    // Moverse a pagina de Sign Up
-
-
-    console.log('hola');
   }
 
   return (
@@ -35,6 +72,7 @@ export default function Home() {
       </Head>
 
       <main>
+        <Flash />
         <h1 className={styles.title}>
           Login
         </h1>

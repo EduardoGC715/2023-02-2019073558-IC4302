@@ -7,7 +7,6 @@ import Bus from '../utils/Bus'
 
 // Código basado de:
 // https://medium.com/@jaouad_45834/building-a-flash-message-component-with-react-js-6288da386d53
-window.flash = (message, type = "success") => Bus.emit('flash', ({ message, type }));
 export const Flash = () => {
   let [visibility, setVisibility] = useState(false);
   let [message, setMessage] = useState('');
@@ -43,6 +42,9 @@ export const Flash = () => {
 }
 
 export default function Register() {
+  if (typeof window !== 'undefined') {
+    window.flash = (message, type = "success") => Bus.emit('flash', ({ message, type }));
+  }
   const [email, setEmail] = useState(null)
   const [password, setPassword] = useState(null)
   const [phone, setPhone] = useState(null)
