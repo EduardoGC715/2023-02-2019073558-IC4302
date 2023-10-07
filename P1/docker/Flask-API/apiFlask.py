@@ -546,7 +546,7 @@ def register():
             return json.dumps({"error": {"code": 500, "message": "The user has already been registered"}})
         
     
-@app.route("/mongodb/get_data/<query>", methods=["GET"])
+@app.route("/mongodb/get_data/<query>", methods=["POST"])
 def get_data (query):
     REQUEST_COUNT.inc()
     filters = request.get_json()

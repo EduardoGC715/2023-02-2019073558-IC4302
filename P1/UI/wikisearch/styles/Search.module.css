@@ -47,6 +47,10 @@ font-size: 1.5rem;
     padding-top: 4px;
 }
 
+.facetLabel {
+    text-align: left;
+    font-size: 19px;
+}
 .middleSection {
     width: 100%;
     display: flex;

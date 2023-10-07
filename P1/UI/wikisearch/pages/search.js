@@ -3,6 +3,7 @@ import styles from '../styles/Search.module.css';
 import { useState } from 'react';
 import { getLogin } from '../lib/loginAPI';
 import Facet from '../components/Facet';
+import { getMongo } from '../lib/mongoAPI';
 
 export default function Search() {
 
@@ -48,8 +49,9 @@ export default function Search() {
         setSearchInput(event.target.value);
     }
 
-    function onClickSearch(){
+    async function onClickSearch(){
         console.log(searchInput, selectedEngine, facetObject)
+        getMongo(searchInput)
     }
 
     return (
@@ -95,12 +97,13 @@ export default function Search() {
                 <div className={styles.contentGrid}>
                     <div className={styles.facetTable}>
                         <p className={styles.facetTitle}>Facet List</p>
-                        <Facet value={facetObject['PageId']} text="Page Id" onChange={event => handleFacetChange(event, "PageId")}/>
-                        <Facet value={facetObject['PageTitle']} text="Page Title" onChange={event => handleFacetChange(event, "PageTitle")}/>
-                        <Facet value={facetObject['PageNamespace']} text="Page Namespace" onChange={event => handleFacetChange(event, "PageNamespace")}/>
-                        <Facet value={facetObject['PageRedirect']} text="Page Redirect" onChange={event => handleFacetChange(event, "PageRedirect")}/>
-                        <Facet value={facetObject['PageHasRedirect']} text="Page Has Redirect" onChange={event => handleFacetChange(event, "PageHasRedirect")}/>
-                        <Facet value={facetObject['PageRestriction']} text="Page Restriction" onChange={event => handleFacetChange(event, "PageRestriction")}/>
+                        <p className={styles.facetLabel}>Page Bytes</p>
+                        <Facet value={facetObject['PageId']} text="0" onChange={event => handleFacetChange(event, "PageId")}/>
+                        <Facet value={facetObject['PageTitle']} text="10000" onChange={event => handleFacetChange(event, "PageTitle")}/>
+                        <Facet value={facetObject['PageNamespace']} text="10000" onChange={event => handleFacetChange(event, "PageNamespace")}/>
+                        <Facet value={facetObject['PageRedirect']} text="20000" onChange={event => handleFacetChange(event, "PageRedirect")}/>
+                        <Facet value={facetObject['PageHasRedirect']} text="30000" onChange={event => handleFacetChange(event, "PageHasRedirect")}/>
+                        <Facet value={facetObject['PageRestriction']} text="40000" onChange={event => handleFacetChange(event, "PageRestriction")}/>
                         <Facet value={facetObject['SiteInfoName']} text="Site Info Name" onChange={event => handleFacetChange(event, "SiteInfoName")}/>
                         <Facet value={facetObject['SiteInfoDBName']} text="Site Info DB Name" onChange={event => handleFacetChange(event, "SiteInfoDBName")}/>
                         <Facet value={facetObject['SiteLanguage']} text="Site Language" onChange={event => handleFacetChange(event, "SiteLanguage")}/>
