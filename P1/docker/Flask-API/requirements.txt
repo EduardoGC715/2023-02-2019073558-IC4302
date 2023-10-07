@@ -6,3 +6,4 @@ oracledb
 borneo
 pymongo
 firebase_admin
+oracledb
