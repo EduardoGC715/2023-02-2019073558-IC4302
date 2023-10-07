@@ -69,12 +69,12 @@ def textSearchQuery(searchQuery):
                       'PageBytesFacet': {
                         'type': 'number', 
                         'path': 'PageBytes',
-                        'boundaries': [0, 200, 400, 600, 800, 1000, 2000]
+                        'boundaries': [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]
                     }, 
                       'PageNumberLinksFacet': {
                         'type': 'number', 
                         'path': 'PageNumberLinks',
-                        'boundaries': [2, 4, 6, 8, 10, 20]
+                        'boundaries': [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
                     },
                       "PageLastModifiedFacet": {
                         "type": "date",
@@ -170,14 +170,15 @@ def filteredTextSearchQuery(searchQuery, PageLastModifiedUser, PageNamespace, Si
     if PageRestrictions:
         pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageRestrictions", "query": PageRestrictions}})
     if PageBytes:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"equals": {"path": "PageBytes", "value": int(PageBytes)}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageBytes", "lte": int(PageBytes), "gt": (int(PageBytes)-200)}})
     if PageNumberLinks:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"equals": {"path": "PageNumberLinks", "value": int(PageNumberLinks)}})
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageNumberLinks", "lte": int(PageNumberLinks), "gt": (int(PageNumberLinks)-2)}})
     if PageLastModified:
-        dateObj = dt.datetime.fromisoformat(PageLastModified)
-        newDate = dateObj - dt.timedelta(days=365*5)
-        newIsoDate = newDate.isoformat()
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageLastModified", "lt": PageLastModified, "gt": newIsoDate}})
+        date_format = "%a, %d %b %Y %H:%M:%S %Z"
+        # Parse the date string into a datetime object
+        dateObj = dt.datetime.strptime(PageLastModified, date_format)
+        newDate = dateObj - dt.timedelta(days=31)
+        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageLastModified", "lte": PageLastModified, "gt": newDate}})
     if PageHasRedirect:
         pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageHasRedirect", "query": PageHasRedirect}})
     return pipeline
