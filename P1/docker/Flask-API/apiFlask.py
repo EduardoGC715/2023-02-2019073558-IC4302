@@ -11,7 +11,7 @@ from flask_pymongo import PyMongo
 from flask_cors import CORS
 from os import environ
 import logging
-from prometheus_client import start_http_server, Counter
+from prometheus_client import start_http_server, Counter, Gauge
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import oci
@@ -22,6 +22,7 @@ import time
 import json
 import random
 import requests
+import oracledb
 
 # Código basado de
 # https://docs.oracle.com/en-us/iaas/tools/python/2.112.0/api/object_storage/client/oci.object_storage.ObjectStorageClient.html
@@ -110,8 +111,192 @@ logger = logging.getLogger(__name__)
 # 
 app = Flask(__name__)
 
+
+# metricas de cada endpoint para prometheus
+metrics = {
+    'get_pages': {
+        'REQUEST_COUNT': Counter('flask_http_requests_autonomous', 'Number of HTTP requests received'),
+        'MAX_TIME': Gauge('request_processing_seconds_max_autonomous', 'Maximum request processing time in autonomous endpoint'),
+        'MIN_TIME': Gauge('request_processing_seconds_min_autonomous', 'Minimum request processing time in autonomous endpoint'),
+        'AVG_TIME': Gauge('request_processing_seconds_avg_autonomous', 'Average request processing time in autonomous endpoint')
+    },
+    'get_data': {
+        'REQUEST_COUNT': Counter('flask_http_requests_mongo', 'Number of HTTP requests received in mongo endpoint'),
+        'MAX_TIME': Gauge('request_processing_seconds_max_mongo', 'Maximum request processing time in mongo endpoint'),
+        'MIN_TIME': Gauge('request_processing_seconds_min_mongo', 'Minimum request processing time in mongo endpoint'),
+        'AVG_TIME': Gauge('request_processing_seconds_avg_mongo', 'Average request processing time in mongo endpoint')
+    },
+    'login': {
+        'REQUEST_COUNT': Counter('flask_http_requests_login', 'Number of HTTP requests received in login endpoint'),
+        'MAX_TIME': Gauge('request_processing_seconds_max_login', 'Maximum request processing time in login endpoint'),
+        'MIN_TIME': Gauge('request_processing_seconds_min_login', 'Minimum request processing time in login endpoint'),
+        'AVG_TIME': Gauge('request_processing_seconds_avg_login', 'Average request processing time in login endpoint')
+    },
+    'register': {
+        'REQUEST_COUNT': Counter('flask_http_requests_register', 'Number of HTTP requests received in register enpoint'),
+        'MAX_TIME': Gauge('request_processing_seconds_max_register', 'Maximum request processing time in register endpoint'),
+        'MIN_TIME': Gauge('request_processing_seconds_min_register', 'Minimum request processing time in register endpoint'),
+        'AVG_TIME': Gauge('request_processing_seconds_avg_register', 'Average request processing time in register endpoint')
+    }
+}
+
+# diccionarios que almacenan los tiempos maximos minimos promedio u numero de requests por endpoint
+times_max = {}
+times_min = {}
+times_avg = {}
+times_count = {}
+
+# contador de tiempo por request hecho utilizando https://sureshdsk.dev/flask-decorator-to-measure-time-taken-for-a-request
+@app.before_request
+def logging_before():
+    # Store the start time for the request
+    g.start_time = time.perf_counter()
+
+@app.after_request
+def logging_after(response):
+    global times_max, times_min, times_avg, times_count
+    print("Endpoint:", request.endpoint)
+    endpoint = request.endpoint
+    total_time = time.perf_counter() - g.start_time
+    time_in_ms = int(total_time)
+    
+    # Initialize metrics for the endpoint if it's the first time
+    if endpoint not in times_count:
+        times_count[endpoint] = 0
+        times_max[endpoint] = 0
+        times_min[endpoint] = float('inf')
+        times_avg[endpoint] = 0
+    
+    times_count[endpoint] += 1
+
+    times_max[endpoint] = max(times_max[endpoint], time_in_ms)
+    times_min[endpoint] = min(times_min[endpoint], time_in_ms)
+    times_avg[endpoint] += time_in_ms
+
+    if endpoint in metrics:
+        metrics[endpoint]['MAX_TIME'].set(times_max[endpoint])
+        metrics[endpoint]['MIN_TIME'].set(times_min[endpoint])
+        metrics[endpoint]['REQUEST_COUNT'].inc()
+        avg_value = times_avg[endpoint]
+        if times_count[endpoint] != 0:
+            avg_value = avg_value / times_count[endpoint]
+            
+        metrics[endpoint]['AVG_TIME'].set(avg_value)
+    return response
+
 # enable cors
 CORS(app)
+
+# AUTONOMOUS CONNECTION
+def connectAutonomousDB():
+    try:
+        
+        cs='''(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-chicago-1.oraclecloud.com))(connect_data=(service_name=gcea482f4f1b83b_ic4302_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))'''
+        connection=oracledb.connect(
+            user="ADMIN",
+            password="thisiswrongNereo08",
+            dsn=cs)
+        
+        return connection
+    except Exception as e:
+        # Handle the exception
+        logger.debug(f"Error connecting to AutonomousDB: {e}")
+        return None
+    
+def read_lob(lob):
+    """Utility function to read LOB content."""
+    if hasattr(lob, "read"):
+        content = lob.read()
+        # Check if the content is bytes and decode if needed
+        if isinstance(content, bytes):
+            return content.decode('utf-8')
+        return content
+    return lob
+
+def searchAutonomousFacets(search_term):
+    cur = autonomous.cursor()
+
+    # Define an output variable for the SYS_REFCURSOR
+    out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
+
+    # Create a list for parameters, where the first element is the search term and the second is the output cursor
+    params = [search_term, out_val]
+
+    # Call the procedure using the list of parameters
+    cur.callproc('search_facets', params)
+
+    # Get the returned SYS_REFCURSOR from the out_val and fetch the results
+    result_cursor = out_val.getvalue()
+    rows = result_cursor.fetchall()
+
+    # Don't forget to close the result_cursor when done
+    result_cursor.close()
+    
+    pages = []
+    for row in rows:
+        # Prepare the page dictionary
+        page = {
+            'facetType': row[0],
+            'facetValue': row[1],
+            'facetCount': row[2]}
+        pages.append(page)
+    
+    cur.close()
+    return pages
+
+
+def searchAutonomous(search_term):
+    cur = autonomous.cursor()
+
+    # Define an output variable for the SYS_REFCURSOR
+    out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
+
+    # Create a list for parameters, where the first element is the search term and the second is the output cursor
+    params = [search_term, out_val]
+
+    # Call the procedure using the list of parameters
+    cur.callproc('search', params)
+
+    # Get the returned SYS_REFCURSOR from the out_val and fetch the results
+    result_cursor = out_val.getvalue()
+    rows = result_cursor.fetchall()
+
+    # Don't forget to close the result_cursor when done
+    result_cursor.close()
+    
+    pages = []
+    for row in rows:
+        # Prepare the page dictionary
+        page = {
+            'pageId': row[0],
+            'pageTitle': row[1],
+            'pageNamespace': row[2],
+            'pageRedirect': row[3],
+            'pageHasRedirect': row[4],
+            'pageRestrictions': row[5],
+            'siteInfoName': row[6],
+            'siteInfoDBName': row[7],
+            'siteLanguage': row[8],
+            'pageLastModified': row[9].isoformat() if isinstance(row[9], dt.datetime) else row[9],
+            'pageLastModifiedUser': row[10],
+            'pageBytes': row[11],
+            'pageText': read_lob(row[12]),
+            'pageWikipediaLink': row[13],
+            'pageWikipediaGenerated': row[14],
+            'pageLinks': row[15],
+            'pageNumberLinks': row[16]}
+        pages.append(page)
+    
+    cur.close()
+    
+    facets = []
+    
+    facets = searchAutonomousFacets(search_term)
+    
+    result = [pages, facets]
+    
+    return result
+
 
 # MONGO CONNECTION
 def mongoDBConnection (): 
@@ -180,23 +365,29 @@ def textSearchQuery(searchQuery):
                       'PageBytesFacet': {
                         'type': 'number', 
                         'path': 'PageBytes',
-                        'boundaries': [0, 1000, 10000, 20000, 30000, 40000, 50000]
+                        'boundaries': [0, 200, 400, 600, 800, 1000, 2000]
                     }, 
                       'PageNumberLinksFacet': {
                         'type': 'number', 
                         'path': 'PageNumberLinks',
-                        'boundaries': [1, 2, 3, 4, 5]
+                        'boundaries': [2, 4, 6, 8, 10, 20]
                     },
                       "PageLastModifiedFacet": {
                         "type": "date",
                         "path": "PageLastModified",
                         "boundaries": [ 
-                            dt.datetime(2000, 1, 1, 0, 0, 0),
-                            dt.datetime(2005, 1, 1, 0, 0, 0),
-                            dt.datetime(2010, 1, 1, 0, 0, 0),
-                            dt.datetime(2015, 1, 1, 0, 0, 0),
-                            dt.datetime(2020, 1, 1, 0, 0, 0),
-                            dt.datetime(2025, 1, 1, 0, 0, 0)
+                            dt.datetime(2023, 1, 1, 0, 0, 0),
+                            dt.datetime(2023, 2, 1, 0, 0, 0),
+                            dt.datetime(2023, 3, 1, 0, 0, 0),
+                            dt.datetime(2023, 4, 1, 0, 0, 0),
+                            dt.datetime(2023, 5, 1, 0, 0, 0),
+                            dt.datetime(2023, 6, 1, 0, 0, 0),
+                            dt.datetime(2023, 7, 1, 0, 0, 0),
+                            dt.datetime(2023, 8, 1, 0, 0, 0),
+                            dt.datetime(2023, 9, 1, 0, 0, 0),
+                            dt.datetime(2023, 10, 1, 0, 0, 0),
+                            dt.datetime(2023, 11, 1, 0, 0, 0),
+                            dt.datetime(2023, 12, 1, 0, 0, 0)
                         ]
                     }, 
                       'PageHasRedirectFacet': {
@@ -367,11 +558,21 @@ def get_data (query):
     
     return results
 
+@app.route('/autonomous/get_pages/<query>', methods=['GET'])
+def get_pages(search_term):
+    REQUEST_COUNT.inc()
+
+    pages = searchAutonomous(search_term)
+
+    return pages
+
 
 if __name__ == "__main__":
     # Start up the server to expose the metrics.
     
     mongo = mongoDBConnection()
+    autonomous = connectAutonomousDB()
+
     start_http_server(8000)
     app.run(debug = True)
     
