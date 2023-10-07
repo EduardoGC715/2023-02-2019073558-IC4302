@@ -3,12 +3,14 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "start": "next start"
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "next": "latest",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "next": "^13.5.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.16.0"
   },
   "engines": {
     "node": ">=18"
