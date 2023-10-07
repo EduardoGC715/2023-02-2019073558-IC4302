@@ -2,51 +2,133 @@ import Head from 'next/head';
 import styles from '../styles/Search.module.css';
 import { useState } from 'react';
 import { getLogin } from '../lib/loginAPI';
+import Facet from '../components/Facet';
 
 export default function Search() {
-  const [email, setEmail] = useState(null)
-  const [password, setPassword] = useState(null)
 
-  async function handleOnSubmit(e){
-    e.preventDefault();
-    console.log(email, password);
-    const login = await getLogin(email, password);
-    console.log(login);
-    if (!login.hasOwnProperty("error")) {
-      console.log("Logged in");
-    } else {
-      console.log('User does not exist');
+
+    const [selectedEngine, setSelectedEngine] = useState("MongoAtlas");
+
+    const handleEngineChange = (event) => {
+        setSelectedEngine(event.target.value);
+    };
+
+    const facetObjectCreate = {
+        PageId: false,
+        PageTitle: false,
+        PageNamespace: false,
+        PageRedirect: false,
+        PageHasRedirect: false,
+        PageRestriction: false,
+        SiteInfoName: false,
+        SiteInfoDBName: false,
+        SiteLanguage: false,
+        PageLastModified: false,
+        PageLastModifiedUser: false,
+        PageBytes: false,
+        PageText: false,
+        PageWikipediaLink: false,
+        PageWikipediaGenerated: false,
+        PageLinks: false,
+        PageNumberLinks: false
+    };
+
+    const [facetObject, setFacetObject] = useState(facetObjectCreate); 
+
+    function handleFacetChange(event, facet){
+        const objectCopy = {...facetObject}
+        objectCopy[facet] = event.target.checked
+        setFacetObject(objectCopy);
+        console.log(objectCopy);
     }
-  }
 
-  function handleSignUp(e){
-    // Moverse a pag de Sign Up
-  }
+    const [searchInput, setSearchInput] = useState("");
+    
+    function handleSearchInput(event){
+        setSearchInput(event.target.value);
+    }
 
-  return (
-    <div className={styles.container}>
-      <Head>
-        <title>WikiSearch</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    function onClickSearch(){
+        console.log(searchInput, selectedEngine, facetObject)
+    }
 
-      <main>
-        <h1 className={styles.title}>
-          Search
-        </h1>
-        <input className={styles.inputT1} type="text" placeholder='Search'/>
-      </main>
+    return (
+        <div className={styles.container}>
+            <Head>
+                <title>WikiSearch</title>
+                <link rel="icon" href="/favicon.ico" />
+            </Head>
 
-      <footer>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel" className={styles.logo} />
-        </a>
-      </footer>
-    </div>
-  );
+            <div className={styles.grid}>
+                <h1 className={styles.title}>
+                    Search
+                </h1>
+                <div className={styles.middleSection}>
+                    <input className={styles.inputT1} type="text" placeholder='Search' onChange={handleSearchInput}/>
+                    <button className={styles.searchButton}><img src="/logoBusqueda.svg" onClick={onClickSearch}/></button>
+                </div>
+
+                <div>
+                    <label className={styles.radioEngine}>
+                        <input
+                            type="radio"
+                            name="radioEngineGroup"
+                            value="MongoAtlas"
+                            checked={selectedEngine === "MongoAtlas"}
+                            onChange={handleEngineChange}
+                        />
+                        Mongo Atlas
+                    </label>
+
+                    <label className={styles.radioEngine}>
+                        <input
+                            type="radio"
+                            name="radioEngineGroup"
+                            value="SQL"
+                            checked={selectedEngine === "SQL"}
+                            onChange={handleEngineChange}
+                        />
+                        SQL
+                    </label>
+                </div>
+
+                <div className={styles.contentGrid}>
+                    <div className={styles.facetTable}>
+                        <p className={styles.facetTitle}>Facet List</p>
+                        <Facet value={facetObject['PageId']} text="Page Id" onChange={event => handleFacetChange(event, "PageId")}/>
+                        <Facet value={facetObject['PageTitle']} text="Page Title" onChange={event => handleFacetChange(event, "PageTitle")}/>
+                        <Facet value={facetObject['PageNamespace']} text="Page Namespace" onChange={event => handleFacetChange(event, "PageNamespace")}/>
+                        <Facet value={facetObject['PageRedirect']} text="Page Redirect" onChange={event => handleFacetChange(event, "PageRedirect")}/>
+                        <Facet value={facetObject['PageHasRedirect']} text="Page Has Redirect" onChange={event => handleFacetChange(event, "PageHasRedirect")}/>
+                        <Facet value={facetObject['PageRestriction']} text="Page Restriction" onChange={event => handleFacetChange(event, "PageRestriction")}/>
+                        <Facet value={facetObject['SiteInfoName']} text="Site Info Name" onChange={event => handleFacetChange(event, "SiteInfoName")}/>
+                        <Facet value={facetObject['SiteInfoDBName']} text="Site Info DB Name" onChange={event => handleFacetChange(event, "SiteInfoDBName")}/>
+                        <Facet value={facetObject['SiteLanguage']} text="Site Language" onChange={event => handleFacetChange(event, "SiteLanguage")}/>
+                        <Facet value={facetObject['PageLastModified']} text="Page Last Modified" onChange={event => handleFacetChange(event, "PageLastModified")}/>
+                        <Facet value={facetObject['PageLastModifiedUser']} text="Page Last Modified User" onChange={event => handleFacetChange(event, "PageLastModifiedUser")}/>
+                        <Facet value={facetObject['PageBytes']} text="Page Bytes" onChange={event => handleFacetChange(event, "PageBytes")}/>
+                        <Facet value={facetObject['PageText']} text="Page Text" onChange={event => handleFacetChange(event, "PageText")}/>
+                        <Facet value={facetObject['PageWikipediaLink']} text="Page Wikipedia Link" onChange={event => handleFacetChange(event, "PageWikipediaLink")}/>
+                        <Facet value={facetObject['PageWikipediaGenerated']} text="Page Wikipedia Generated" onChange={event => handleFacetChange(event, "PageWikipediaGenerated")}/>
+                        <Facet value={facetObject['PageLinks']} text="Page Links" onChange={event => handleFacetChange(event, "PageLinks")}/>
+                        <Facet value={facetObject['PageNumberLinks']} text="Page Number Links" onChange={event => handleFacetChange(event, "PageNumberLinks")}/>
+
+                    </div>
+                    <div className={styles.documentList}>
+                        <p>Document List Goes Here</p>
+                    </div>
+                </div>
+                <footer>
+                    <a
+                        href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Powered by{' '}
+                        <img src="/vercel.svg" alt="Vercel" className={styles.logo} />
+                    </a>
+                </footer>
+            </div>
+        </div>
+    );
 }

@@ -1,7 +1,13 @@
+.container {
+    height: 100%;
+}
+
 .grid{
+    height: 100%;
     display: grid;
-    grid-template-columns: 1;
-    grid-template-rows: 1fr 1fr 3fr;
+    grid-template-columns: 1fr;
+    grid-template-rows: 80px 50px 50px 1fr 40px;
+    place-items: center;
 }
   
 .title a {
@@ -26,28 +32,69 @@ text-align: center;
 }
 
 .title,
-.description {
+.description,
+.facetTitle {
 text-align: center;
 }
 
-.description {
+.description,
+.facetTitle {
 line-height: 1.5;
 font-size: 1.5rem;
 }
 
-.grid {
-display: flex;
-align-items: center;
-justify-content: center;
-flex-wrap: wrap;
+.facetTitle{
+    padding-top: 4px;
+}
 
-max-width: 800px;
-margin-top: 3rem;
+.middleSection {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: auto;
 }
   
+.searchBar {
+    height: 40px;
+    flex: 1;
+    background-color: transparent;
+    min-width: 0;
+    padding: 0px 12px 0px 52px;
+    font-size: 16px;
+    border: 1px solid #cccccc;
+    border-radius: 50px;
+    box-shadow: inset 0px 1px 2px #eeeeee;
+}
+
+.searchButton {
+    width: 44px;
+    height: 42px;
+    border: none;
+    border-radius: 20px;
+    background: none;
+    cursor: pointer;
+    margin-left: -44px;
+    margin-top: -8px;
+    transition: background 0.15s;
+}
+
+.searchButton img {
+    width: 25px;
+    height: auto;
+}
+
+.searchButton:hover {
+    background: rgb(223, 222, 222);
+}
+
+.searchButton:active {
+    opacity: 0.7;
+}
+
 .inputT1 {
-    width: 30%;
-    padding: 10px 3px 10px 36px;
+    width: 80%;
+    padding: 10px 45px 10px 17px;
     /*mover donde se escribe*/
     border-radius: 20px;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
@@ -75,4 +122,33 @@ margin-top: 3rem;
       Droid Sans,
       Helvetica Neue,
       sans-serif;
-  }
+}
+
+.radioEngine {
+    font-size: 20px;
+    margin: 0px 10px;
+}
+  
+.contentGrid {
+    width: 90%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    grid-template-rows: 1fr;
+}
+
+.facetTable{
+    border: 2px black solid;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.facetTable label{
+    display: block;
+    margin-bottom: 2px;
+}
+
+.documentList{
+    border: 2px black solid;
+}
+

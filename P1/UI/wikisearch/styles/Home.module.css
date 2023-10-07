@@ -173,3 +173,7 @@
 .buttonT1:hover {
   border-color: lightskyblue;
 }
+
+.buttonT1:active {
+  opacity: 0.7;
+}

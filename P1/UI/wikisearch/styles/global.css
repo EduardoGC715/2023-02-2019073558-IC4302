@@ -2,6 +2,7 @@ html,
 body {
   padding: 0;
   margin: 0;
+  height: 100%; 
   font-family:
     Inter,
     -apple-system,
@@ -15,6 +16,10 @@ body {
     Droid Sans,
     Helvetica Neue,
     sans-serif;
+}
+
+#__next{
+  height:100%;
 }
 
 a {
@@ -32,13 +37,14 @@ img {
 }
 
 main {
-  padding: 5rem 0;
+  padding: 0px 0px;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   width: 100%;
+  height: 95%;
   font-family:
     Inter,
     -apple-system,
@@ -52,10 +58,11 @@ main {
     Droid Sans,
     Helvetica Neue,
     sans-serif;
+  margin-bottom: 85px;
 }
 footer {
   width: 100%;
-  height: 100px;
+  height: 100%;
   border-top: 1px solid #eaeaea;
   display: flex;
   justify-content: center;
@@ -70,6 +77,9 @@ footer a {
   align-items: center;
   text-decoration: none;
   color: inherit;
+}
+footer a img {
+  height: 25px;
 }
 code {
   background: #fafafa;
