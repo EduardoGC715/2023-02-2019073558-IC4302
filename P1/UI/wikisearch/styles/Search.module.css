@@ -146,7 +146,6 @@ font-size: 1.5rem;
 .facetTable{
     border: 2px black solid;
     height: 100%;
-    overflow-y: auto;
 }
 
 .facetTable label{
@@ -156,13 +155,32 @@ font-size: 1.5rem;
 
 .documentList{
     border: 2px black solid;
+    padding-left: 10px;
 }
 
 .facetTable,
 .documentList {
     max-height: 600px;
+    overflow-y: auto;
 }
 
 .facetList {
     list-style: none;
+}
+
+.docTitle{
+    font-size: 18px;
+    color:#0070f3;
+    text-decoration: underline;
+    margin-bottom: 0px;
+}
+
+.pageText{
+    margin: 0px;
+    font-size: 14px;
+    font-style: italic;
+}
+
+.normalText {
+    margin: 0px;
 }

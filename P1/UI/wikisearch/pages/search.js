@@ -4,15 +4,20 @@ import { useState } from 'react';
 import { getLogin } from '../lib/loginAPI';
 import Facet from '../components/Facet';
 import FacetTable from '../components/FacetTable'
+import DocumentTable from '../components/DocumentTable'
 import { getMongo } from '../lib/mongoAPI';
 import { useRouter } from 'next/router';
 
 export default function Search() {
     const router = useRouter();
-    const login = JSON.parse(localStorage.getItem('login'));
-    // if (!login) {
-    //     router.push('/index');
-    // }
+    if (typeof window !== 'undefined') {
+        // https://developer.school/snippets/react/localstorage-is-not-defined-nextjs
+        // Perform localStorage action
+        const login = JSON.parse(localStorage.getItem('login'));
+        // if (!login) {
+        //     router.push('/index');
+        // }
+      }
 
     const [selectedEngine, setSelectedEngine] = useState("MongoAtlas");
 
@@ -43,6 +48,7 @@ export default function Search() {
     }
 
     const [facetList, setFacetList] = useState({});
+    const [documentList, setDocumentList] = useState([]);
 
     const [searchInput, setSearchInput] = useState("");
     
@@ -54,9 +60,10 @@ export default function Search() {
         console.log(searchInput, selectedEngine, facetObject)
         const facetSearch = await getMongo(searchInput, facetObject)
         if (!facetSearch['facets'].length){
-            alert("No documents found.")
+            alert("No documents found.");
         } else {
-            setFacetList(facetSearch['facets'][0]['facet'])
+            setFacetList(facetSearch['facets'][0]['facet']);
+            setDocumentList(facetSearch['docs']);
         }
     }
 
@@ -102,9 +109,7 @@ export default function Search() {
 
                 <div className={styles.contentGrid}>
                     <FacetTable facetList={facetList} facetObject={facetObject} handleFacetChange={handleFacetChange}/>
-                    <div className={styles.documentList}>
-                        <p>Document List Goes Here</p>
-                    </div>
+                    <DocumentTable documentList={documentList}/>
                 </div>
                 <footer>
                     <a

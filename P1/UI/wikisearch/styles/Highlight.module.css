@@ -1,0 +1,11 @@
+.normalText
+.highlightText{
+    font-size: 15px;
+}
+
+.highlightText{
+    background-color: #FFFF00;
+    font-weight: bold;
+    color: #000000;
+    border-radius: 8px;
+}
