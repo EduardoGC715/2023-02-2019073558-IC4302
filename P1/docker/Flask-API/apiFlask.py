@@ -213,14 +213,14 @@ def read_lob(lob):
         return content
     return lob
 
-def searchAutonomousFacets(search_term):
+def searchAutonomousFacets(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9):
     cur = autonomous.cursor()
 
     # Define an output variable for the SYS_REFCURSOR
     out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
 
     # Create a list for parameters, where the first element is the search term and the second is the output cursor
-    params = [search_term, out_val]
+    params = [search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9, out_val]
 
     # Call the procedure using the list of parameters
     cur.callproc('search_facets', params)
@@ -245,16 +245,16 @@ def searchAutonomousFacets(search_term):
     return pages
 
 
-def searchAutonomous(search_term):
+def searchAutonomous(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9):
     cur = autonomous.cursor()
 
     # Define an output variable for the SYS_REFCURSOR
     out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
 
     # Create a list for parameters, where the first element is the search term and the second is the output cursor
-    params = [search_term, out_val]
+    params = [search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9, out_val]
 
-    # Call the procedure using the list of parameters
+    # Call the procedure using the list of parameters, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9
     cur.callproc('search', params)
 
     # Get the returned SYS_REFCURSOR from the out_val and fetch the results
@@ -291,7 +291,7 @@ def searchAutonomous(search_term):
     
     facets = []
     
-    facets = searchAutonomousFacets(search_term)
+    facets = searchAutonomousFacets(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9)
     
     result = [pages, facets]
     
@@ -559,11 +559,21 @@ def get_data (query):
     
     return results
 
-@app.route('/autonomous/get_pages/<query>', methods=['GET'])
-def get_pages(search_term):
+@app.route('/autonomous/get_pages/<query>', methods=['POST'])
+def get_pages(query):
     REQUEST_COUNT.inc()
+    
+    filters = request.get_json()
+    
+    result = []
 
-    pages = searchAutonomous(search_term)
+    for filter_item in filters:
+        if filter_item:
+            # Si el filtro tiene valor, agregamos el filtro y el query con 
+            result.append(f"% {filter_item} %")
+
+    pages = searchAutonomous(query, result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], result[8], result[9])
+
 
     return pages
 
