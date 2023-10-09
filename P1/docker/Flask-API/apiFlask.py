@@ -155,7 +155,7 @@ def logging_before():
 @app.after_request
 def logging_after(response):
     global times_max, times_min, times_avg, times_count
-    print("Endpoint:", request.endpoint)
+    logger.debug("Endpoint:", request.endpoint)
     endpoint = request.endpoint
     total_time = time.perf_counter() - g.start_time
     time_in_ms = int(total_time)
@@ -555,6 +555,7 @@ def get_data (query):
     for doc in results["docs"]:
         for highlight in doc["highlights"]:
             doc[highlight["path"]] = highlight["texts"]
+    print(results)
     
     return results
 

@@ -1,10 +1,21 @@
 
-export async function getMongo(searchInput){
+export async function getMongo(searchInput, facetObject){
     try{
+      const list = [];
+      list.push(facetObject["PageLastModifiedUserFacet"] == "None" ? "" : facetObject["PageLastModifiedUserFacet"]);
+      list.push(facetObject["PageNamespaceFacet"] == "None" ? "" : facetObject["PageNamespaceFacet"]);
+      list.push(facetObject["SiteInfoNameFacet"] == "None" ? "" : facetObject["SiteInfoNameFacet"]);
+      list.push(facetObject["SiteInfoDBNameFacet"] == "None" ? "" : facetObject["SiteInfoDBNameFacet"]);
+      list.push(facetObject["SiteLanguageFacet"] == "None" ? "" : facetObject["SiteLanguageFacet"]);
+      list.push(facetObject["PageRestrictionsFacet"]  == "None" ? "" : facetObject["PageRestrictionsFacet"]);
+      list.push(facetObject["PageBytesFacet"]  == "None" ? "" : facetObject["PageBytesFacet"]);
+      list.push(facetObject["PageNumberLinksFacet"] == "None" ? "" : facetObject["PageNumberLinksFacet"]);
+      list.push(facetObject["PageLastModifiedFacet"]  == "None" ? "" : facetObject["PageLastModifiedFacet"]);
+      list.push(facetObject["PageHasRedirectFacet"] == "None" ? "" : facetObject["PageHasRedirectFacet"]);
+      console.log(list)
       const response = await fetch("http://localhost:5000/mongodb/get_data/" + searchInput, {
         method: "POST",
-        body: JSON.stringify(["","","","","","","","","",""]
-        ),
+        body: JSON.stringify(list),
         headers: {
           "content-type": "application/json",
         },

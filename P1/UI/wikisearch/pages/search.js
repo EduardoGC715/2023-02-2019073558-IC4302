@@ -3,6 +3,7 @@ import styles from '../styles/Search.module.css';
 import { useState } from 'react';
 import { getLogin } from '../lib/loginAPI';
 import Facet from '../components/Facet';
+import FacetTable from '../components/FacetTable'
 import { getMongo } from '../lib/mongoAPI';
 
 export default function Search() {
@@ -15,33 +16,28 @@ export default function Search() {
     };
 
     const facetObjectCreate = {
-        PageId: false,
-        PageTitle: false,
-        PageNamespace: false,
-        PageRedirect: false,
-        PageHasRedirect: false,
-        PageRestriction: false,
-        SiteInfoName: false,
-        SiteInfoDBName: false,
-        SiteLanguage: false,
-        PageLastModified: false,
-        PageLastModifiedUser: false,
-        PageBytes: false,
-        PageText: false,
-        PageWikipediaLink: false,
-        PageWikipediaGenerated: false,
-        PageLinks: false,
-        PageNumberLinks: false
+        PageNamespaceFacet: "None",
+        PageHasRedirectFacet: "None",
+        SiteInfoNameFacet: "None",
+        SiteInfoDBNameFacet: "None",
+        SiteLanguageFacet: "None",
+        PageLastModifiedFacet: "None",
+        PageLastModifiedUserFacet: "None",
+        PageBytesFacet: "None",
+        PageRestrictionsFacet: "None",
+        PageNumberLinksFacet: "None"
     };
 
     const [facetObject, setFacetObject] = useState(facetObjectCreate); 
 
     function handleFacetChange(event, facet){
         const objectCopy = {...facetObject}
-        objectCopy[facet] = event.target.checked
+        objectCopy[facet] = event.target.value
         setFacetObject(objectCopy);
         console.log(objectCopy);
     }
+
+    const [facetList, setFacetList] = useState({});
 
     const [searchInput, setSearchInput] = useState("");
     
@@ -51,7 +47,8 @@ export default function Search() {
 
     async function onClickSearch(){
         console.log(searchInput, selectedEngine, facetObject)
-        getMongo(searchInput)
+        const facetSearch = await getMongo(searchInput, facetObject)
+        setFacetList(facetSearch['facets'][0]['facet'])
     }
 
     return (
@@ -95,28 +92,7 @@ export default function Search() {
                 </div>
 
                 <div className={styles.contentGrid}>
-                    <div className={styles.facetTable}>
-                        <p className={styles.facetTitle}>Facet List</p>
-                        <p className={styles.facetLabel}>Page Bytes</p>
-                        <Facet value={facetObject['PageId']} text="0" onChange={event => handleFacetChange(event, "PageId")}/>
-                        <Facet value={facetObject['PageTitle']} text="10000" onChange={event => handleFacetChange(event, "PageTitle")}/>
-                        <Facet value={facetObject['PageNamespace']} text="10000" onChange={event => handleFacetChange(event, "PageNamespace")}/>
-                        <Facet value={facetObject['PageRedirect']} text="20000" onChange={event => handleFacetChange(event, "PageRedirect")}/>
-                        <Facet value={facetObject['PageHasRedirect']} text="30000" onChange={event => handleFacetChange(event, "PageHasRedirect")}/>
-                        <Facet value={facetObject['PageRestriction']} text="40000" onChange={event => handleFacetChange(event, "PageRestriction")}/>
-                        <Facet value={facetObject['SiteInfoName']} text="Site Info Name" onChange={event => handleFacetChange(event, "SiteInfoName")}/>
-                        <Facet value={facetObject['SiteInfoDBName']} text="Site Info DB Name" onChange={event => handleFacetChange(event, "SiteInfoDBName")}/>
-                        <Facet value={facetObject['SiteLanguage']} text="Site Language" onChange={event => handleFacetChange(event, "SiteLanguage")}/>
-                        <Facet value={facetObject['PageLastModified']} text="Page Last Modified" onChange={event => handleFacetChange(event, "PageLastModified")}/>
-                        <Facet value={facetObject['PageLastModifiedUser']} text="Page Last Modified User" onChange={event => handleFacetChange(event, "PageLastModifiedUser")}/>
-                        <Facet value={facetObject['PageBytes']} text="Page Bytes" onChange={event => handleFacetChange(event, "PageBytes")}/>
-                        <Facet value={facetObject['PageText']} text="Page Text" onChange={event => handleFacetChange(event, "PageText")}/>
-                        <Facet value={facetObject['PageWikipediaLink']} text="Page Wikipedia Link" onChange={event => handleFacetChange(event, "PageWikipediaLink")}/>
-                        <Facet value={facetObject['PageWikipediaGenerated']} text="Page Wikipedia Generated" onChange={event => handleFacetChange(event, "PageWikipediaGenerated")}/>
-                        <Facet value={facetObject['PageLinks']} text="Page Links" onChange={event => handleFacetChange(event, "PageLinks")}/>
-                        <Facet value={facetObject['PageNumberLinks']} text="Page Number Links" onChange={event => handleFacetChange(event, "PageNumberLinks")}/>
-
-                    </div>
+                    <FacetTable facetList={facetList} facetObject={facetObject} handleFacetChange={handleFacetChange}/>
                     <div className={styles.documentList}>
                         <p>Document List Goes Here</p>
                     </div>
@@ -135,3 +111,22 @@ export default function Search() {
         </div>
     );
 }
+
+{/* <p className={styles.facetLabel}>Page Bytes</p>
+<Facet value={facetObject['PageId']} text="0" onChange={event => handleFacetChange(event, "PageId")}/>
+<Facet value={facetObject['PageTitle']} text="10000" onChange={event => handleFacetChange(event, "PageTitle")}/>
+<Facet value={facetObject['PageNamespace']} text="10000" onChange={event => handleFacetChange(event, "PageNamespace")}/>
+<Facet value={facetObject['PageRedirect']} text="20000" onChange={event => handleFacetChange(event, "PageRedirect")}/>
+<Facet value={facetObject['PageHasRedirect']} text="30000" onChange={event => handleFacetChange(event, "PageHasRedirect")}/>
+<Facet value={facetObject['PageRestriction']} text="40000" onChange={event => handleFacetChange(event, "PageRestriction")}/>
+<Facet value={facetObject['SiteInfoName']} text="Site Info Name" onChange={event => handleFacetChange(event, "SiteInfoName")}/>
+<Facet value={facetObject['SiteInfoDBName']} text="Site Info DB Name" onChange={event => handleFacetChange(event, "SiteInfoDBName")}/>
+<Facet value={facetObject['SiteLanguage']} text="Site Language" onChange={event => handleFacetChange(event, "SiteLanguage")}/>
+<Facet value={facetObject['PageLastModified']} text="Page Last Modified" onChange={event => handleFacetChange(event, "PageLastModified")}/>
+<Facet value={facetObject['PageLastModifiedUser']} text="Page Last Modified User" onChange={event => handleFacetChange(event, "PageLastModifiedUser")}/>
+<Facet value={facetObject['PageBytes']} text="Page Bytes" onChange={event => handleFacetChange(event, "PageBytes")}/>
+<Facet value={facetObject['PageText']} text="Page Text" onChange={event => handleFacetChange(event, "PageText")}/>
+<Facet value={facetObject['PageWikipediaLink']} text="Page Wikipedia Link" onChange={event => handleFacetChange(event, "PageWikipediaLink")}/>
+<Facet value={facetObject['PageWikipediaGenerated']} text="Page Wikipedia Generated" onChange={event => handleFacetChange(event, "PageWikipediaGenerated")}/>
+<Facet value={facetObject['PageLinks']} text="Page Links" onChange={event => handleFacetChange(event, "PageLinks")}/>
+<Facet value={facetObject['PageNumberLinks']} text="Page Number Links" onChange={event => handleFacetChange(event, "PageNumberLinks")}/> */}

@@ -1,14 +1,15 @@
 
 import styles from '../styles/Search.module.css';
 
-export default function Facet({ value, text, onChange}) {
+export default function Facet({ key, name, value, text, onChange, facetObjectValue }) {
     return (
         <>
             <label className={styles.radioEngine}>
                 <input
-                type="checkbox"
-                name="radioEngineGroup"
-                checked={value}
+                type="radio"
+                name={name}
+                value={value}
+                checked={facetObjectValue == value}
                 onChange={onChange}
                 />
                 {text}

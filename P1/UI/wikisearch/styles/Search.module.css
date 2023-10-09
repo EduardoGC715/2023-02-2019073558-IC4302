@@ -50,7 +50,9 @@ font-size: 1.5rem;
 .facetLabel {
     text-align: left;
     font-size: 19px;
+    margin-left: 10px;
 }
+
 .middleSection {
     width: 100%;
     display: flex;
@@ -156,3 +158,11 @@ font-size: 1.5rem;
     border: 2px black solid;
 }
 
+.facetTable,
+.documentList {
+    max-height: 600px;
+}
+
+.facetList {
+    list-style: none;
+}
