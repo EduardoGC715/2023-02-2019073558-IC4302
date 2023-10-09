@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { getLogin } from '../lib/loginAPI';
 import Link from 'next/link'
 import Bus from '../utils/Bus'
@@ -49,6 +50,7 @@ export default function Home() {
 
   const [email, setEmail] = useState(null)
   const [password, setPassword] = useState(null)
+  const router = useRouter();
 
   async function handleOnSubmit(e) {
     e.preventDefault();
@@ -57,6 +59,8 @@ export default function Home() {
     console.log(login);
     if (!login.hasOwnProperty("error")) {
       console.log("Logged in");
+      localStorage.setItem('login', JSON.stringify({email, password}));
+      router.push('/search');
     } else {
       window.flash('ERROR: The user does not exist', 'error')
       console.log('User does not exist');
@@ -93,7 +97,7 @@ export default function Home() {
             <button className={styles.buttonT1} type="submit">Login</button>
           </form>
         </div>
-        < Link href="/register"><button className={styles.buttonT1}>Sign Up</button></Link>
+        <Link href="/register"><button className={styles.buttonT1}>Sign Up</button></Link>
       </main>
 
       <footer>

@@ -5,9 +5,14 @@ import { getLogin } from '../lib/loginAPI';
 import Facet from '../components/Facet';
 import FacetTable from '../components/FacetTable'
 import { getMongo } from '../lib/mongoAPI';
+import { useRouter } from 'next/router';
 
 export default function Search() {
-
+    const router = useRouter();
+    const login = JSON.parse(localStorage.getItem('login'));
+    // if (!login) {
+    //     router.push('/index');
+    // }
 
     const [selectedEngine, setSelectedEngine] = useState("MongoAtlas");
 
@@ -48,7 +53,11 @@ export default function Search() {
     async function onClickSearch(){
         console.log(searchInput, selectedEngine, facetObject)
         const facetSearch = await getMongo(searchInput, facetObject)
-        setFacetList(facetSearch['facets'][0]['facet'])
+        if (!facetSearch['facets'].length){
+            alert("No documents found.")
+        } else {
+            setFacetList(facetSearch['facets'][0]['facet'])
+        }
     }
 
     return (
