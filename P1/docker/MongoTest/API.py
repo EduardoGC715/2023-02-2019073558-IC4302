@@ -69,12 +69,14 @@ def textSearchQuery(searchQuery):
                       'PageBytesFacet': {
                         'type': 'number', 
                         'path': 'PageBytes',
-                        'boundaries': [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]
+                        'boundaries': [0, 3000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000],
+                        "default": "+300000"
                     }, 
                       'PageNumberLinksFacet': {
                         'type': 'number', 
                         'path': 'PageNumberLinks',
-                        'boundaries': [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+                        'boundaries': [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+                        "default": "+50"
                     },
                       "PageLastModifiedFacet": {
                         "type": "date",
@@ -92,7 +94,8 @@ def textSearchQuery(searchQuery):
                             dt.datetime(2023, 10, 1, 0, 0, 0),
                             dt.datetime(2023, 11, 1, 0, 0, 0),
                             dt.datetime(2023, 12, 1, 0, 0, 0)
-                        ]
+                        ],
+                        "default": "Older"
                     }, 
                       'PageHasRedirectFacet': {
                         'type': 'string', 
@@ -103,7 +106,8 @@ def textSearchQuery(searchQuery):
             'highlight': {
                 'path': {
                     'wildcard': '*'
-                }
+                },
+                "maxNumPassages": 1
             }
         }
     }, {
@@ -170,15 +174,24 @@ def filteredTextSearchQuery(searchQuery, PageLastModifiedUser, PageNamespace, Si
     if PageRestrictions:
         pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageRestrictions", "query": PageRestrictions}})
     if PageBytes:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageBytes", "lte": int(PageBytes), "gt": (int(PageBytes)-200)}})
+        if PageBytes == "+300000":
+            pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageBytes", "gte": 300000}})
+        else:
+            pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageBytes", "lt": (int(PageBytes)+30000), "gte": int(PageBytes)}})
     if PageNumberLinks:
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageNumberLinks", "lte": int(PageNumberLinks), "gt": (int(PageNumberLinks)-2)}})
+        if PageNumberLinks == "+50":
+                pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageNumberLinks", "gte": 50}})
+        else:
+            pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageNumberLinks", "lt": (int(PageNumberLinks)+5), "gte": int(PageNumberLinks)}})
     if PageLastModified:
-        date_format = "%a, %d %b %Y %H:%M:%S %Z"
-        # Parse the date string into a datetime object
-        dateObj = dt.datetime.strptime(PageLastModified, date_format)
-        newDate = dateObj - dt.timedelta(days=31)
-        pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageLastModified", "lte": PageLastModified, "gt": newDate}})
+        if PageLastModified == "Older":
+            pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageLastModified", "lte": dt.datetime(2023, 1, 1, 0, 0, 0)}})
+        else: 
+            date_format = "%a, %d %b %Y %H:%M:%S %Z"
+            # Parse the date string into a datetime object
+            dateObj = dt.datetime.strptime(PageLastModified, date_format)
+            newDate = dateObj + dt.timedelta(days=31)
+            pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"range": {"path": "PageLastModified", "lt": newDate, "gte": dateObj}})
     if PageHasRedirect:
         pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "PageHasRedirect", "query": PageHasRedirect}})
     return pipeline
@@ -195,7 +208,7 @@ def home():
     </body>
 </html>
 ''')
-@app.route("/mongodb/get_data/<query>", methods=["GET"])
+@app.route("/mongodb/get_data/<query>", methods=["POST"])
 def get_data (query):
     filters = request.get_json()
     pipeline = filteredTextSearchQuery(query, filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
