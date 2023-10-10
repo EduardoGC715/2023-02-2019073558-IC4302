@@ -67,7 +67,7 @@ export default function Register() {
       window.flash
     } else {
       console.log('User was not created');
-      window.flash('ERROR: The user is already registered', 'error')
+      window.flash('ERROR: The user could not be registered', 'error')
     }
   }
 
@@ -81,7 +81,7 @@ export default function Register() {
       <main>
         <Flash />
         <h1 className={styles.title}>
-          Login
+          Register
         </h1>
 
         <p className={styles.description}>
