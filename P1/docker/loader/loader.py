@@ -113,7 +113,7 @@ def upsertDocument(insert_id, values, mongo):
     try:
         db = mongo["bibliotec"]
         query = {"_id": insert_id}
-        if len(values) > 3:
+        if len(values) > 4:
             update = {
                 "PageId": values[0],
                 "PageTitle": values[1],
@@ -131,9 +131,10 @@ def upsertDocument(insert_id, values, mongo):
                 "PageRestrictions": values[13]}
         else:
             update = {
-                "PageWikipediaLink": values[0],
-                "PageLinks": values[1],
-                "PageNumberLinks": values[2]}
+                "PageTitle": values[0],
+                "PageWikipediaLink": values[1],
+                "PageLinks": values[2],
+                "PageNumberLinks": values[3]}
         
         updateQuery = {"$set": update}
         
@@ -362,6 +363,7 @@ if __name__ == "__main__":
 
                     # Insert abstract data into Mongo Atlas
                     data4MongoA = [
+                        pageTitle,
                         url,
                         links,
                         len(links)
