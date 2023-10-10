@@ -58,7 +58,14 @@ export default function Search() {
 
     async function onClickSearch(){
         console.log(searchInput, selectedEngine, facetObject)
-        const facetSearch = await getMongo(searchInput, facetObject)
+        let facetSearch;
+        try{
+            facetSearch = await getMongo(searchInput, facetObject)
+        } catch {
+            alert("Error connecting to Mongo database.");
+            return;
+        }
+        
         if (!facetSearch['facets'].length){
             alert("No documents found.");
         } else {
