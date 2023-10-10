@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template_string, jsonify
 from flask_pymongo import PyMongo
 import datetime as dt
 
@@ -240,8 +240,19 @@ def get_doc (id, query):
                     else:
                         document[path].append({"type": "text", "value": text[index]})
                         document[path].append({"type": "hit", "value": query})
-        
     return document
+
+@app.route("/mongodb/update_vote/<id>/<vote>", methods=["POST"])
+def upsertVote(id, vote):
+    try:
+        query = {"_id": id}
+        voteVal = int(vote)
+        update = {'$inc': {'PagePoints': 1}} if voteVal else {'$inc': {'PagePoint': -1}}
+        mongo.db.pages.update_one(query, update, upsert= True)
+        return jsonify("Updated the points on the document. ")
+    except Exception as e:
+        raise e
+
 
 if __name__ == "__main__":
     mongo = mongoDBConnection()

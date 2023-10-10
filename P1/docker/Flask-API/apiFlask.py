@@ -5,7 +5,7 @@ cred = credentials.Certificate("bibliotec-98a06-firebase-adminsdk-qiahh-ea76f834
 firebase_admin.initialize_app(cred)
 import datetime as dt
 import bson
-from flask import Flask, request, render_template_string, current_app, g
+from flask import Flask, request, render_template_string, current_app, g, jsonify
 from werkzeug.local import LocalProxy
 from flask_pymongo import PyMongo
 from flask_cors import CORS
@@ -550,8 +550,7 @@ def register():
         except Exception as e:
             logger.debug(str(e))
             logger.debug("El usuario ya está registrado.", e)
-            return json.dumps({"error": {"code": 500, "message": "The user has already been registered"}})
-        
+            return json.dumps({"error": {"code": 500, "message": "The user has already been registered"}})    
     
 @app.route("/mongodb/get_data/<query>", methods=["POST"])
 def get_data (query):
@@ -565,6 +564,17 @@ def get_data (query):
     print(results)
     
     return results
+
+@app.route("/mongodb/update_vote/<id>/<vote>", methods=["POST"])
+def upsertVote(id, vote):
+    try:
+        query = {"_id": id}
+        voteVal = int(vote)
+        update = {'$inc': {'PagePoints': 1}} if voteVal else {'$inc': {'PagePoint': -1}}
+        mongo.db.pages.update_one(query, update, upsert= True)
+        return jsonify("Updated the points on the document. ")
+    except Exception as e:
+        raise e
 
 @app.route("/mongodb/get_doc/<id>/<query>", methods=["POST"])
 def get_doc (id, query):
