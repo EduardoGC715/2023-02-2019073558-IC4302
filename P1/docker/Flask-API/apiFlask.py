@@ -566,6 +566,29 @@ def get_data (query):
     
     return results
 
+@app.route("/mongodb/get_doc/<id>/<query>", methods=["POST"])
+def get_doc (id, query):
+    pipeline = textSearchQuery(query)
+    pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "_id", "query": id}})
+    document = list(mongo.db.pages.aggregate(pipeline))[0]["docs"][0]
+    toHighlight = []
+    for dict in document["highlights"]:  
+        toHighlight.append(dict["path"])
+    toHighlight.remove("_id")
+
+    for path in toHighlight:
+        if isinstance(document[path], str):
+            text = document[path].split(query)
+            document[path] = []
+            for index in range(len(text)):
+                if text[index] != "":
+                    if index == len(text)-1:
+                        document[path].append({"type": "text", "value": text[index]})
+                    else:
+                        document[path].append({"type": "text", "value": text[index]})
+                        document[path].append({"type": "hit", "value": query})
+    return document
+
 @app.route('/autonomous/get_pages/<query>', methods=['POST'])
 def get_pages(query):
     REQUEST_COUNT.inc()
