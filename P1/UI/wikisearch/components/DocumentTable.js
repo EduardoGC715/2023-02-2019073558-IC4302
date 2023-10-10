@@ -2,7 +2,6 @@
 import styles from '../styles/Search.module.css';
 import DocumentPreview from './DocumentPreview';
 import { Fragment } from 'react';
-import PropTypes from 'prop-types';
 
 export default function DocumentTable({ documentList }) {
 
@@ -14,8 +13,4 @@ export default function DocumentTable({ documentList }) {
             {documentComponents}
         </div>
     )
-}
-
-DocumentTable.propTypes = {
-    documentList: PropTypes.array.isRequired,
 }
