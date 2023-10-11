@@ -213,14 +213,14 @@ def read_lob(lob):
         return content
     return lob
 
-def searchAutonomousFacets(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9):
+def searchAutonomousFacets(search_term):
     cur = autonomous.cursor()
 
     # Define an output variable for the SYS_REFCURSOR
     out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
 
     # Create a list for parameters, where the first element is the search term and the second is the output cursor
-    params = [search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9, out_val]
+    params = [search_term, out_val]
 
     # Call the procedure using the list of parameters
     cur.callproc('search_facets', params)
@@ -297,6 +297,13 @@ def searchAutonomous(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5
     
     return result
 
+def getAutonomousPoints(pageId):
+    cur = autonomous.cursor()
+    cur.execute("select PAGEPOINTS from PAGES where pageid = " + pageId)
+    
+    row = cur.fetchone()
+    cur.close()
+    return row[0] if row else None
 
 # MONGO CONNECTION
 def mongoDBConnection (): 
@@ -596,6 +603,22 @@ def get_doc (id, query):
                 else:
                     document[path].append({"type": "text", "value": word})
     return document
+
+@app.route('/autonomous/update_pagepoints/<pageId>', methods=['PUT'])
+def update_pagepoints(pageId):
+
+    value = request.json['value']
+
+    cur = autonomous.cursor()
+
+    params = [pageId, value]
+
+    # Call the procedure using the list of parameters
+    cur.callproc('update_pagepoints', params)
+    
+    points = getAutonomousPoints(pageId)
+    
+    return str(points)
 
 @app.route('/autonomous/get_pages/<query>', methods=['POST'])
 def get_pages(query):
