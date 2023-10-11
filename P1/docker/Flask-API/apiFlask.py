@@ -64,8 +64,7 @@ wf4QTCyd9noRs4piFx6/9A0=
   "tenancy": "ocid1.tenancy.oc1..aaaaaaaab2j6gk2b33sutg2bhoga5zekg3j5su23tygzw6nw5es4jxdts4ya",
   "region": "us-chicago-1"
  }
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+
 
 oci.config.validate_config(config)
 object_storage = oci.object_storage.ObjectStorageClient(config)
@@ -155,7 +154,7 @@ def logging_before():
 @app.after_request
 def logging_after(response):
     global times_max, times_min, times_avg, times_count
-    logger.debug("Endpoint:", request.endpoint)
+    logger.debug(f"Endpoint: {request.endpoint}")
     endpoint = request.endpoint
     total_time = time.perf_counter() - g.start_time
     time_in_ms = int(total_time)
@@ -213,14 +212,14 @@ def read_lob(lob):
         return content
     return lob
 
-def searchAutonomousFacets(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9):
+def searchAutonomousFacets(search_term):
     cur = autonomous.cursor()
 
     # Define an output variable for the SYS_REFCURSOR
     out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
 
     # Create a list for parameters, where the first element is the search term and the second is the output cursor
-    params = [search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9, out_val]
+    params = [search_term, out_val]
 
     # Call the procedure using the list of parameters
     cur.callproc('search_facets', params)
@@ -297,6 +296,13 @@ def searchAutonomous(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5
     
     return result
 
+def getAutonomousPoints(pageId):
+    cur = autonomous.cursor()
+    cur.execute("select PAGEPOINTS from PAGES where pageid = " + pageId)
+    
+    row = cur.fetchone()
+    cur.close()
+    return row[0] if row else None
 
 # MONGO CONNECTION
 def mongoDBConnection (): 
@@ -306,6 +312,7 @@ def mongoDBConnection ():
         return mongo
     except Exception as e:
         logger.debug(f"An error occurred: {e}")
+
 
 #MONGO OPERATIONS
 
@@ -561,6 +568,7 @@ def get_data (query):
     for doc in results["docs"]:
         for highlight in doc["highlights"]:
             doc[highlight["path"]] = highlight["texts"]
+    # logger.debug(results)
     
     return results
 
@@ -595,6 +603,22 @@ def get_doc (id, query):
                 else:
                     document[path].append({"type": "text", "value": word})
     return document
+
+@app.route('/autonomous/update_pagepoints/<pageId>', methods=['PUT'])
+def update_pagepoints(pageId):
+
+    value = request.json['value']
+
+    cur = autonomous.cursor()
+
+    params = [pageId, value]
+
+    # Call the procedure using the list of parameters
+    cur.callproc('update_pagepoints', params)
+    
+    points = getAutonomousPoints(pageId)
+    
+    return str(points)
 
 @app.route('/autonomous/get_pages/<query>', methods=['POST'])
 def get_pages(query):

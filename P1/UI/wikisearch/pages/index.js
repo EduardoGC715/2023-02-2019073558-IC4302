@@ -55,16 +55,20 @@ export default function Home() {
   async function handleOnSubmit(e) {
     e.preventDefault();
     console.log(email, password);
-    const login = await getLogin(email, password);
-    console.log(login);
-    if (!login.hasOwnProperty("error")) {
-      console.log("Logged in");
-      localStorage.setItem('login', JSON.stringify({email, password}));
-      router.push('/search');
-    } else {
-      window.flash('ERROR: The user does not exist', 'error')
-      console.log('User does not exist');
-
+    try {
+      const login = await getLogin(email, password);
+      console.log(login);
+      if (!login.hasOwnProperty("error")) {
+        console.log("Logged in");
+        localStorage.setItem('login', JSON.stringify({email, password}));
+        router.push('/search');
+      } else {
+        window.flash('ERROR: The user does not exist', 'error')
+        console.log('User does not exist');
+      }
+    } catch (error) {
+      console.log(error);
+      window.flash("ERROR: No connection to network.", 'error')
     }
   }
 

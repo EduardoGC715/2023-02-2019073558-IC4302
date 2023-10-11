@@ -60,7 +60,12 @@ export default function Search() {
         console.log(searchInput, selectedEngine, facetObject)
         let facetSearch;
         try{
-            facetSearch = await getMongo(searchInput, facetObject)
+            if (selectedEngine === "MongoAtlas") {
+                facetSearch = await getMongo(searchInput, facetObject)
+            } else {
+                facetSearch = await getSQL(searchInput, facetObject)
+            }
+            
         } catch {
             alert("Error connecting to Mongo database.");
             return;
@@ -72,6 +77,11 @@ export default function Search() {
             setFacetList(facetSearch['facets'][0]['facet']);
             setDocumentList(facetSearch['docs']);
         }
+    }
+
+    function logOut(){
+        localStorage.removeItem('login');
+        router.push('/');
     }
 
     return (
@@ -116,9 +126,10 @@ export default function Search() {
 
                 <div className={styles.contentGrid}>
                     <FacetTable facetList={facetList} facetObject={facetObject} handleFacetChange={handleFacetChange}/>
-                    <DocumentTable documentList={documentList}/>
+                    <DocumentTable documentList={documentList} searchQuery={searchInput} selectedEngine={selectedEngine}/>
                 </div>
                 <footer>
+                    <button className={styles.logOutButton} onClick={logOut}>Log Out</button>
                     <a
                         href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
                         target="_blank"
@@ -132,22 +143,3 @@ export default function Search() {
         </div>
     );
 }
-
-{/* <p className={styles.facetLabel}>Page Bytes</p>
-<Facet value={facetObject['PageId']} text="0" onChange={event => handleFacetChange(event, "PageId")}/>
-<Facet value={facetObject['PageTitle']} text="10000" onChange={event => handleFacetChange(event, "PageTitle")}/>
-<Facet value={facetObject['PageNamespace']} text="10000" onChange={event => handleFacetChange(event, "PageNamespace")}/>
-<Facet value={facetObject['PageRedirect']} text="20000" onChange={event => handleFacetChange(event, "PageRedirect")}/>
-<Facet value={facetObject['PageHasRedirect']} text="30000" onChange={event => handleFacetChange(event, "PageHasRedirect")}/>
-<Facet value={facetObject['PageRestriction']} text="40000" onChange={event => handleFacetChange(event, "PageRestriction")}/>
-<Facet value={facetObject['SiteInfoName']} text="Site Info Name" onChange={event => handleFacetChange(event, "SiteInfoName")}/>
-<Facet value={facetObject['SiteInfoDBName']} text="Site Info DB Name" onChange={event => handleFacetChange(event, "SiteInfoDBName")}/>
-<Facet value={facetObject['SiteLanguage']} text="Site Language" onChange={event => handleFacetChange(event, "SiteLanguage")}/>
-<Facet value={facetObject['PageLastModified']} text="Page Last Modified" onChange={event => handleFacetChange(event, "PageLastModified")}/>
-<Facet value={facetObject['PageLastModifiedUser']} text="Page Last Modified User" onChange={event => handleFacetChange(event, "PageLastModifiedUser")}/>
-<Facet value={facetObject['PageBytes']} text="Page Bytes" onChange={event => handleFacetChange(event, "PageBytes")}/>
-<Facet value={facetObject['PageText']} text="Page Text" onChange={event => handleFacetChange(event, "PageText")}/>
-<Facet value={facetObject['PageWikipediaLink']} text="Page Wikipedia Link" onChange={event => handleFacetChange(event, "PageWikipediaLink")}/>
-<Facet value={facetObject['PageWikipediaGenerated']} text="Page Wikipedia Generated" onChange={event => handleFacetChange(event, "PageWikipediaGenerated")}/>
-<Facet value={facetObject['PageLinks']} text="Page Links" onChange={event => handleFacetChange(event, "PageLinks")}/>
-<Facet value={facetObject['PageNumberLinks']} text="Page Number Links" onChange={event => handleFacetChange(event, "PageNumberLinks")}/> */}

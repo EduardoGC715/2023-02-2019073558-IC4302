@@ -12,8 +12,8 @@ export default function Highlight({ highlight }){
             }
         });
     return (
-        <div className="highlight">
+        <>
             {highlights}
-        </div>
+        </>
     )
 }

@@ -1,5 +1,5 @@
 
-export async function getMongo(searchInput, facetObject){
+export async function getSQL(searchInput, facetObject){
     try{
       const list = [];
       list.push(facetObject["PageLastModifiedUserFacet"] == "None" ? "" : facetObject["PageLastModifiedUserFacet"]);
