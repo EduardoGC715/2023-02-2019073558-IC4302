@@ -116,23 +116,23 @@ def upsertDocument(insert_id, values, mongo):
         if len(values) > 4:
             update = {
                 "PageId": values[0],
-                "PageTitle": values[1],
-                "PageNamespace": values[2],
+                "PageTitle": values[1].encode("utf-8", "ignore"),
+                "PageNamespace": values[2].encode("utf-8", "ignore"),
                 "PageRedirect": values[3],
-                "PageHasRedirect": values[4],
+                "PageHasRedirect": values[4].encode("utf-8", "ignore"),
                 "PageLastModified": values[5],
-                "PageLastModifiedUser": values[6],
+                "PageLastModifiedUser": values[6].encode("utf-8", "ignore"),
                 "PageBytes": values[7],
-                "PageText": values[8],
-                "SiteInfoDBName": values[9],
-                "SiteInfoName": values[10],
-                "SiteLanguage": values[11],
-                "pageWikipediaGenerated": values[12],
+                "PageText": values[8].encode("utf-8", "ignore"),
+                "SiteInfoDBName": values[9].encode("utf-8", "ignore"),
+                "SiteInfoName": values[10].encode("utf-8", "ignore"),
+                "SiteLanguage": values[11].encode("utf-8", "ignore"),
+                "pageWikipediaGenerated": values[12].encode("utf-8", "ignore"),
                 "PageRestrictions": values[13]}
         else:
             update = {
-                "PageTitle": values[0],
-                "PageWikipediaLink": values[1],
+                "PageTitle": values[0].encode("utf-8", "ignore"),
+                "PageWikipediaLink": values[1].encode("utf-8", "ignore"),
                 "PageLinks": values[2],
                 "PageNumberLinks": values[3]}
         
