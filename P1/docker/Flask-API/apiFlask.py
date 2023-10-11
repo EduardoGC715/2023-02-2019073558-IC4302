@@ -64,8 +64,7 @@ wf4QTCyd9noRs4piFx6/9A0=
   "tenancy": "ocid1.tenancy.oc1..aaaaaaaab2j6gk2b33sutg2bhoga5zekg3j5su23tygzw6nw5es4jxdts4ya",
   "region": "us-chicago-1"
  }
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+
 
 oci.config.validate_config(config)
 object_storage = oci.object_storage.ObjectStorageClient(config)
@@ -155,7 +154,7 @@ def logging_before():
 @app.after_request
 def logging_after(response):
     global times_max, times_min, times_avg, times_count
-    logger.debug("Endpoint:", request.endpoint)
+    logger.debug(f"Endpoint: {request.endpoint}")
     endpoint = request.endpoint
     total_time = time.perf_counter() - g.start_time
     time_in_ms = int(total_time)
@@ -312,7 +311,7 @@ def mongoDBConnection ():
         mongo = PyMongo(app)
         return mongo
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
 
 #MONGO OPERATIONS
 
@@ -568,7 +567,7 @@ def get_data (query):
     for doc in results["docs"]:
         for highlight in doc["highlights"]:
             doc[highlight["path"]] = highlight["texts"]
-    print(results)
+    # logger.debug(results)
     
     return results
 

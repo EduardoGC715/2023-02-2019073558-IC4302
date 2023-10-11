@@ -33,3 +33,25 @@ export async function getMongo(searchInput, facetObject){
       throw error; // Re-throw the error for the calling code to handle
     }
   }
+
+export async function getMongoDocument(id, searchQuery){
+  try{
+    const response = await fetch("http://localhost:5000/mongodb/get_doc/" + id + "/" + searchQuery, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+    })
+    
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    
+    const data = await response.json();
+    console.log(data); // You can log or process the data here
+    return data;
+  } catch (error) {
+    console.error("Error:", error);
+    throw error; // Re-throw the error for the calling code to handle
+  }
+}
