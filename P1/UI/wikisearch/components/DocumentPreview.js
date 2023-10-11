@@ -1,8 +1,9 @@
 import styles from '../styles/Search.module.css';
 import { Fragment } from 'react';
 import Highlight from './Highlight';
+import Link from 'next/link'
 
-export default function docPreview({ key, doc }){
+export default function docPreview({ key, doc, searchQuery, searchEngine }){
     
     const pageTitle = typeof doc['PageText'] !== 'undefined' ? (typeof doc['PageTitle'] !== 'object' ? doc['PageTitle'] : <Highlight highlight={doc['PageTitle']}/>) : "No title available.";
     const pageText = typeof doc['PageText'] !== "undefined" ? 
@@ -22,12 +23,12 @@ export default function docPreview({ key, doc }){
     const PageNamespace = doc['PageNamespace'] !== null ? 
                             (typeof doc['PageNamespace'] !== 'object' ? doc['PageNamespace'] : <Highlight highlight={doc['PageNamespace']}/>)
                             : "Date not available.";
-    //console.log(doc['PageLinks'], doc)
+    
     let PageLinks;
     if (typeof doc['PageLinks'] === 'object') {
         
         if (doc['PageLinks'][0].hasOwnProperty('type')){
-            PageLinks = <Highlight highlight={doc['PageLinks']}/>
+            PageLinks = <Highlight highlight={doc['PageLinks']} key={`PageLinks${doc['_id']}`}/>
         } else {
             PageLinks = doc['PageLinks'].map((link) => {
                 return <span className={styles.normalText}><br />- {link[0]}</span>
@@ -40,9 +41,9 @@ export default function docPreview({ key, doc }){
     
     
 
-                            //console.log(PageLastModified, doc['PageLastModified']);
+    //console.log(PageLastModified, doc['PageLastModified']);
     return <Fragment key={key}>
-        <p className={styles.docTitle}>{pageTitle}       </p>
+        <Link href={{pathname: '/docView', query:{id: doc['_id'], searchQuery, searchEngine}}}><p className={styles.docTitle}>{pageTitle}</p></Link>
         <p className={styles.normalText}>by {PageLastModifiedUser} on {PageLastModified}</p>
         <p className={styles.pageText}>...{pageText}...</p>
         <p className={styles.normalText}>Redirect: {PageRedirect}</p>

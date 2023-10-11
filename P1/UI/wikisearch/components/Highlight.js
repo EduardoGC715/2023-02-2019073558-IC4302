@@ -1,7 +1,7 @@
 
 import styles from '../styles/Highlight.module.css'
 
-export default function Highlight({ highlight }){
+export default function Highlight({ highlight, key }){
 
     const highlightKeys = Object.keys(highlight);
     const highlights = highlightKeys.map((index) => {
