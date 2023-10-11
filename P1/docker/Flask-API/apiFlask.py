@@ -588,15 +588,13 @@ def get_doc (id, query):
 
     for path in toHighlight:
         if isinstance(document[path], str):
-            text = document[path].split(query)
+            text = document[path].split()
             document[path] = []
-            for index in range(len(text)):
-                if text[index] != "":
-                    if index == len(text)-1:
-                        document[path].append({"type": "text", "value": text[index]})
-                    else:
-                        document[path].append({"type": "text", "value": text[index]})
-                        document[path].append({"type": "hit", "value": query})
+            for word in text:
+                if word.lower() == query.lower():
+                    document[path].append({"type": "hit", "value": word})
+                else:
+                    document[path].append({"type": "text", "value": word})
     return document
 
 @app.route('/autonomous/get_pages/<query>', methods=['POST'])
