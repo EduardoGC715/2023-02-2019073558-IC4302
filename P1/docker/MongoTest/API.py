@@ -107,7 +107,7 @@ def textSearchQuery(searchQuery):
                 'path': {
                     'wildcard': '*'
                 },
-                "maxNumPassages": 1
+                "maxNumPassages": 1000
             }
         }
     }, {
@@ -231,15 +231,17 @@ def get_doc (id, query):
 
     for path in toHighlight:
         if isinstance(document[path], str):
-            text = document[path].split(query)
+            text = document[path].split()
             document[path] = []
-            for index in range(len(text)):
-                if text[index] != "":
-                    if index == len(text)-1:
-                        document[path].append({"type": "text", "value": text[index]})
-                    else:
-                        document[path].append({"type": "text", "value": text[index]})
-                        document[path].append({"type": "hit", "value": query})
+            newText = ""
+            for word in text:
+                if query.lower() == word.lower():
+                    document[path].append({"type": "text", "value": newText})
+                    document[path].append({"type": "hit", "value": word})
+                    newText = ""
+                else:
+                    newText += " " + word
+            document[path].append({"type": "text", "value": newText})
     return document
 
 @app.route("/mongodb/update_vote/<id>/<vote>", methods=["POST"])
