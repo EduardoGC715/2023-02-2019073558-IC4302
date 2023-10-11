@@ -563,6 +563,8 @@ def register():
 def get_data (query):
     REQUEST_COUNT.inc()
     filters = request.get_json()
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "get_data", 'bagInfo': json.dumps({"query": query, "body": filters})}
+    write_a_record(handle, 'ic4302_logs', record)
     pipeline = filteredTextSearchQuery(query, filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
     results = list(mongo.db.pages.aggregate(pipeline))[0]
     for doc in results["docs"]:
@@ -574,6 +576,9 @@ def get_data (query):
 
 @app.route("/mongodb/update_vote/<id>/<vote>", methods=["POST"])
 def upsertVote(id, vote):
+    REQUEST_COUNT.inc()
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "update_vote", 'bagInfo': json.dumps({"id": id, "vote": vote})}
+    write_a_record(handle, 'ic4302_logs', record)
     try:
         query = {"_id": id}
         voteVal = int(vote)
@@ -585,6 +590,9 @@ def upsertVote(id, vote):
 
 @app.route("/mongodb/get_doc/<id>/<query>", methods=["POST"])
 def get_doc (id, query):
+    REQUEST_COUNT.inc()
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "get_doc", 'bagInfo': json.dumps({"id": id, "query": query})}
+    write_a_record(handle, 'ic4302_logs', record)
     pipeline = textSearchQuery(query)
     pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "_id", "query": id}})
     document = list(mongo.db.pages.aggregate(pipeline))[0]["docs"][0]
@@ -606,6 +614,7 @@ def get_doc (id, query):
 
 @app.route('/autonomous/update_pagepoints/<pageId>', methods=['PUT'])
 def update_pagepoints(pageId):
+    REQUEST_COUNT.inc()
 
     value = request.json['value']
 
