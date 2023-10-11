@@ -69,7 +69,7 @@ def textSearchQuery(searchQuery):
                       'PageBytesFacet': {
                         'type': 'number', 
                         'path': 'PageBytes',
-                        'boundaries': [0, 3000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000],
+                        'boundaries': [0, 30000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000],
                         "default": "+300000"
                     }, 
                       'PageNumberLinksFacet': {
@@ -107,7 +107,7 @@ def textSearchQuery(searchQuery):
                 'path': {
                     'wildcard': '*'
                 },
-                "maxNumPassages": 1000
+                "maxNumPassages": 1
             }
         }
     }, {
@@ -138,7 +138,7 @@ def textSearchQuery(searchQuery):
                         "highlights": { "$meta": "searchHighlights" }
                     }
                 }, {
-                    "$limit": 1250
+                    "$limit": 500
                 }
             ], 
             'facets': [
@@ -254,7 +254,6 @@ def upsertVote(id, vote):
         return jsonify("Updated the points on the document. ")
     except Exception as e:
         raise e
-
 
 if __name__ == "__main__":
     mongo = mongoDBConnection()

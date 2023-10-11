@@ -305,7 +305,7 @@ def mongoDBConnection ():
         mongo = PyMongo(app)
         return mongo
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.debug(f"An error occurred: {e}")
 
 #MONGO OPERATIONS
 
@@ -366,7 +366,7 @@ def textSearchQuery(searchQuery):
                       'PageBytesFacet': {
                         'type': 'number', 
                         'path': 'PageBytes',
-                        'boundaries': [0, 3000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000],
+                        'boundaries': [0, 30000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000],
                         "default": "+300000"
                     }, 
                       'PageNumberLinksFacet': {
@@ -435,7 +435,7 @@ def textSearchQuery(searchQuery):
                         "highlights": { "$meta": "searchHighlights" }
                     }
                 }, {
-                    "$limit": 1250
+                    "$limit": 500
                 }
             ], 
             'facets': [
@@ -561,7 +561,6 @@ def get_data (query):
     for doc in results["docs"]:
         for highlight in doc["highlights"]:
             doc[highlight["path"]] = highlight["texts"]
-    print(results)
     
     return results
 
