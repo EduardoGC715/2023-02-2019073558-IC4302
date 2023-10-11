@@ -60,7 +60,12 @@ export default function Search() {
         console.log(searchInput, selectedEngine, facetObject)
         let facetSearch;
         try{
-            facetSearch = await getMongo(searchInput, facetObject)
+            if (selectedEngine === "MongoAtlas") {
+                facetSearch = await getMongo(searchInput, facetObject)
+            } else {
+                facetSearch = await getSQL(searchInput, facetObject)
+            }
+            
         } catch {
             alert("Error connecting to Mongo database.");
             return;
@@ -72,6 +77,11 @@ export default function Search() {
             setFacetList(facetSearch['facets'][0]['facet']);
             setDocumentList(facetSearch['docs']);
         }
+    }
+
+    function logOut(){
+        localStorage.removeItem('login');
+        router.push('/');
     }
 
     return (
@@ -119,6 +129,7 @@ export default function Search() {
                     <DocumentTable documentList={documentList} searchQuery={searchInput} selectedEngine={selectedEngine}/>
                 </div>
                 <footer>
+                    <button className={styles.logOutButton} onClick={logOut}>Log Out</button>
                     <a
                         href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
                         target="_blank"

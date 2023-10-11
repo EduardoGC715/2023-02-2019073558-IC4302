@@ -144,8 +144,9 @@ font-size: 1.5rem;
 }
 
 .facetTable{
-    border: 2px black solid;
+    border: 1px rgb(180, 180, 180) solid;
     height: 100%;
+    border-radius: 20px;
 }
 
 .facetTable label{
@@ -154,8 +155,9 @@ font-size: 1.5rem;
 }
 
 .documentList{
-    border: 2px black solid;
+    border: 1px rgb(180, 180, 180) solid;
     padding-left: 10px;
+    border-radius: 20px;
 }
 
 .facetTable,
@@ -183,4 +185,36 @@ font-size: 1.5rem;
 
 .normalText {
     margin: 0px;
+}
+
+.logOutButton {
+    width: 100px;
+    border-radius: 10px;
+    padding: 3px 0px 3px 0px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: border-color 0.15s;
+    margin-bottom: 10px;
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      Segoe UI,
+      Roboto,
+      Oxygen,
+      Ubuntu,
+      Cantarell,
+      Fira Sans,
+      Droid Sans,
+      Helvetica Neue,
+      sans-serif;
+    margin-right: 25px;
+}
+
+.logOutButton:hover {
+    border-color: lightskyblue;
+}
+
+.logOutButton:active {
+    opacity: 0.7;
 }

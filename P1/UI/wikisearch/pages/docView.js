@@ -21,45 +21,45 @@ export default function DocView({doc}){
     const router = useRouter();
 
     console.log(doc)
-    const PageTitle = typeof doc['PageText'] !== 'undefined' ? (typeof doc['PageTitle'] !== 'object' ? doc['PageTitle'] : <Highlight highlight={doc['PageTitle']}/>) : "No title available.";
+    const PageTitle = typeof doc['PageText'] !== 'undefined' ? (typeof doc['PageTitle'] !== 'object' ? doc['PageTitle'] : <Highlight highlight={doc['PageTitle']} key={`PageTitle${doc['_id']}`}/>) : "No title available.";
     const PageText = typeof doc['PageText'] !== "undefined" ? 
-                            (typeof doc['PageText'] !== 'object' ? doc['PageText'] : <Highlight highlight={doc['PageText']}/>)
+                            (typeof doc['PageText'] !== 'object' ? doc['PageText'] : <Highlight highlight={doc['PageText']} key={`PageText${doc['_id']}`}/>)
                             : "No text available.";
     const PageLastModified = doc['PageLastModified'] !== null ? 
-                            (typeof doc['PageLastModified'] !== 'object' ? doc['PageLastModified'] : <Highlight highlight={doc['PageLastModified']}/>)
+                            (typeof doc['PageLastModified'] !== 'object' ? doc['PageLastModified'] : <Highlight highlight={doc['PageLastModified']} key={`PageLastModified${doc['_id']}`}/>)
                             : "Date not available.";
     const PageLastModifiedUser = typeof doc['PageLastModifiedUser'] !== "undefined" ? 
-                            (typeof doc['PageLastModifiedUser'] !== 'object' ? doc['PageLastModifiedUser'] : <Highlight highlight={doc['PageLastModifiedUser']}/>)
+                            (typeof doc['PageLastModifiedUser'] !== 'object' ? doc['PageLastModifiedUser'] : <Highlight highlight={doc['PageLastModifiedUser']} key={`PageLastModifiedUser${doc['_id']}`}/>)
                             : "User not available.";
 
     const PageBytes = typeof doc['PageBytes'] !== "undefined" ? 
                             doc['PageBytes']
                             : "Bytes not available.";
-    const PageRedirect = typeof doc['PageRedirect'] !== "undefined" && doc['PageRedirect'] !== null ? (typeof doc['PageRedirect'] !== 'object' ? doc['PageRedirect'] : <Highlight highlight={doc['PageRedirect']}/>) : "No redirect available.";
+    const PageRedirect = typeof doc['PageRedirect'] !== "undefined" && doc['PageRedirect'] !== null ? (typeof doc['PageRedirect'] !== 'object' ? doc['PageRedirect'] : <Highlight highlight={doc['PageRedirect']} key={`PageRedirect${doc['_id']}`}/>) : "No redirect available.";
     const PageNamespace = doc['PageNamespace'] !== null ? 
-                            (typeof doc['PageNamespace'] !== 'object' ? doc['PageNamespace'] : <Highlight highlight={doc['PageNamespace']}/>)
+                            (typeof doc['PageNamespace'] !== 'object' ? doc['PageNamespace'] : <Highlight highlight={doc['PageNamespace']} key={`PageNamespace${doc['_id']}`}/>)
                             : "Date not available.";
 
     const PageHasRedirect = typeof doc['PageHasRedirect'] !== "undefined" && doc['PageHasRedirect'] !== null ?
-                                (typeof doc['PageHasRedirect'] !== 'object' ? doc['PageHasRedirect'] : <Highlight highlight={doc['PageHasRedirect']}/>)
+                                (typeof doc['PageHasRedirect'] !== 'object' ? doc['PageHasRedirect'] : <Highlight highlight={doc['PageHasRedirect']} key={`PageHasRedirect${doc['_id']}`}/>)
                                 : "No information whether it has a redirect available.";
     const SiteInfoName = typeof doc['SiteInfoName'] !== "undefined" && doc['SiteInfoName'] !== null ?
-                                (typeof doc['SiteInfoName'] !== 'object' ? doc['SiteInfoName'] : <Highlight highlight={doc['SiteInfoName']}/>)
+                                (typeof doc['SiteInfoName'] !== 'object' ? doc['SiteInfoName'] : <Highlight highlight={doc['SiteInfoName']} key={`SiteInfoName${doc['_id']}`}/>)
                                 : "No Site Info Name available.";
     const SiteInfoDBName = typeof doc['SiteInfoDBName'] !== "undefined" && doc['SiteInfoDBName'] !== null ?
-                                (typeof doc['SiteInfoDBName'] !== 'object' ? doc['SiteInfoDBName'] : <Highlight highlight={doc['SiteInfoDBName']}/>)
+                                (typeof doc['SiteInfoDBName'] !== 'object' ? doc['SiteInfoDBName'] : <Highlight highlight={doc['SiteInfoDBName']} key={`SiteInfoDBName${doc['_id']}`}/>)
                                 : "No Site Info Data Base Name available.";
     const SiteLanguage = typeof doc['SiteLanguage'] !== "undefined" && doc['SiteLanguage'] !== null ?
-                                (typeof doc['SiteLanguage'] !== 'object' ? doc['SiteLanguage'] : <Highlight highlight={doc['SiteLanguage']}/>)
+                                (typeof doc['SiteLanguage'] !== 'object' ? doc['SiteLanguage'] : <Highlight highlight={doc['SiteLanguage']} key={`SiteLanguage${doc['_id']}`}/>)
                                 : "No Site Language available.";
     const PageWikipediaLink = typeof doc['PageWikipediaLink'] !== "undefined" && doc['PageWikipediaLink'] !== null ?
-                                (typeof doc['PageWikipediaLink'] !== 'object' ? doc['PageWikipediaLink'] : <Highlight highlight={doc['PageWikipediaLink']}/>)
+                                (typeof doc['PageWikipediaLink'] !== 'object' ? doc['PageWikipediaLink'] : <Highlight highlight={doc['PageWikipediaLink']} key={`PageWikipediaLink${doc['_id']}`}/>)
                                 : "No Wikipedia link available.";
     const PageWikipediaGenerated = typeof doc['pageWikipediaGenerated'] !== "undefined" && doc['pageWikipediaGenerated'] !== null ?
-                                (typeof doc['pageWikipediaGenerated'] !== 'object' ? doc['pageWikipediaGenerated'] : <Highlight highlight={doc['pageWikipediaGenerated']}/>)
+                                (typeof doc['pageWikipediaGenerated'] !== 'object' ? doc['pageWikipediaGenerated'] : <Highlight highlight={doc['pageWikipediaGenerated']} key={`pageWikipediaGenerated${doc['_id']}`}/>)
                                 : "No Wikipedia generated link available.";
     const PageNumberLinks = typeof doc['PageNumberLinks'] !== "undefined" && doc['PageNumberLinks'] !== null ? 
-                                (typeof doc['PageNumberLinks'] !== 'object' ? doc['PageNumberLinks'] : <Highlight highlight={doc['PageNumberLinks']}/>)
+                                (typeof doc['PageNumberLinks'] !== 'object' ? doc['PageNumberLinks'] : <Highlight highlight={doc['PageNumberLinks']} key={`PageNumberLinks${doc['_id']}`}/>)
                                 : "No number of links available.";
     let PageLinks;
     if (typeof doc['PageLinks'] === 'object') {
@@ -90,6 +90,11 @@ export default function DocView({doc}){
         PageRestrictions = "No restrictions available."
     }
 
+    function logOut(){
+        localStorage.removeItem('login');
+        router.push('/');
+    }
+
     return (
         <div className={styles.container}>
             <Head>
@@ -100,8 +105,8 @@ export default function DocView({doc}){
             <h1 className={styles.title}>Document View</h1>
             <h2 className={styles.docTitle}>{PageTitle}</h2>
             <p className={styles.subtitle}>{PageLastModified} by {PageLastModifiedUser}</p>
-            <p className={styles.normalText}>Wikipedia Link: <Link href={PageWikipediaLink}>{PageWikipediaLink}</Link></p>
-            <p className={styles.normalText}>Wikipedia Generated Link: <Link href={PageWikipediaGenerated}>{PageWikipediaGenerated}</Link></p>
+            <p className={styles.normalText}>Wikipedia Link: <Link href={PageWikipediaLink} target="_blank">{PageWikipediaLink}</Link></p>
+            <p className={styles.normalText}>Wikipedia Generated Link: <Link href={PageWikipediaGenerated} target="_blank">{PageWikipediaGenerated}</Link></p>
             <h3>Document Info:</h3>
             <ul>
                 <li>Bytes: {PageBytes}</li>
@@ -113,14 +118,23 @@ export default function DocView({doc}){
                 <li>Site Info Data Base Name: {SiteInfoDBName}</li>
                 <li>Site Language: {SiteLanguage}</li>
             </ul>
-            <p>Links: {PageLinks}</p>
+            <p>Number of links: {PageNumberLinks}. Links: {PageLinks}</p>
             <h2>Text</h2>
             <p className={styles.pageText}>{PageText}</p>
             <div className={styles.buttonDiv}>
                 <button className={styles.buttonT1} onClick={() => {router.push('/search')}}>Return to Search</button>
             </div>
-            
-
+            <footer className={styles.footerDoc}>
+                <button className={styles.logOutButton} onClick={logOut}>Log Out</button>
+                <a
+                    href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Powered by{' '}
+                    <img src="/vercel.svg" alt="Vercel" className={styles.logo} />
+                </a>
+            </footer>
         </div>
     );
 }
