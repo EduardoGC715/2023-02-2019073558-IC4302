@@ -186,6 +186,21 @@ def logging_after(response):
 # enable cors
 CORS(app)
 
+def retry_with_backoff(fn, backoff_in_seconds = 1):
+    x = 0
+    while True:
+        logger.info(x)
+        try:
+            return fn()
+        except:
+            # va subiendo de 1, 2, 4, ... hasta esperar 256 segundos entre intentos. Se queda esperando hasta que pueda conectar,
+            # porque de lo contrario, no podría trabajar bien.
+            sleep = backoff_in_seconds * 2 ** x + random.uniform(0, 1)
+            time.sleep(sleep)
+            if x < 8:
+                x += 1
+
+
 # AUTONOMOUS CONNECTION
 def connectAutonomousDB():
     try:
@@ -203,23 +218,39 @@ def connectAutonomousDB():
         return None
     
 def read_lob(lob):
-    """Utility function to read LOB content."""
+    """Utility function to read LOB content and manage raw type values."""
+    # Check if the lob has a "read" method
     if hasattr(lob, "read"):
         content = lob.read()
-        # Check if the content is bytes and decode if needed
-        if isinstance(content, bytes):
-            return content.decode('utf-8')
-        return content
-    return lob
+    else:
+        # Directly assign the lob to content if it doesn't have "read"
+        content = lob
+    # Check if the content is bytes and decode if needed
+    if isinstance(content, bytes):
+        return content.decode('utf-8')
+    
+    return content
 
-def searchAutonomousFacets(search_term):
+def createAutonomousView(search_term):
+    cur = autonomous.cursor()
+    
+    try:
+        cur.execute('DROP MATERIALIZED VIEW SearchView')
+    except:
+        pass
+    
+    params = [search_term]
+    
+    # Call the procedure using the list of parameters, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9
+    cur.callproc('createSearchView', params)
+ 
+    
+def searchAutonomousFacets():
     cur = autonomous.cursor()
 
-    # Define an output variable for the SYS_REFCURSOR
     out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
 
-    # Create a list for parameters, where the first element is the search term and the second is the output cursor
-    params = [search_term, out_val]
+    params = [out_val]
 
     # Call the procedure using the list of parameters
     cur.callproc('search_facets', params)
@@ -244,17 +275,59 @@ def searchAutonomousFacets(search_term):
     return pages
 
 
-def searchAutonomous(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9):
+def searchAutonomous():
     cur = autonomous.cursor()
+    
+    cur.execute('SELECT * FROM SearchView')
+    result = cur.fetchall()
+    
+    pages = []
+    for row in result:
+        # Prepare the page dictionary
+        
+        page = {
+            'pageId': row[0],
+            'pageTitle': row[1],
+            'pageNamespace': row[2],
+            'pageRedirect': row[3],
+            'pageHasRedirect': row[4],
+            'pageRestrictions': row[5],
+            'siteInfoName': row[6],
+            'siteInfoDBName': row[7],
+            'siteLanguage': row[8],
+            'pageLastModified': row[9].isoformat() if isinstance(row[9], dt.datetime) else row[9],
+            'pageLastModifiedUser': row[10],
+            'pageBytes': row[11],
+            'pageText': read_lob(row[12]),
+            'pageWikipediaLink': row[13],
+            'pageWikipediaGenerated': row[14],
+            'pageLinks': row[15],
+            'pageNumberLinks': row[16],
+            'pagePoints': row[17],
+            'pageTitleKey': read_lob(row[18])}
+        pages.append(page)
+    
+    cur.close()
+    
+    facets = []
+    
+    facets = searchAutonomousFacets()
+    
+    result = {
+        "docs": pages, 
+        "facets": facets}
+    
+    return result
 
-    # Define an output variable for the SYS_REFCURSOR
+def searchAutonomousWithFacets( facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9):
+    cur = autonomous.cursor()
+    
     out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
 
-    # Create a list for parameters, where the first element is the search term and the second is the output cursor
-    params = [search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9, out_val]
+    params = [facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9, out_val]
 
-    # Call the procedure using the list of parameters, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9
-    cur.callproc('search', params)
+    # Call the procedure using the list of parameters
+    cur.callproc('search_facets', params)
 
     # Get the returned SYS_REFCURSOR from the out_val and fetch the results
     result_cursor = out_val.getvalue()
@@ -283,18 +356,13 @@ def searchAutonomous(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5
             'pageWikipediaLink': row[13],
             'pageWikipediaGenerated': row[14],
             'pageLinks': row[15],
-            'pageNumberLinks': row[16]}
+            'pageNumberLinks': row[16],
+            'pagePoints': row[17],
+            'pageTitleKey': read_lob(row[18])}
         pages.append(page)
-    
+        
     cur.close()
-    
-    facets = []
-    
-    facets = searchAutonomousFacets(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9)
-    
-    result = [pages, facets]
-    
-    return result
+    return pages
 
 def getAutonomousPoints(pageId):
     cur = autonomous.cursor()
@@ -304,14 +372,12 @@ def getAutonomousPoints(pageId):
     cur.close()
     return row[0] if row else None
 
-# MONGO CONNECTION
+# MONGO CONNECTION 
 def mongoDBConnection (): 
-    try:
-        app.config["MONGO_URI"] = "mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec"
-        mongo = PyMongo(app)
-        return mongo
-    except Exception as e:
-        logger.error(f"An error occurred: {e}")
+    app.config["MONGO_URI"] = "mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec"
+    mongo = PyMongo(app)
+    return mongo
+
 
 #MONGO OPERATIONS
 
@@ -372,7 +438,7 @@ def textSearchQuery(searchQuery):
                       'PageBytesFacet': {
                         'type': 'number', 
                         'path': 'PageBytes',
-                        'boundaries': [0, 3000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000],
+                        'boundaries': [0, 30000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000],
                         "default": "+300000"
                     }, 
                       'PageNumberLinksFacet': {
@@ -410,7 +476,7 @@ def textSearchQuery(searchQuery):
                 'path': {
                     'wildcard': '*'
                 },
-                "maxNumPassages": 1
+                "maxNumPassages": 10000
             }
         }
     }, {
@@ -441,7 +507,7 @@ def textSearchQuery(searchQuery):
                         "highlights": { "$meta": "searchHighlights" }
                     }
                 }, {
-                    "$limit": 1250
+                    "$limit": 500
                 }
             ], 
             'facets': [
@@ -557,22 +623,28 @@ def register():
             logger.debug(str(e))
             logger.debug("El usuario ya está registrado.", e)
             return json.dumps({"error": {"code": 500, "message": "The user has already been registered"}})    
-    
+
 @app.route("/mongodb/get_data/<query>", methods=["POST"])
 def get_data (query):
     REQUEST_COUNT.inc()
     filters = request.get_json()
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "get_data", 'bagInfo': json.dumps({"query": query, "body": filters})}
+    write_a_record(handle, 'ic4302_logs', record)
     pipeline = filteredTextSearchQuery(query, filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
     results = list(mongo.db.pages.aggregate(pipeline))[0]
+    pathsDone = {}
     for doc in results["docs"]:
         for highlight in doc["highlights"]:
-            doc[highlight["path"]] = highlight["texts"]
-    # logger.debug(results)
-    
+            if (highlight["path"] in pathsDone and highlight["score"] > pathsDone[highlight["path"]]) or highlight["path"] not in pathsDone:
+                doc[highlight["path"]] = highlight["texts"]
+                pathsDone[highlight["path"]] = highlight["score"]
     return results
 
 @app.route("/mongodb/update_vote/<id>/<vote>", methods=["POST"])
 def upsertVote(id, vote):
+    REQUEST_COUNT.inc()
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "update_vote", 'bagInfo': json.dumps({"id": id, "vote": vote})}
+    write_a_record(handle, 'ic4302_logs', record)
     try:
         query = {"_id": id}
         voteVal = int(vote)
@@ -584,27 +656,50 @@ def upsertVote(id, vote):
 
 @app.route("/mongodb/get_doc/<id>/<query>", methods=["POST"])
 def get_doc (id, query):
+    # get the document
+    REQUEST_COUNT.inc()
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "get_doc", 'bagInfo': json.dumps({"id": id, "query": query})}
+    write_a_record(handle, 'ic4302_logs', record)
     pipeline = textSearchQuery(query)
     pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "_id", "query": id}})
-    document = list(mongo.db.pages.aggregate(pipeline))[0]["docs"][0]
-    toHighlight = []
-    for dict in document["highlights"]:  
-        toHighlight.append(dict["path"])
-    toHighlight.remove("_id")
-
-    for path in toHighlight:
-        if isinstance(document[path], str):
-            text = document[path].split()
-            document[path] = []
-            for word in text:
-                if word.lower() == query.lower():
-                    document[path].append({"type": "hit", "value": word})
-                else:
-                    document[path].append({"type": "text", "value": word})
-    return document
+    doc = list(mongo.db.pages.aggregate(pipeline))[0]["docs"][0]
+    # process the document
+    pathsDone = {}
+    for highlight in doc["highlights"]:
+        if (highlight["path"] in pathsDone and highlight["score"] > pathsDone[highlight["path"]]) or highlight["path"] not in pathsDone:
+            pathsDone[highlight["path"]] = highlight["score"]
+            if isinstance(doc[highlight["path"]], list):
+                linkHigh = highlight["texts"]
+            elif highlight["path"] != "PageText":
+                doc[highlight["path"]] = highlight["texts"]
+            elif highlight["path"] == "PageText":
+               textHigh = highlight["texts"]
+    if textHigh:
+        pageTextHigh = ""
+        newPageText = []
+        for dictTextHigh in textHigh:
+            pageTextHigh += dictTextHigh["value"]
+            newPageText.append(dictTextHigh)
+        nonHighText = doc["PageText"].split(pageTextHigh)
+        doc["PageText"] = []
+        doc["PageText"].append({"type": "text", "value": nonHighText[0]})
+        doc["PageText"] += newPageText
+        doc["PageText"].append({"type": "text", "value": nonHighText[1]})
+    
+    if linkHigh:
+        pageLinkHigh = ""
+        newPageLink = []
+        for dictLinkHigh in linkHigh:
+            pageLinkHigh += dictLinkHigh["value"]
+            newPageLink.append(dictLinkHigh) 
+        for linkList in doc["PageLinks"]:
+            if linkList[0] == pageLinkHigh:
+                linkList[0] = newPageLink
+    return doc["PageLinks"]
 
 @app.route('/autonomous/update_pagepoints/<pageId>', methods=['PUT'])
 def update_pagepoints(pageId):
+    REQUEST_COUNT.inc()
 
     value = request.json['value']
 
@@ -619,21 +714,25 @@ def update_pagepoints(pageId):
     
     return str(points)
 
-@app.route('/autonomous/get_pages/<query>', methods=['POST'])
-def get_pages(query):
+
+
+@app.route('/autonomous/get_pages_facets/', methods=['POST'])
+def get_pages_facets():
     REQUEST_COUNT.inc()
     
     filters = request.get_json()
     
-    result = []
+    search = searchAutonomousWithFacets(filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
 
-    for filter_item in filters:
-        if filter_item:
-            # Si el filtro tiene valor, agregamos el filtro y el query con 
-            result.append(f"% {filter_item} %")
+    return search
 
-    pages = searchAutonomous(query, result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], result[8], result[9])
 
+@app.route('/autonomous/get_pages/<query>', methods=['GET'])
+def get_pages(query):
+    
+    createAutonomousView(query)
+    pages = []
+    pages = searchAutonomous()
 
     return pages
 
@@ -641,7 +740,7 @@ def get_pages(query):
 if __name__ == "__main__":
     # Start up the server to expose the metrics.
     
-    mongo = mongoDBConnection()
+    mongo = mongodb = retry_with_backoff(mongoDBConnection)
     autonomous = connectAutonomousDB()
 
     start_http_server(8000)

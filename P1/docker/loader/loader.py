@@ -113,27 +113,28 @@ def upsertDocument(insert_id, values, mongo):
     try:
         db = mongo["bibliotec"]
         query = {"_id": insert_id}
-        if len(values) > 3:
+        if len(values) > 4:
             update = {
                 "PageId": values[0],
-                "PageTitle": values[1],
-                "PageNamespace": values[2],
+                "PageTitle": values[1].encode("utf-8", "ignore"),
+                "PageNamespace": values[2].encode("utf-8", "ignore"),
                 "PageRedirect": values[3],
-                "PageHasRedirect": values[4],
+                "PageHasRedirect": values[4].encode("utf-8", "ignore"),
                 "PageLastModified": values[5],
-                "PageLastModifiedUser": values[6],
+                "PageLastModifiedUser": values[6].encode("utf-8", "ignore"),
                 "PageBytes": values[7],
-                "PageText": values[8],
-                "SiteInfoDBName": values[9],
-                "SiteInfoName": values[10],
-                "SiteLanguage": values[11],
-                "pageWikipediaGenerated": values[12],
+                "PageText": values[8].encode("utf-8", "ignore"),
+                "SiteInfoDBName": values[9].encode("utf-8", "ignore"),
+                "SiteInfoName": values[10].encode("utf-8", "ignore"),
+                "SiteLanguage": values[11].encode("utf-8", "ignore"),
+                "pageWikipediaGenerated": values[12].encode("utf-8", "ignore"),
                 "PageRestrictions": values[13]}
         else:
             update = {
-                "PageWikipediaLink": values[0],
-                "PageLinks": values[1],
-                "PageNumberLinks": values[2]}
+                "PageTitle": values[0].encode("utf-8", "ignore"),
+                "PageWikipediaLink": values[1].encode("utf-8", "ignore"),
+                "PageLinks": values[2],
+                "PageNumberLinks": values[3]}
         
         updateQuery = {"$set": update}
         
@@ -246,7 +247,6 @@ if __name__ == "__main__":
                     revisions = sorted(page, key=lambda x: x.timestamp, reverse=True)
                     latestRevision = revisions[0]
                     latestRevision.timestamp = datetime.fromtimestamp(latestRevision.timestamp.unix())
-                    latestRevision4Mongo = latestRevision.timestamp.isoformat()
                     hashkey = hashlib.md5(page.title.encode('UTF-8'))
                     pageTitleKey = hashkey.hexdigest()
 
@@ -254,10 +254,10 @@ if __name__ == "__main__":
                     data4MongoMS = [
                         page.id, 
                         page.title, 
-                        page.namespace, 
+                        str(page.namespace), 
                         page.redirect, 
                         pageHasRedirect4Mongo, 
-                        latestRevision4Mongo, 
+                        latestRevision, 
                         latestRevision.user.text, 
                         latestRevision.bytes,
                         latestRevision.text,
@@ -363,6 +363,7 @@ if __name__ == "__main__":
 
                     # Insert abstract data into Mongo Atlas
                     data4MongoA = [
+                        pageTitle,
                         url,
                         links,
                         len(links)

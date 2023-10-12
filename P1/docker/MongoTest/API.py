@@ -5,12 +5,9 @@ import datetime as dt
 app = Flask(__name__)
 
 def mongoDBConnection (): 
-    try:
-        app.config["MONGO_URI"] = "mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec"
-        mongo = PyMongo(app)
-        return mongo
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    app.config["MONGO_URI"] = "mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec"
+    mongo = PyMongo(app)
+    return mongo
 
 def isValidDate(dateStr):
     try:
@@ -69,7 +66,7 @@ def textSearchQuery(searchQuery):
                       'PageBytesFacet': {
                         'type': 'number', 
                         'path': 'PageBytes',
-                        'boundaries': [0, 3000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000],
+                        'boundaries': [0, 30000, 60000, 90000, 120000, 150000, 180000, 210000, 240000, 270000, 300000],
                         "default": "+300000"
                     }, 
                       'PageNumberLinksFacet': {
@@ -107,7 +104,7 @@ def textSearchQuery(searchQuery):
                 'path': {
                     'wildcard': '*'
                 },
-                "maxNumPassages": 1000
+                "maxNumPassages": 10000
             }
         }
     }, {
@@ -138,7 +135,7 @@ def textSearchQuery(searchQuery):
                         "highlights": { "$meta": "searchHighlights" }
                     }
                 }, {
-                    "$limit": 1250
+                    "$limit": 500
                 }
             ], 
             'facets': [
@@ -214,35 +211,53 @@ def get_data (query):
     filters = request.get_json()
     pipeline = filteredTextSearchQuery(query, filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
     results = list(mongo.db.pages.aggregate(pipeline))[0]
+    pathsDone = {}
     for doc in results["docs"]:
         for highlight in doc["highlights"]:
-            doc[highlight["path"]] = highlight["texts"]
+            if (highlight["path"] in pathsDone and highlight["score"] > pathsDone[highlight["path"]]) or highlight["path"] not in pathsDone:
+                doc[highlight["path"]] = highlight["texts"]
+                pathsDone[highlight["path"]] = highlight["score"]
     return results
 
 @app.route("/mongodb/get_doc/<id>/<query>", methods=["POST"])
 def get_doc (id, query):
+    # get the document
     pipeline = textSearchQuery(query)
     pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "_id", "query": id}})
-    document = list(mongo.db.pages.aggregate(pipeline))[0]["docs"][0]
-    toHighlight = []
-    for dict in document["highlights"]:  
-        toHighlight.append(dict["path"])
-    toHighlight.remove("_id")
-
-    for path in toHighlight:
-        if isinstance(document[path], str):
-            text = document[path].split()
-            document[path] = []
-            newText = ""
-            for word in text:
-                if query.lower() == word.lower():
-                    document[path].append({"type": "text", "value": newText})
-                    document[path].append({"type": "hit", "value": word})
-                    newText = ""
-                else:
-                    newText += " " + word
-            document[path].append({"type": "text", "value": newText})
-    return document
+    doc = list(mongo.db.pages.aggregate(pipeline))[0]["docs"][0]
+    # process the document
+    pathsDone = {}
+    for highlight in doc["highlights"]:
+        if (highlight["path"] in pathsDone and highlight["score"] > pathsDone[highlight["path"]]) or highlight["path"] not in pathsDone:
+            pathsDone[highlight["path"]] = highlight["score"]
+            if isinstance(doc[highlight["path"]], list):
+                linkHigh = highlight["texts"]
+            elif highlight["path"] != "PageText":
+                doc[highlight["path"]] = highlight["texts"]
+            elif highlight["path"] == "PageText":
+               textHigh = highlight["texts"]
+    if textHigh:
+        pageTextHigh = ""
+        newPageText = []
+        for dictTextHigh in textHigh:
+            pageTextHigh += dictTextHigh["value"]
+            newPageText.append(dictTextHigh)
+        nonHighText = doc["PageText"].split(pageTextHigh)
+        doc["PageText"] = []
+        doc["PageText"].append({"type": "text", "value": nonHighText[0]})
+        doc["PageText"] += newPageText
+        doc["PageText"].append({"type": "text", "value": nonHighText[1]})
+    
+    if linkHigh:
+        pageLinkHigh = ""
+        newPageLink = []
+        for dictLinkHigh in linkHigh:
+            pageLinkHigh += dictLinkHigh["value"]
+            newPageLink.append(dictLinkHigh) 
+        for linkList in doc["PageLinks"]:
+            if linkList[0] == pageLinkHigh:
+                linkList[0] = newPageLink
+    return doc["PageLinks"]
 
 @app.route("/mongodb/update_vote/<id>/<vote>", methods=["POST"])
 def upsertVote(id, vote):
@@ -251,10 +266,9 @@ def upsertVote(id, vote):
         voteVal = int(vote)
         update = {'$inc': {'PagePoints': 1}} if voteVal else {'$inc': {'PagePoint': -1}}
         mongo.db.pages.update_one(query, update, upsert= True)
-        return jsonify("Updated the points on the document. ")
+        return jsonify("Updated the points on the document.")
     except Exception as e:
         raise e
-
 
 if __name__ == "__main__":
     mongo = mongoDBConnection()
