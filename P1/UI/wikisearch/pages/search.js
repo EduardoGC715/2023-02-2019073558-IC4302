@@ -6,6 +6,7 @@ import Facet from '../components/Facet';
 import FacetTable from '../components/FacetTable'
 import DocumentTable from '../components/DocumentTable'
 import { getMongo } from '../lib/mongoAPI';
+import { getAutonomous } from '../lib/autonomousAPI';
 import { useRouter } from 'next/router';
 
 export default function Search() {
@@ -63,7 +64,7 @@ export default function Search() {
             if (selectedEngine === "MongoAtlas") {
                 facetSearch = await getMongo(searchInput, facetObject)
             } else {
-                facetSearch = await getSQL(searchInput, facetObject)
+                facetSearch = await getAutonomous(searchInput, facetObject)
             }
             
         } catch {
@@ -71,12 +72,36 @@ export default function Search() {
             return;
         }
         
+        
         if (!facetSearch['facets'].length){
-            alert("No documents found.");
-        } else {
-            setFacetList(facetSearch['facets'][0]['facet']);
-            setDocumentList(facetSearch['docs']);
-        }
+                alert("No documents found.");
+            } else if (selectedEngine === "MongoAtlas") {
+                setFacetList(facetSearch['facets'][0]['facet']);
+                setDocumentList(facetSearch['docs']);
+            } else{
+                const facetOutput = {
+                    facet: {}
+                };
+
+                for (const row of facetSearch['facets']) {
+                    const facetCount = row.facetCount;
+                    const facetType = row.facetType;
+                    const facetValue = row.facetValue;
+                    // Revisar que el output este en el facetOutput
+                    if (!facetOutput.facet[facetType]) {
+                        facetOutput.facet[facetType] = {
+                            buckets: []
+                        };
+                    }
+                    // Append the facet value and count to the facet type's bucket
+                    facetOutput.facet[facetType].buckets.push({
+                        _id: facetValue,
+                        count: facetCount
+                    });
+                }
+                setFacetList(facetOutput['facet']);
+                setDocumentList(facetSearch['docs']);
+            }
     }
 
     function logOut(){
@@ -126,7 +151,7 @@ export default function Search() {
 
                 <div className={styles.contentGrid}>
                     <FacetTable facetList={facetList} facetObject={facetObject} handleFacetChange={handleFacetChange}/>
-                    <DocumentTable documentList={documentList} searchQuery={searchInput} selectedEngine={selectedEngine}/>
+                    <DocumentTable documentList={documentList} searchQuery={searchInput} searchEngine={selectedEngine}/>
                 </div>
                 <footer>
                     <button className={styles.logOutButton} onClick={logOut}>Log Out</button>

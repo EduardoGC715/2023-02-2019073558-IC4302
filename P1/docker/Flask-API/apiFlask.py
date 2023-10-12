@@ -227,14 +227,26 @@ def read_lob(lob):
         return content
     return lob
 
-def searchAutonomousFacets(search_term):
+def createAutonomousView(search_term):
+    cur = autonomous.cursor()
+    
+    try:
+        cur.execute('DROP MATERIALIZED VIEW SearchView')
+    except:
+        pass
+    
+    params = [search_term]
+    
+    # Call the procedure using the list of parameters, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9
+    cur.callproc('createSearchView', params)
+ 
+    
+def searchAutonomousFacets():
     cur = autonomous.cursor()
 
-    # Define an output variable for the SYS_REFCURSOR
     out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
 
-    # Create a list for parameters, where the first element is the search term and the second is the output cursor
-    params = [search_term, out_val]
+    params = [out_val]
 
     # Call the procedure using the list of parameters
     cur.callproc('search_facets', params)
@@ -259,17 +271,57 @@ def searchAutonomousFacets(search_term):
     return pages
 
 
-def searchAutonomous(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9):
+def searchAutonomous():
     cur = autonomous.cursor()
+    
+    cur.execute('SELECT * FROM SearchView')
+    result = cur.fetchall()
+    
+    pages = []
+    for row in result:
+        # Prepare the page dictionary
+        page = {
+            'pageId': row[0],
+            'pageTitle': row[1],
+            'pageNamespace': row[2],
+            'pageRedirect': row[3],
+            'pageHasRedirect': row[4],
+            'pageRestrictions': row[5],
+            'siteInfoName': row[6],
+            'siteInfoDBName': row[7],
+            'siteLanguage': row[8],
+            'pageLastModified': row[9].isoformat() if isinstance(row[9], dt.datetime) else row[9],
+            'pageLastModifiedUser': row[10],
+            'pageBytes': row[11],
+            'pageText': read_lob(row[12]),
+            'pageWikipediaLink': row[13],
+            'pageWikipediaGenerated': row[14],
+            'pageLinks': row[15],
+            'pageNumberLinks': row[16],
+            'pagePoints': row[17]}
+        pages.append(page)
+    
+    cur.close()
+    
+    facets = []
+    
+    facets = searchAutonomousFacets()
+    
+    result = {
+        "docs": pages, 
+        "facets": facets}
+    
+    return result
 
-    # Define an output variable for the SYS_REFCURSOR
+def searchAutonomousWithFacets( facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9):
+    cur = autonomous.cursor()
+    
     out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
 
-    # Create a list for parameters, where the first element is the search term and the second is the output cursor
-    params = [search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9, out_val]
+    params = [facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9, out_val]
 
-    # Call the procedure using the list of parameters, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9
-    cur.callproc('search', params)
+    # Call the procedure using the list of parameters
+    cur.callproc('search_facets', params)
 
     # Get the returned SYS_REFCURSOR from the out_val and fetch the results
     result_cursor = out_val.getvalue()
@@ -298,18 +350,12 @@ def searchAutonomous(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5
             'pageWikipediaLink': row[13],
             'pageWikipediaGenerated': row[14],
             'pageLinks': row[15],
-            'pageNumberLinks': row[16]}
+            'pageNumberLinks': row[16],
+            'pagePoints': row[17]}
         pages.append(page)
-    
+        
     cur.close()
-    
-    facets = []
-    
-    facets = searchAutonomousFacets(search_term, facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9)
-    
-    result = [pages, facets]
-    
-    return result
+    return pages
 
 def getAutonomousPoints(pageId):
     cur = autonomous.cursor()
@@ -661,21 +707,25 @@ def update_pagepoints(pageId):
     
     return str(points)
 
-@app.route('/autonomous/get_pages/<query>', methods=['POST'])
-def get_pages(query):
+
+
+@app.route('/autonomous/get_pages_facets/', methods=['POST'])
+def get_pages_facets():
     REQUEST_COUNT.inc()
     
     filters = request.get_json()
     
-    result = []
+    search = searchAutonomousWithFacets(filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
 
-    for filter_item in filters:
-        if filter_item:
-            # Si el filtro tiene valor, agregamos el filtro y el query con 
-            result.append(f"% {filter_item} %")
+    return search
 
-    pages = searchAutonomous(query, result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], result[8], result[9])
 
+@app.route('/autonomous/get_pages/<query>', methods=['GET'])
+def get_pages(query):
+    
+    createAutonomousView(query)
+    pages = []
+    pages = searchAutonomous()
 
     return pages
 
