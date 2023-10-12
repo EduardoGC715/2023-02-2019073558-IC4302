@@ -693,6 +693,8 @@ def get_doc (id, query):
     doc = list(mongo.db.pages.aggregate(pipeline))[0]["docs"][0]
     # process the document
     pathsDone = {}
+    linkHigh = None
+    textHigh = None
     for highlight in doc["highlights"]:
         if (highlight["path"] in pathsDone and highlight["score"] > pathsDone[highlight["path"]]) or highlight["path"] not in pathsDone:
             pathsDone[highlight["path"]] = highlight["score"]
@@ -702,7 +704,7 @@ def get_doc (id, query):
                 doc[highlight["path"]] = highlight["texts"]
             elif highlight["path"] == "PageText":
                textHigh = highlight["texts"]
-    if textHigh:
+    if textHigh != None:
         pageTextHigh = ""
         newPageText = []
         for dictTextHigh in textHigh:
@@ -714,7 +716,7 @@ def get_doc (id, query):
         doc["PageText"] += newPageText
         doc["PageText"].append({"type": "text", "value": nonHighText[1]})
     
-    if linkHigh:
+    if linkHigh != None:
         pageLinkHigh = ""
         newPageLink = []
         for dictLinkHigh in linkHigh:
