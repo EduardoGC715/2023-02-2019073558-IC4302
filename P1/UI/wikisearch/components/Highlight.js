@@ -2,7 +2,6 @@
 import styles from '../styles/Highlight.module.css'
 
 export default function Highlight({ highlight }){
-
     const highlightKeys = Object.keys(highlight);
     const highlights = highlightKeys.map((index) => {
             if (highlight[index]['type'] == 'text'){
