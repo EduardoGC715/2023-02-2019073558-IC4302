@@ -186,6 +186,21 @@ def logging_after(response):
 # enable cors
 CORS(app)
 
+def retry_with_backoff(fn, backoff_in_seconds = 1):
+    x = 0
+    while True:
+        logger.info(x)
+        try:
+            return fn()
+        except:
+            # va subiendo de 1, 2, 4, ... hasta esperar 256 segundos entre intentos. Se queda esperando hasta que pueda conectar,
+            # porque de lo contrario, no podría trabajar bien.
+            sleep = backoff_in_seconds * 2 ** x + random.uniform(0, 1)
+            time.sleep(sleep)
+            if x < 8:
+                x += 1
+
+
 # AUTONOMOUS CONNECTION
 def connectAutonomousDB():
     try:
@@ -304,14 +319,11 @@ def getAutonomousPoints(pageId):
     cur.close()
     return row[0] if row else None
 
-# MONGO CONNECTION
+# MONGO CONNECTION 
 def mongoDBConnection (): 
-    try:
-        app.config["MONGO_URI"] = "mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec"
-        mongo = PyMongo(app)
-        return mongo
-    except Exception as e:
-        logger.debug(f"An error occurred: {e}")
+    app.config["MONGO_URI"] = "mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec"
+    mongo = PyMongo(app)
+    return mongo
 
 
 #MONGO OPERATIONS
@@ -411,7 +423,7 @@ def textSearchQuery(searchQuery):
                 'path': {
                     'wildcard': '*'
                 },
-                "maxNumPassages": 1
+                "maxNumPassages": 10000
             }
         }
     }, {
@@ -558,7 +570,7 @@ def register():
             logger.debug(str(e))
             logger.debug("El usuario ya está registrado.", e)
             return json.dumps({"error": {"code": 500, "message": "The user has already been registered"}})    
-    
+
 @app.route("/mongodb/get_data/<query>", methods=["POST"])
 def get_data (query):
     REQUEST_COUNT.inc()
@@ -567,11 +579,12 @@ def get_data (query):
     write_a_record(handle, 'ic4302_logs', record)
     pipeline = filteredTextSearchQuery(query, filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
     results = list(mongo.db.pages.aggregate(pipeline))[0]
+    pathsDone = {}
     for doc in results["docs"]:
         for highlight in doc["highlights"]:
-            doc[highlight["path"]] = highlight["texts"]
-    # logger.debug(results)
-    
+            if (highlight["path"] in pathsDone and highlight["score"] > pathsDone[highlight["path"]]) or highlight["path"] not in pathsDone:
+                doc[highlight["path"]] = highlight["texts"]
+                pathsDone[highlight["path"]] = highlight["score"]
     return results
 
 @app.route("/mongodb/update_vote/<id>/<vote>", methods=["POST"])
@@ -590,27 +603,46 @@ def upsertVote(id, vote):
 
 @app.route("/mongodb/get_doc/<id>/<query>", methods=["POST"])
 def get_doc (id, query):
+    # get the document
     REQUEST_COUNT.inc()
     record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "get_doc", 'bagInfo': json.dumps({"id": id, "query": query})}
     write_a_record(handle, 'ic4302_logs', record)
     pipeline = textSearchQuery(query)
     pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "_id", "query": id}})
-    document = list(mongo.db.pages.aggregate(pipeline))[0]["docs"][0]
-    toHighlight = []
-    for dict in document["highlights"]:  
-        toHighlight.append(dict["path"])
-    toHighlight.remove("_id")
-
-    for path in toHighlight:
-        if isinstance(document[path], str):
-            text = document[path].split()
-            document[path] = []
-            for word in text:
-                if word.lower() == query.lower():
-                    document[path].append({"type": "hit", "value": word})
-                else:
-                    document[path].append({"type": "text", "value": word})
-    return document
+    doc = list(mongo.db.pages.aggregate(pipeline))[0]["docs"][0]
+    # process the document
+    pathsDone = {}
+    for highlight in doc["highlights"]:
+        if (highlight["path"] in pathsDone and highlight["score"] > pathsDone[highlight["path"]]) or highlight["path"] not in pathsDone:
+            pathsDone[highlight["path"]] = highlight["score"]
+            if isinstance(doc[highlight["path"]], list):
+                linkHigh = highlight["texts"]
+            elif highlight["path"] != "PageText":
+                doc[highlight["path"]] = highlight["texts"]
+            elif highlight["path"] == "PageText":
+               textHigh = highlight["texts"]
+    if textHigh:
+        pageTextHigh = ""
+        newPageText = []
+        for dictTextHigh in textHigh:
+            pageTextHigh += dictTextHigh["value"]
+            newPageText.append(dictTextHigh)
+        nonHighText = doc["PageText"].split(pageTextHigh)
+        doc["PageText"] = []
+        doc["PageText"].append({"type": "text", "value": nonHighText[0]})
+        doc["PageText"] += newPageText
+        doc["PageText"].append({"type": "text", "value": nonHighText[1]})
+    
+    if linkHigh:
+        pageLinkHigh = ""
+        newPageLink = []
+        for dictLinkHigh in linkHigh:
+            pageLinkHigh += dictLinkHigh["value"]
+            newPageLink.append(dictLinkHigh) 
+        for linkList in doc["PageLinks"]:
+            if linkList[0] == pageLinkHigh:
+                linkList[0] = newPageLink
+    return doc["PageLinks"]
 
 @app.route('/autonomous/update_pagepoints/<pageId>', methods=['PUT'])
 def update_pagepoints(pageId):
@@ -651,7 +683,7 @@ def get_pages(query):
 if __name__ == "__main__":
     # Start up the server to expose the metrics.
     
-    mongo = mongoDBConnection()
+    mongo = mongodb = retry_with_backoff(mongoDBConnection)
     autonomous = connectAutonomousDB()
 
     start_http_server(8000)
