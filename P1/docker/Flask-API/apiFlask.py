@@ -218,14 +218,18 @@ def connectAutonomousDB():
         return None
     
 def read_lob(lob):
-    """Utility function to read LOB content."""
+    """Utility function to read LOB content and manage raw type values."""
+    # Check if the lob has a "read" method
     if hasattr(lob, "read"):
         content = lob.read()
-        # Check if the content is bytes and decode if needed
-        if isinstance(content, bytes):
-            return content.decode('utf-8')
-        return content
-    return lob
+    else:
+        # Directly assign the lob to content if it doesn't have "read"
+        content = lob
+    # Check if the content is bytes and decode if needed
+    if isinstance(content, bytes):
+        return content.decode('utf-8')
+    
+    return content
 
 def createAutonomousView(search_term):
     cur = autonomous.cursor()
@@ -280,6 +284,7 @@ def searchAutonomous():
     pages = []
     for row in result:
         # Prepare the page dictionary
+        
         page = {
             'pageId': row[0],
             'pageTitle': row[1],
@@ -298,7 +303,8 @@ def searchAutonomous():
             'pageWikipediaGenerated': row[14],
             'pageLinks': row[15],
             'pageNumberLinks': row[16],
-            'pagePoints': row[17]}
+            'pagePoints': row[17],
+            'pageTitleKey': read_lob(row[18])}
         pages.append(page)
     
     cur.close()
@@ -351,7 +357,8 @@ def searchAutonomousWithFacets( facet0 ,facet1, facet2, facet3, facet4, facet5, 
             'pageWikipediaGenerated': row[14],
             'pageLinks': row[15],
             'pageNumberLinks': row[16],
-            'pagePoints': row[17]}
+            'pagePoints': row[17],
+            'pageTitleKey': read_lob(row[18])}
         pages.append(page)
         
     cur.close()

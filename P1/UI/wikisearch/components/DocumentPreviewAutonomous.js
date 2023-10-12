@@ -35,7 +35,7 @@ export default function docPreviewAutonomous({ key, doc, searchQuery, searchEngi
 
     //console.log(PageLastModified, doc['PageLastModified']);
     return <Fragment key={key}>
-        <Link href={{pathname: '/docView', query:{id: doc['pageId'], searchQuery, searchEngine}}}><p className={styles.docTitle}>{pageTitle}</p></Link>
+        <Link href={{pathname: '/docView', query:{id: doc['pageTitleKey'], searchQuery, searchEngine}}}><p className={styles.docTitle}>{pageTitle}</p></Link>
         <p className={styles.normalText}>by {PageLastModifiedUser} on {PageLastModified}</p>
         <p className={styles.pageText}>...{pageText}...</p>
         <p className={styles.normalText}>Redirect: {PageRedirect}</p>

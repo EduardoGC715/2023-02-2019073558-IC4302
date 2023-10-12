@@ -4,7 +4,6 @@ import Highlight from './Highlight';
 import Link from 'next/link'
 
 export default function docPreview({ key, doc, searchQuery, searchEngine }){
-    console.log(key, doc);
     
     const pageTitle = typeof doc['PageText'] !== 'undefined' ? (typeof doc['PageTitle'] !== 'object' ? doc['PageTitle'] : <Highlight highlight={doc['PageTitle']} key={`PageTitle${doc['_id']}`}/>) : "No title available.";
     const pageText = typeof doc['PageText'] !== "undefined" ? 
