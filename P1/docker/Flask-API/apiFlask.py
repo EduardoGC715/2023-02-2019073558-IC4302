@@ -286,25 +286,25 @@ def searchAutonomous():
         # Prepare the page dictionary
         
         page = {
-            'pageId': row[0],
-            'pageTitle': row[1],
-            'pageNamespace': row[2],
-            'pageRedirect': row[3],
-            'pageHasRedirect': row[4],
-            'pageRestrictions': row[5],
-            'siteInfoName': row[6],
-            'siteInfoDBName': row[7],
-            'siteLanguage': row[8],
-            'pageLastModified': row[9].isoformat() if isinstance(row[9], dt.datetime) else row[9],
-            'pageLastModifiedUser': row[10],
-            'pageBytes': row[11],
-            'pageText': read_lob(row[12]),
-            'pageWikipediaLink': row[13],
-            'pageWikipediaGenerated': row[14],
-            'pageLinks': row[15],
-            'pageNumberLinks': row[16],
-            'pagePoints': row[17],
-            'pageTitleKey': read_lob(row[18])}
+            'PageId': row[0],
+            'PageTitle': row[1],
+            'PageNamespace': row[2],
+            'PageRedirect': row[3],
+            'PageHasRedirect': row[4],
+            'PageRestrictions': row[5],
+            'SiteInfoName': row[6],
+            'SiteInfoDBName': row[7],
+            'SiteLanguage': row[8],
+            'PageLastModified': row[9].isoformat() if isinstance(row[9], dt.datetime) else row[9],
+            'PageLastModifiedUser': row[10],
+            'PageBytes': row[11],
+            'PageText': read_lob(row[12]),
+            'PageWikipediaLink': row[13],
+            'PageWikipediaGenerated': row[14],
+            'PageLinks': row[15],
+            'PageNumberLinks': row[16],
+            'PagePoints': row[17],
+            'PageTitleKey': read_lob(row[18])}
         pages.append(page)
     
     cur.close()
@@ -323,11 +323,36 @@ def searchAutonomousWithFacets( facet0 ,facet1, facet2, facet3, facet4, facet5, 
     cur = autonomous.cursor()
     
     out_val = cur.var(oracledb.DB_TYPE_CURSOR) 
+    max_bytes = ""
+    min_bytes = ""
+    min_links = ""
+    max_links = ""
+    if facet6 != "":
+        if facet6 == '0':
+            max_bytes = '0'
+            min_bytes = '0'
+        elif facet6 == '+300000':
+            min_bytes = '270001'
+            max_bytes = '1000000000000000'
+        else:
+            min_bytes, max_bytes = map(str, facet6.split('-'))
+        print(min_bytes,max_bytes,"   bytes")
+    
+    if facet7 != "":
+        if facet7 == '0':
+            min_links = '0'
+            max_links = '0'
+        elif facet7 == '+50':
+            min_links = '46'
+            max_links = '1000000000000000' # un número arbitrariamente grande para representar "infinito"
+        else:
+            min_links, max_links = map(str, facet7.split('-'))
+        print(min_links,max_links,"   links")
 
-    params = [facet0 ,facet1, facet2, facet3, facet4, facet5, facet6, facet7, facet8, facet9, out_val]
+    params = [facet0 ,facet1, facet2, facet3, facet4, facet5, min_bytes, max_bytes, min_links, max_links, facet8, facet9, out_val]
 
     # Call the procedure using the list of parameters
-    cur.callproc('search_facets', params)
+    cur.callproc('searchWithFacets', params)
 
     # Get the returned SYS_REFCURSOR from the out_val and fetch the results
     result_cursor = out_val.getvalue()
@@ -340,29 +365,32 @@ def searchAutonomousWithFacets( facet0 ,facet1, facet2, facet3, facet4, facet5, 
     for row in rows:
         # Prepare the page dictionary
         page = {
-            'pageId': row[0],
-            'pageTitle': row[1],
-            'pageNamespace': row[2],
-            'pageRedirect': row[3],
-            'pageHasRedirect': row[4],
-            'pageRestrictions': row[5],
-            'siteInfoName': row[6],
-            'siteInfoDBName': row[7],
-            'siteLanguage': row[8],
-            'pageLastModified': row[9].isoformat() if isinstance(row[9], dt.datetime) else row[9],
-            'pageLastModifiedUser': row[10],
-            'pageBytes': row[11],
-            'pageText': read_lob(row[12]),
-            'pageWikipediaLink': row[13],
-            'pageWikipediaGenerated': row[14],
-            'pageLinks': row[15],
-            'pageNumberLinks': row[16],
-            'pagePoints': row[17],
-            'pageTitleKey': read_lob(row[18])}
+            'PageId': row[0],
+            'PageTitle': row[1],
+            'PageNamespace': row[2],
+            'PageRedirect': row[3],
+            'PageHasRedirect': row[4],
+            'PageRestrictions': row[5],
+            'SiteInfoName': row[6],
+            'SiteInfoDBName': row[7],
+            'SiteLanguage': row[8],
+            'PageLastModified': row[9].isoformat() if isinstance(row[9], dt.datetime) else row[9],
+            'PageLastModifiedUser': row[10],
+            'PageBytes': row[11],
+            'PageText': read_lob(row[12]),
+            'PageWikipediaLink': row[13],
+            'PageWikipediaGenerated': row[14],
+            'PageLinks': row[15],
+            'PageNumberLinks': row[16],
+            'PagePoints': row[17],
+            'PageTitleKey': read_lob(row[18])}
         pages.append(page)
-        
+
     cur.close()
-    return pages
+    result = {
+        "docs": pages, 
+        "facets": "123"}
+    return result
 
 def getAutonomousPoints(pageId):
     cur = autonomous.cursor()
@@ -721,6 +749,7 @@ def get_pages_facets():
     REQUEST_COUNT.inc()
     
     filters = request.get_json()
+    print(filters)
     
     search = searchAutonomousWithFacets(filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
 

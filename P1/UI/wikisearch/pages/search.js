@@ -64,6 +64,7 @@ export default function Search() {
             if (selectedEngine === "MongoAtlas") {
                 facetSearch = await getMongo(searchInput, facetObject)
             } else {
+                console.log(facetObject)
                 facetSearch = await getAutonomous(searchInput, facetObject)
             }
             
@@ -71,35 +72,35 @@ export default function Search() {
             alert("Error connecting to Mongo database.");
             return;
         }
-        
-        
         if (!facetSearch['facets'].length){
                 alert("No documents found.");
             } else if (selectedEngine === "MongoAtlas") {
                 setFacetList(facetSearch['facets'][0]['facet']);
                 setDocumentList(facetSearch['docs']);
             } else{
-                const facetOutput = {
-                    facet: {}
-                };
+                if(facetSearch['facets'] !== "123"){
+                    const facetOutput = {
+                        facet: {}
+                    };
 
-                for (const row of facetSearch['facets']) {
-                    const facetCount = row.facetCount;
-                    const facetType = row.facetType;
-                    const facetValue = row.facetValue;
-                    // Revisar que el output este en el facetOutput
-                    if (!facetOutput.facet[facetType]) {
-                        facetOutput.facet[facetType] = {
-                            buckets: []
-                        };
+                    for (const row of facetSearch['facets']) {
+                        const facetCount = row.facetCount;
+                        const facetType = row.facetType;
+                        const facetValue = row.facetValue;
+                        // Revisar que el output este en el facetOutput
+                        if (!facetOutput.facet[facetType]) {
+                            facetOutput.facet[facetType] = {
+                                buckets: []
+                            };
+                        }
+                        // Append the facet value and count to the facet type's bucket
+                        facetOutput.facet[facetType].buckets.push({
+                            _id: facetValue,
+                            count: facetCount
+                        });
                     }
-                    // Append the facet value and count to the facet type's bucket
-                    facetOutput.facet[facetType].buckets.push({
-                        _id: facetValue,
-                        count: facetCount
-                    });
+                    setFacetList(facetOutput['facet']);
                 }
-                setFacetList(facetOutput['facet']);
                 setDocumentList(facetSearch['docs']);
             }
     }
