@@ -59,7 +59,7 @@ export async function getAutonomousDocument(id){
       
       const data = await response.json();
       console.log(data); // You can log or process the data here
-      return data;
+      return data[0];
     } catch (error) {
       console.error("Error:", error);
       throw error; // Re-throw the error for the calling code to handle

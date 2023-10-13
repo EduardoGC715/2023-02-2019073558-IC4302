@@ -106,7 +106,7 @@ export default function DocView({doc, searchEngine}){
             })
         }
         //console.log(doc['PageLinks'], PageLinks)
-    } else if(searchEngine === "SQL" &&  doc['PageRestrictions'].length !== 0){
+    } else if(searchEngine === "SQL" &&  doc['PageRestrictions'] !== 0){
         const restrictionsArray = doc['PageRestrictions'].split(','); // Split the string into an array based on commas
         PageRestrictions = restrictionsArray.map((restriction) => {
             return (<span className={styles.normalText}><br />- {restriction}</span>

@@ -248,7 +248,7 @@ def createAutonomousView(search_term):
 def autonomousGetPage(id):
     cur = autonomous.cursor()
     
-    cur.execute('SELECT * FROM SearchView WHERE RAWTOHEX(PageTitleKey) = :id', id=id)
+    cur.execute('SELECT * FROM SearchView WHERE PageTitleKey = :id', id=id)
     result = cur.fetchall()
     
     pages = []
@@ -800,7 +800,7 @@ def update_pagepoints(pageId):
 def get_page(id):
     
     search = autonomousGetPage(id)
-
+    app.logger.debug(search)
     return search
 
 @app.route('/autonomous/get_pages_facets/', methods=['POST'])
