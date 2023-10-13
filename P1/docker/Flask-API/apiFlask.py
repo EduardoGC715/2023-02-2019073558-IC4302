@@ -436,14 +436,19 @@ def getAutonomousPoints(pageId):
     return row[0] if row else None
 
 # MONGO CONNECTION 
+# Función para conectarse a la base de datos de Mongo Atlas
 def mongoDBConnection (): 
     app.config["MONGO_URI"] = "mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec"
     mongo = PyMongo(app)
     return mongo
 
+# Código basado de 
+# https://www.mongodb.com/docs/manual/core/aggregation-pipeline/
+# https://www.mongodb.com/docs/atlas/atlas-search/facet/
+# https://www.mongodb.com/docs/atlas/atlas-search/highlighting/
 
 #MONGO OPERATIONS
-
+# Verificar si una fecha es válida
 def isValidDate(dateStr):
     try:
         dt.datetime.strptime(dateStr, "%Y-%m-%d")
@@ -451,6 +456,8 @@ def isValidDate(dateStr):
     except ValueError:
         return False
 
+# Función que genera el string del pipeline de Mongo DB para realizar la busqueda textual de una consulata
+# Tambien realiza el pricesamiento de los facets y filtros
 def textSearchQuery(searchQuery):
     pipeline = [
     {
@@ -591,6 +598,8 @@ def textSearchQuery(searchQuery):
       pipeline[0]["$search"]["facet"]["operator"]["compound"]["should"].append({"equals": {"path": "PageLastModified", "value": dt.datetime.strptime(searchQuery, "%Y-%m-%d")}}) 
     return pipeline
 
+# Función para agregar filtros dependiendo de los valores de los facets que se seleccionen
+# Retorna el pipeline con los nuevos filtros
 def filteredTextSearchQuery(searchQuery, PageLastModifiedUser, PageNamespace, SiteInfoName, SiteInfoDBName, SiteLanguage, PageRestrictions, PageBytes, PageNumberLinks, PageLastModified, PageHasRedirect):
     pipeline = textSearchQuery(searchQuery)
     if PageLastModifiedUser:
@@ -687,6 +696,7 @@ def register():
             logger.debug("El usuario ya está registrado.", e)
             return json.dumps({"error": {"code": 500, "message": "The user has already been registered"}})    
 
+# Endpoint para realizar una busqueda textual y obtener los facets, documentos y higlights en cada campo
 @app.route("/mongodb/get_data/<query>", methods=["POST"])
 def get_data (query):
     REQUEST_COUNT.inc()
@@ -703,6 +713,7 @@ def get_data (query):
                 pathsDone[highlight["path"]] = highlight["score"]
     return results
 
+# Endpoint donde se actualizan los votos positivos o negativos para un documento
 @app.route("/mongodb/update_vote/<id>/<vote>", methods=["POST"])
 def upsertVote(id, vote):
     REQUEST_COUNT.inc()
@@ -717,19 +728,21 @@ def upsertVote(id, vote):
     except Exception as e:
         raise e
 
+# Endpoint donde se realiza la busqueda de un documento específicio y se retorna con el texto completo con highlights en cada campo
 @app.route("/mongodb/get_doc/<id>/<query>", methods=["POST"])
 def get_doc (id, query):
-    # get the document
     REQUEST_COUNT.inc()
     record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "get_doc", 'bagInfo': json.dumps({"id": id, "query": query})}
     write_a_record(handle, 'ic4302_logs', record)
     pipeline = textSearchQuery(query)
     pipeline[0]["$search"]["facet"]["operator"]["compound"]["filter"].append({"phrase": {"path": "_id", "query": id}})
+    # obtener el documento
     doc = list(mongo.db.pages.aggregate(pipeline))[0]["docs"][0]
-    # process the document
+    # procesar el documento
     pathsDone = {}
     linkHigh = None
     textHigh = None
+    # insertar los higlights en el documento
     for highlight in doc["highlights"]:
         if (highlight["path"] in pathsDone and highlight["score"] > pathsDone[highlight["path"]]) or highlight["path"] not in pathsDone:
             pathsDone[highlight["path"]] = highlight["score"]
@@ -739,6 +752,8 @@ def get_doc (id, query):
                 doc[highlight["path"]] = highlight["texts"]
             elif highlight["path"] == "PageText":
                textHigh = highlight["texts"]
+               
+    # incrustar el highlight en el texto completo
     if textHigh != None:
         pageTextHigh = ""
         newPageText = []
@@ -750,8 +765,8 @@ def get_doc (id, query):
         doc["PageText"].append({"type": "text", "value": nonHighText[0]})
         doc["PageText"] += newPageText
         doc["PageText"].append({"type": "text", "value": nonHighText[1]})
-    
-    if linkHigh != None:
+
+    # incrustar el highlight en el texto completo link donde ocurre 
         pageLinkHigh = ""
         newPageLink = []
         for dictLinkHigh in linkHigh:
