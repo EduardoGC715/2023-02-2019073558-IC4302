@@ -72,20 +72,33 @@ export default function DocView({doc, searchEngine}){
 
     
     if (searchEngine === "MongoAtlas" && typeof doc['PageLinks'] === 'object') {
-        
-        if (doc['PageLinks'][0].hasOwnProperty('type')){
-            PageLinks = <Highlight highlight={doc['PageLinks']} key={`PageLinks${doc['_id']}`}/>
-        } else {
-            PageLinks = doc['PageLinks'].map((link) => {
-                return <span className={styles.normalText}><br />- {link[0]} | <a href={link[1]}>{link[1]}</a></span>
+        // const linkKeys = Object.keys(doc['PageLinks']);
+        // PageLinks = linkKeys.map((link) => {
+        //     const linkArrayKeys = Object.keys(doc['PageLinks'][link]);
+        //     return linkArrayKeys.map((element) => {
+        //         let anchor;
+        //         if (typeof doc['PageLinks'][link][element] === 'object') {
+        //             anchor = <Highlight highlight={doc['PageLinks'][link][element]} key={`PageLinks${doc['_id']}`}/>
+        //         } else {
+        //             anchor = <span className={styles.normalText}><br />- {doc['PageLinks'][link][element]}</span>
+        //         }
+        //         return <span className={styles.normalText}><br />- {anchor} | <a href={doc['PageLinks'][link][element]}>{doc['PageLinks'][link][element]}</a></span>
+        //     })
+        // })
+        PageLinks = doc['PageLinks'].map((link) => {let anchor;
+                if (typeof link[0] === 'object') {
+                    anchor = <Highlight highlight={link[0]} key={`PageLinks`}/>
+                } else {
+                    anchor = <span className={styles.normalText}>{link[0]}</span>
+                }
+                return <span className={styles.normalText}><br />- {anchor} | <a href={link[1]}>{link[1]}</a></span>
             })
-        }
-        //console.log(doc['PageLinks'], PageLinks)
+        console.log(doc['PageLinks'], PageLinks, typeof PageLinks)
     } else if(searchEngine === "SQL" && doc['PageLinks'].trim() !== ''){
         const linkTexts = doc['PageLinks'].split(','); // Split the string into an array based on commas
         const linkHrefs = doc['PageLinksLinks'].split(','); // Split the string into an array based on commas
         // Map the links and wrap each in a span
-        const PageLinks = linkTexts.map((linkText, index) => {
+        PageLinks = linkTexts.map((linkText, index) => {
             return (
                 <span className={styles.normalText}>
                     <br />- {linkText} | <a href={linkHrefs[index]}>{linkHrefs[index]}</a>
@@ -95,11 +108,12 @@ export default function DocView({doc, searchEngine}){
     }else {
         PageLinks = "No links available."
     }
+
     let PageRestrictions;
     if (searchEngine === "MongoAtlas" && typeof doc['PageRestrictions'] === 'object' && doc['PageRestrictions'].length !== 0) {
         
         if (doc['PageRestrictions'][0].hasOwnProperty('type')){
-            PageRestrictions = <Highlight highlight={doc['PageRestrictions']} key={`PageRestrictions${doc['_id']}`}/>
+            PageRestrictions = <Highlight highlight={doc['PageRestrictions']} key={`PageRestrictions`}/>
         } else {
             PageRestrictions = doc['PageRestrictions'].map((link) => {
                 return <span className={styles.normalText}><br />- {link[0]}</span>
