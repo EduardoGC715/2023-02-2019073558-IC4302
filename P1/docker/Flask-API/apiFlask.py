@@ -728,7 +728,8 @@ def upsertVote(id, vote):
         voteVal = int(vote)
         update = {'$inc': {'PagePoints': 1}} if voteVal else {'$inc': {'PagePoint': -1}}
         mongo.db.pages.update_one(query, update, upsert= True)
-        return jsonify("Updated the points on the document. ")
+        pagePoints = mongo.db.pages.find_one(query)["PagePoints"]
+        return {"value": pagePoints}
     except Exception as e:
         raise e
 
