@@ -725,7 +725,7 @@ def get_doc (id, query):
         for linkList in doc["PageLinks"]:
             if linkList[0] == pageLinkHigh:
                 linkList[0] = newPageLink
-    return doc["PageLinks"]
+    return doc
 
 @app.route('/autonomous/update_pagepoints/<pageId>', methods=['PUT'])
 def update_pagepoints(pageId):
