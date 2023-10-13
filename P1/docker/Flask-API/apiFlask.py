@@ -749,7 +749,7 @@ def get_doc (id, query):
             pathsDone[highlight["path"]] = highlight["score"]
             if isinstance(doc[highlight["path"]], list):
                 linkHigh = highlight["texts"]
-            elif highlight["path"] != "PageText":
+            elif highlight["path"] != "PageText" and highlight["path"] != "_id":
                 doc[highlight["path"]] = highlight["texts"]
             elif highlight["path"] == "PageText":
                textHigh = highlight["texts"]
