@@ -574,6 +574,7 @@ def textSearchQuery(searchQuery):
                         "SiteInfoName": 1,
                         "SiteLanguage": 1,
                         "pageWikipediaGenerated": 1,
+                        "PagePoints":1,
                         "highlights": { "$meta": "searchHighlights" }
                     }
                 }, {
@@ -781,6 +782,11 @@ def get_doc (id, query):
         for linkList in doc["PageLinks"]:
             if linkList[0] == pageLinkHigh:
                 linkList[0] = newPageLink
+
+    try:   
+        points = doc["PagePoints"]
+    except KeyError as e:
+        doc["PagePoints"] = 0
     return doc
 
 @app.route('/autonomous/update_pagepoints/<pageId>', methods=['PUT'])

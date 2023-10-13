@@ -132,6 +132,7 @@ def textSearchQuery(searchQuery):
                         "SiteInfoName": 1,
                         "SiteLanguage": 1,
                         "pageWikipediaGenerated": 1,
+                        "PagePoints":1,
                         "highlights": { "$meta": "searchHighlights" }
                     }
                 }, {
@@ -236,7 +237,10 @@ def get_doc (id, query):
                 doc[highlight["path"]] = highlight["texts"]
             elif highlight["path"] == "PageText":
                textHigh = highlight["texts"]
-    if textHigh:
+
+    linkHigh = None
+    textHigh = None
+    if textHigh != None:
         pageTextHigh = ""
         newPageText = []
         for dictTextHigh in textHigh:
@@ -248,7 +252,7 @@ def get_doc (id, query):
         doc["PageText"] += newPageText
         doc["PageText"].append({"type": "text", "value": nonHighText[1]})
     
-    if linkHigh:
+    if linkHigh != None:
         pageLinkHigh = ""
         newPageLink = []
         for dictLinkHigh in linkHigh:
@@ -257,7 +261,11 @@ def get_doc (id, query):
         for linkList in doc["PageLinks"]:
             if linkList[0] == pageLinkHigh:
                 linkList[0] = newPageLink
-    return doc["PageLinks"]
+    try:   
+        points = doc["PagePoints"]
+    except KeyError as e:
+        doc["PagePoints"] = 0
+    return doc
 
 @app.route("/mongodb/update_vote/<id>/<vote>", methods=["POST"])
 def upsertVote(id, vote):
