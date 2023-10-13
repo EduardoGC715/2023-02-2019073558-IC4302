@@ -37,25 +37,7 @@ export default function DocView({id, searchEngine, searchQuery}){
         PageLinks: "Loading...",
         PageRestrictions: "Loading..."
     })
-    // const [PageTitle, setPageTitle] = useState("Loading...");
-    // // write a useState for the variables that start with Page
-    // const [PageText, setPageText] = useState("Loading...");
-    // const [PageLastModified, setPageLastModified] = useState("Loading...");
-    // const [PageLastModifiedUser, setPageLastModifiedUser] = useState("Loading...");
-    // const [PageBytes, setPageBytes] = useState("Loading...");
-    // const [PageRedirect, setPageRedirect] = useState("Loading...");
-    // const [PageNamespace, setPageNamespace] = useState("Loading...");
-    // const [PageHasRedirect, setPageHasRedirect] = useState("Loading...");
-    // const [SiteInfoName, setSiteInfoName] = useState("Loading...");
-    // const [SiteInfoDBName, setSiteInfoDBName] = useState("Loading...");
-    // const [SiteLanguage, setSiteLanguage] = useState("Loading...");
-    // const [PageWikipediaLink, setPageWikipediaLink] = useState("Loading...");
-    // const [PageWikipediaGenerated, setPageWikipediaGenerated] = useState("Loading...");
-    // const [PageNumberLinks, setPageNumberLinks] = useState("Loading...");
-    // const [PageLinks, setPageLinks] = useState("Loading...");
-    // const [PageRestrictions, setPageRestrictions] = useState("Loading...");
 
-    // https://nextjs.org/docs/pages/building-your-application/rendering/client-side-rendering
     useEffect(() => {
         const fetchData = async () => {
             let doc;
