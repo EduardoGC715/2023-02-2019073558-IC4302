@@ -245,6 +245,40 @@ def createAutonomousView(search_term):
     cur.callproc('createSearchView', params)
  
     
+def autonomousGetPage(id):
+    cur = autonomous.cursor()
+    
+    cur.execute('SELECT * FROM SearchView WHERE RAWTOHEX(PageTitleKey) = :id', id=id)
+    result = cur.fetchall()
+    
+    pages = []
+    for row in result:
+        page = {
+            'PageId': row[0],
+            'PageTitle': row[1],
+            'PageNamespace': row[2],
+            'PageRedirect': row[3],
+            'PageHasRedirect': row[4],
+            'PageRestrictions': row[5],
+            'SiteInfoName': row[6],
+            'SiteInfoDBName': row[7],
+            'SiteLanguage': row[8],
+            'PageLastModified': row[9].isoformat() if isinstance(row[9], dt.datetime) else row[9],
+            'PageLastModifiedUser': row[10],
+            'PageBytes': row[11],
+            'PageText': read_lob(row[12]),
+            'PageWikipediaLink': row[13],
+            'pageWikipediaGenerated': row[14],
+            'PageLinks': row[15],
+            'PageNumberLinks': row[16],
+            'PagePoints': row[17],
+            'PageTitleKey': read_lob(row[18]),
+            'PageLinksLinks': row[19]}
+        pages.append(page)
+    
+    cur.close()
+    return pages
+
 def searchAutonomousFacets():
     cur = autonomous.cursor()
 
@@ -304,7 +338,8 @@ def searchAutonomous():
             'PageLinks': row[15],
             'PageNumberLinks': row[16],
             'PagePoints': row[17],
-            'PageTitleKey': read_lob(row[18])}
+            'PageTitleKey': read_lob(row[18]),
+            'PageLinksLinks': row[19]}
         pages.append(page)
     
     cur.close()
@@ -383,7 +418,8 @@ def searchAutonomousWithFacets( facet0 ,facet1, facet2, facet3, facet4, facet5, 
             'PageLinks': row[15],
             'PageNumberLinks': row[16],
             'PagePoints': row[17],
-            'PageTitleKey': read_lob(row[18])}
+            'PageTitleKey': read_lob(row[18]),
+            'PageLinksLinks': row[19]}
         pages.append(page)
 
     cur.close()
@@ -745,6 +781,12 @@ def update_pagepoints(pageId):
     return str(points)
 
 
+@app.route('/autonomous/get_page/<id>', methods=['POST'])
+def get_page(id):
+    
+    search = autonomousGetPage(id)
+
+    return search
 
 @app.route('/autonomous/get_pages_facets/', methods=['POST'])
 def get_pages_facets():

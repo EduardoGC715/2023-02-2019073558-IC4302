@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { getMongoDocument } from '../lib/mongoAPI';
+import { getAutonomousDocument } from '../lib/autonomousAPI';
 import Highlight from '../components/Highlight';
 
 
@@ -12,12 +13,18 @@ export async function getServerSideProps(context){
     const id = data['id'];
     const searchQuery = data['searchQuery'];
     const searchEngine = data['searchEngine'];
-
-    const doc = await getMongoDocument(id, searchQuery, searchEngine);
-    return { props: { doc } }
+    let doc;
+    
+    if(searchEngine === "MongoAtlas"){
+        doc = await getMongoDocument(id, searchQuery, searchEngine);
+    } else{
+        doc = await getAutonomousDocument(id);
+    }
+    console.log(doc);
+    return { props: { doc, searchEngine } }
 }
-
-export default function DocView({doc}){
+// preguntar de esto
+export default function DocView({doc, searchEngine}){
     const router = useRouter();
 
     console.log(doc)
@@ -62,7 +69,9 @@ export default function DocView({doc}){
                                 (typeof doc['PageNumberLinks'] !== 'object' ? doc['PageNumberLinks'] : <Highlight highlight={doc['PageNumberLinks']} key={`PageNumberLinks${doc['_id']}`}/>)
                                 : "No number of links available.";
     let PageLinks;
-    if (typeof doc['PageLinks'] === 'object') {
+
+    
+    if (searchEngine === "MongoAtlas" && typeof doc['PageLinks'] === 'object') {
         
         if (doc['PageLinks'][0].hasOwnProperty('type')){
             PageLinks = <Highlight highlight={doc['PageLinks']} key={`PageLinks${doc['_id']}`}/>
@@ -72,11 +81,22 @@ export default function DocView({doc}){
             })
         }
         //console.log(doc['PageLinks'], PageLinks)
-    } else {
+    } else if(searchEngine === "SQL" && doc['PageLinks'].trim() !== ''){
+        const linkTexts = doc['PageLinks'].split(','); // Split the string into an array based on commas
+        const linkHrefs = doc['PageLinksLinks'].split(','); // Split the string into an array based on commas
+        // Map the links and wrap each in a span
+        const PageLinks = linkTexts.map((linkText, index) => {
+            return (
+                <span className={styles.normalText}>
+                    <br />- {linkText} | <a href={linkHrefs[index]}>{linkHrefs[index]}</a>
+                </span>
+            );
+        });
+    }else {
         PageLinks = "No links available."
     }
     let PageRestrictions;
-    if (typeof doc['PageRestrictions'] === 'object' && doc['PageRestrictions'].length !== 0) {
+    if (searchEngine === "MongoAtlas" && typeof doc['PageRestrictions'] === 'object' && doc['PageRestrictions'].length !== 0) {
         
         if (doc['PageRestrictions'][0].hasOwnProperty('type')){
             PageRestrictions = <Highlight highlight={doc['PageRestrictions']} key={`PageRestrictions${doc['_id']}`}/>
@@ -86,7 +106,13 @@ export default function DocView({doc}){
             })
         }
         //console.log(doc['PageLinks'], PageLinks)
-    } else {
+    } else if(searchEngine === "SQL" &&  doc['PageRestrictions'].length !== 0){
+        const restrictionsArray = doc['PageRestrictions'].split(','); // Split the string into an array based on commas
+        PageRestrictions = restrictionsArray.map((restriction) => {
+            return (<span className={styles.normalText}><br />- {restriction}</span>
+            );
+        });
+    }else {
         PageRestrictions = "No restrictions available."
     }
 

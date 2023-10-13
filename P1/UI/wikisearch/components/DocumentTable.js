@@ -10,7 +10,7 @@ export default function DocumentTable({ documentList, searchQuery, searchEngine 
     const documentKeys = Object.keys(documentList);
     let documentComponents;
     if(searchEngine === "SQL"){
-        documentComponents = documentKeys.map((doc) => <DocumentPreviewAutonomous key={documentList[doc]['pageId']} doc={documentList[doc]} searchQuery={searchQuery} searchEngine={searchEngine}/>);
+        documentComponents = documentKeys.map((doc) => <DocumentPreviewAutonomous key={documentList[doc]['PageTitleKey']} doc={documentList[doc]} searchQuery={searchQuery} searchEngine={searchEngine}/>);
 
     }else {
         documentComponents = documentKeys.map((doc) => <DocumentPreview key={documentList[doc]['_id']} doc={documentList[doc]} searchQuery={searchQuery} searchEngine={searchEngine}/>);
