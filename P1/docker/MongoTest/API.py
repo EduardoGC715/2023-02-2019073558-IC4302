@@ -264,7 +264,7 @@ def upsertVote(id, vote):
     try:
         query = {"_id": id}
         voteVal = int(vote)
-        update = {'$inc': {'PagePoints': 1}} if voteVal else {'$inc': {'PagePoint': -1}}
+        update = {'$inc': {'PagePoints': 1}} if voteVal else {'$inc': {'PagePoints': -1}}
         mongo.db.pages.update_one(query, update, upsert= True)
         pagePoints = mongo.db.pages.find_one(query)["PagePoints"]
         return {"value": pagePoints}
