@@ -17,6 +17,8 @@ from pymongo import MongoClient
 # https://docs.oracle.com/en-us/iaas/tools/python/2.112.0/api/object_storage/client/oci.object_storage.ObjectStorageClient.html
 # https://docs.oracle.com/en-us/iaas/tools/python-sdk-examples/2.112.0/objectstorage/get_object.py.html
 # https://docs.oracle.com/en-us/iaas/tools/python-sdk-examples/2.112.0/objectstorage/list_objects.py.html
+# https://www.geeksforgeeks.org/upsert-in-mongodb/
+# https://flask-pymongo.readthedocs.io/en/latest/#:~:text=PyMongo%20connects%20to%20the%20MongoDB,exposed%20as%20the%20db%20attribute.&text=Previous%20versions%20of%20Flask-PyMongo,2.2%2C%20this%20requirement%20is%20lifted.
 
 @xml_handle_element("feed", "doc")
 @dataclass
@@ -103,12 +105,13 @@ def retry_with_backoff(fn, backoff_in_seconds = 1):
             if x < 8:
                 x += 1
 
-
+# Función para conectarse a Mongo DB
 def mongoDBConnection ():
     logger.info("mongo")
     mongo = MongoClient("mongodb+srv://eduardogc715:BasesII2023@bibliotec.6l341ym.mongodb.net/bibliotec")
     return mongo
 
+# Función para realizar el upsert de un documento a Mongo DB
 def upsertDocument(insert_id, values, mongo):
     try:
         db = mongo["bibliotec"]
@@ -250,7 +253,7 @@ if __name__ == "__main__":
                     hashkey = hashlib.md5(page.title.encode('UTF-8'))
                     pageTitleKey = hashkey.hexdigest()
 
-                    # Insert multistream data into Mongo Atlas
+                    # Insert multistream data para Mongo Atlas
                     data4MongoMS = [
                         page.id, 
                         page.title, 
@@ -269,6 +272,8 @@ if __name__ == "__main__":
                     ]
 
                     try:
+                        # llamado a las funciones para insertar los datos obtenidos
+                        
                         upsertDocument(pageTitleKey, data4MongoMS, mongodb)
 
                         cursorSQL.execute("""
@@ -361,7 +366,7 @@ if __name__ == "__main__":
                     hashkey = hashlib.md5(pageTitle.encode('UTF-8'))
                     pageTitleKey = hashkey.hexdigest()
 
-                    # Insert abstract data into Mongo Atlas
+                    # Insert abstract data para Mongo Atlas
                     data4MongoA = [
                         pageTitle,
                         url,
@@ -370,6 +375,8 @@ if __name__ == "__main__":
                     ]
 
                     try:
+                        #Llamados para insertar a las bases de datos
+
                         upsertDocument(pageTitleKey, data4MongoA, mongodb)
                         
                         cursorSQL.execute(
