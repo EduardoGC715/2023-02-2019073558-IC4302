@@ -429,7 +429,7 @@ def searchAutonomousWithFacets( facet0 ,facet1, facet2, facet3, facet4, facet5, 
 
 def getAutonomousPoints(pageId):
     cur = autonomous.cursor()
-    cur.execute("select PAGEPOINTS from PAGES where pageid = " + pageId)
+    cur.execute("SELECT PAGEPOINTS FROM PAGES WHERE PageTitleKey = :pageId ", pageId=pageId)
     
     row = cur.fetchone()
     cur.close()
