@@ -7,3 +7,4 @@ borneo
 pymongo
 firebase_admin
 oracledb
+oci
