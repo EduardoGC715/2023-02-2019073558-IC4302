@@ -3,8 +3,8 @@ import styles from '../styles/DocView.module.css';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { getMongoDocument } from '../lib/mongoAPI';
-import { getAutonomousDocument } from '../lib/autonomousAPI';
+import { getMongoDocument, addMongoLike } from '../lib/mongoAPI';
+import { getAutonomousDocument, addSQLLike } from '../lib/autonomousAPI';
 import Highlight from '../components/Highlight';
 
 
@@ -89,19 +89,6 @@ export default function DocView({id, searchEngine, searchQuery}){
                                         : "No number of links available";
             
             if (searchEngine === "MongoAtlas" && typeof doc['PageLinks'] === 'object') {
-                // const linkKeys = Object.keys(doc['PageLinks']);
-                // PageLinks = linkKeys.map((link) => {
-                //     const linkArrayKeys = Object.keys(doc['PageLinks'][link]);
-                //     return linkArrayKeys.map((element) => {
-                //         let anchor;
-                //         if (typeof doc['PageLinks'][link][element] === 'object') {
-                //             anchor = <Highlight highlight={doc['PageLinks'][link][element]} key={`PageLinks${doc['_id']}`}/>
-                //         } else {
-                //             anchor = <span className={styles.normalText}><br />- {doc['PageLinks'][link][element]}</span>
-                //         }
-                //         return <span className={styles.normalText}><br />- {anchor} | <a href={doc['PageLinks'][link][element]}>{doc['PageLinks'][link][element]}</a></span>
-                //     })
-                // })
                 newInfo.PageLinks = doc['PageLinks'].map((link) => {let anchor;
                         if (typeof link[0] === 'object') {
                             anchor = <Highlight highlight={link[0]} key={`PageLinks`}/>
@@ -146,6 +133,14 @@ export default function DocView({id, searchEngine, searchQuery}){
                 newInfo.PageRestrictions = "No restrictions available."
             }
             setInfo(newInfo);
+
+            if (searchEngine === "MongoAtlas") {
+                if (typeof doc['PagePoints'] !== 'undefined'){
+                    setLikeNumber(doc['PagePoints']);
+                }
+            } else {
+                setLikeNumber(doc['PagePoints'])
+            }
         };
         
         fetchData(); // Call the function to fetch the data
@@ -155,6 +150,63 @@ export default function DocView({id, searchEngine, searchQuery}){
     function logOut(){
         localStorage.removeItem('login');
         router.push('/');
+    }
+
+    const [likeNumber, setLikeNumber] = useState(0);
+    const [liked, setLiked] = useState(false);
+    const [disliked, setDisliked] = useState(false);
+    async function handleLike(){
+        let number;
+        if (searchEngine === "MongoAtlas") {
+            if (!liked) {
+                number = await addMongoLike(id, 1);
+            } else {
+                number = await addMongoLike(id, 0);
+            }
+            if (disliked) {
+                number = await addMongoLike(id, 1);
+                setDisliked(false);
+            }
+        } else {
+            if (!liked) {
+                number = await addSQLLike(id, 1);
+            } else {
+                number = await addSQLLike(id, -1);
+            }
+            if (disliked) {
+                number = await addSQLLike(id, 1);
+                setDisliked(false);
+            }
+        }
+        setLiked(!liked);
+        setLikeNumber(number);
+    }
+
+    async function handleDislike(){
+        let number;
+        if (searchEngine === "MongoAtlas") {
+            if (!disliked) {
+                number = await addMongoLike(id, 0);
+            } else {
+                number = await addMongoLike(id, 1);
+            }
+            if (liked) {
+                number = await addMongoLike(id, 0);
+                setLiked(false);
+            }
+        } else {
+            if (!disliked) {
+                number = await addSQLLike(id, -1);
+            } else {
+                number = await addSQLLike(id, 1);
+            }
+            if (liked) {
+                number = await addSQLLike(id, -1);
+                setLiked(false);
+            }
+        }
+        setDisliked(!disliked);
+        setLikeNumber(number);
     }
 
     return (
@@ -184,6 +236,9 @@ export default function DocView({id, searchEngine, searchQuery}){
             <h2>Text</h2>
             <p className={styles.pageText}>{info.PageText}</p>
             <div className={styles.buttonDiv}>
+                <p className={styles.likesText}>Likes: {likeNumber}</p>
+                <button id="LikeButton" className={liked ? styles.buttonLikeClicked : styles.buttonLike} onClick={handleLike}>Like</button>
+                <button id="DislikeButton" className={disliked ? styles.buttonDislikeClicked : styles.buttonDislike} onClick={handleDislike}>Dislike</button>
                 <button className={styles.buttonT1} onClick={() => {router.push('/search')}}>Return to Search</button>
             </div>
             <footer className={styles.footerDoc}>

@@ -183,9 +183,15 @@ font-size: 1.5rem;
     font-style: italic;
 }
 
-.normalText {
+.normalText,
+.likesText {
     margin: 5px 0px 10px 0px;
     font-size: 16px;
+}
+
+.likesText {
+    display: inline;
+    margin-right: 20px;
 }
 
 .pageText{
@@ -197,7 +203,11 @@ font-size: 1.5rem;
 
 }
 
-.buttonT1 {
+.buttonT1,
+.buttonLike,
+.buttonLikeClicked,
+.buttonDislike,
+.buttonDislikeClicked {
     width: 200px;
     border-radius: 10px;
     padding: 13px 0px 13px 0px;
@@ -218,39 +228,86 @@ font-size: 1.5rem;
       Droid Sans,
       Helvetica Neue,
       sans-serif;
-    margin: 40px 0px 60px;
-  }
-  
-  .buttonT1:hover {
-    border-color: lightskyblue;
-  }
-  
-  .buttonT1:active {
-    opacity: 0.7;
+    margin: 40px 10px 60px 10px;
   }
 
-  .logOutButton {
+  
+.buttonT1:hover {
+border-color: lightskyblue;
+}
+
+.buttonT1:active {
+opacity: 0.7;
+}
+
+.buttonLike {
     width: 100px;
-    border-radius: 10px;
-    padding: 3px 0px 3px 0px;
-    cursor: pointer;
-    font-size: 18px;
-    transition: border-color 0.15s;
-    margin-bottom: 10px;
-    font-family:
-      Inter,
-      -apple-system,
-      BlinkMacSystemFont,
-      Segoe UI,
-      Roboto,
-      Oxygen,
-      Ubuntu,
-      Cantarell,
-      Fira Sans,
-      Droid Sans,
-      Helvetica Neue,
-      sans-serif;
-    margin-right: 25px;
+    background-color: rgb(0, 216, 0);
+    transition: background-color 0.15s;
+}
+
+.buttonLikeClicked {
+    width: 100px;
+    background-color: rgb(0, 216, 0);
+    transition: background-color 0.15s;
+    font-weight: 700;
+}
+
+.buttonLike:hover,
+.buttonLikeClicked:hover {
+    background-color: rgb(134, 255, 134);
+}
+
+.buttonLike:active,
+.buttonLikeClicked:active {
+    opacity: 0.7;
+}
+
+.buttonDislike {
+    width: 100px;
+    background-color: rgb(255, 0, 0);
+    transition: background-color 0.15s;
+}
+
+.buttonDislikeClicked {
+    width: 100px;
+    background-color: rgb(255, 0, 0);
+    transition: background-color 0.15s;
+    font-weight: 700;
+}
+
+.buttonDislike:hover,
+.buttonDislikeClicked:hover {
+    background-color: rgb(255, 108, 108);
+}
+
+.buttonDislike:active,
+.buttonDislikeClicked:active {
+    opacity: 0.7;
+}
+
+.logOutButton {
+width: 100px;
+border-radius: 10px;
+padding: 3px 0px 3px 0px;
+cursor: pointer;
+font-size: 18px;
+transition: border-color 0.15s;
+margin-bottom: 10px;
+font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    Segoe UI,
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    Fira Sans,
+    Droid Sans,
+    Helvetica Neue,
+    sans-serif;
+margin-right: 25px;
 }
 
 .logOutButton:hover {

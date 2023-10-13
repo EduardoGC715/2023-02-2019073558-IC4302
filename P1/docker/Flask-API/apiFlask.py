@@ -429,7 +429,7 @@ def searchAutonomousWithFacets( facet0 ,facet1, facet2, facet3, facet4, facet5, 
 
 def getAutonomousPoints(pageId):
     cur = autonomous.cursor()
-    cur.execute("SELECT PAGEPOINTS FROM PAGES WHERE PageTitleKey = :pageId ", pageId=pageId)
+    cur.execute("SELECT PAGEPOINTS FROM PAGES WHERE PageTitleKey = :pageId;", pageId=pageId)
     
     row = cur.fetchone()
     cur.close()
@@ -787,7 +787,9 @@ def get_doc (id, query):
 def update_pagepoints(pageId):
     REQUEST_COUNT.inc()
 
-    value = request.json['value']
+    data = request.get_json()
+    value = data['value']
+    app.logger.debug(value)
     record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "update_pagepoints", 'bagInfo': json.dumps({"pagId": pageId, "value": value})}
     write_a_record(handle, 'ic4302_logs', record)
     cur = autonomous.cursor()
@@ -844,6 +846,6 @@ if __name__ == "__main__":
     autonomous = connectAutonomousDB()
 
     start_http_server(8000)
-    app.run(host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')
     # https://synchronizing.medium.com/running-a-simple-flask-application-inside-a-docker-container-b83bf3e07dd5
     
