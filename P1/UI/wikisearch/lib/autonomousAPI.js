@@ -46,7 +46,7 @@ export async function getAutonomous(searchInput, facetObject){
 export async function getAutonomousDocument(id){
     try{
       console.log(id)
-      const response = await fetch("http://localhost:5000/autonomous/get_page/" + toString(id) , {
+      const response = await fetch("http://localhost:5000/autonomous/get_page/" + id, {
         method: "POST",
         headers: {
           "content-type": "application/json",

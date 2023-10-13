@@ -248,7 +248,7 @@ def createAutonomousView(search_term):
 def autonomousGetPage(id):
     cur = autonomous.cursor()
     
-    cur.execute('SELECT * FROM SearchView WHERE RAWTOHEX(PageTitleKey) = ' + id)
+    cur.execute('SELECT * FROM SearchView WHERE RAWTOHEX(PageTitleKey) = :id', id=id)
     result = cur.fetchall()
     
     pages = []

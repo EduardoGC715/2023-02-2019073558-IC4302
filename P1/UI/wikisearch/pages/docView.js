@@ -14,6 +14,7 @@ export async function getServerSideProps(context){
     const searchQuery = data['searchQuery'];
     const searchEngine = data['searchEngine'];
     let doc;
+    
     if(searchEngine === "MongoAtlas"){
         doc = await getMongoDocument(id, searchQuery, searchEngine);
     } else{
