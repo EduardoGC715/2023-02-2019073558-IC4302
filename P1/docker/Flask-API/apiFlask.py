@@ -15,7 +15,6 @@ from prometheus_client import start_http_server, Counter, Gauge
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import oci
-import logging
 from borneo.iam import SignatureProvider
 from borneo import (Regions, NoSQLHandle, NoSQLHandleConfig, PutRequest)
 import time
@@ -186,6 +185,7 @@ def logging_after(response):
 # enable cors
 CORS(app)
 
+# Retry with backoff implementado con base en https://keestalkstech.com/2021/03/python-utility-function-retry-with-exponential-backoff/#without-typings.
 def retry_with_backoff(fn, backoff_in_seconds = 1):
     x = 0
     while True:
@@ -199,7 +199,6 @@ def retry_with_backoff(fn, backoff_in_seconds = 1):
             time.sleep(sleep)
             if x < 8:
                 x += 1
-
 
 # AUTONOMOUS CONNECTION
 def connectAutonomousDB():
@@ -659,12 +658,14 @@ def home():
 def login():
     if request.method == "POST":
         REQUEST_COUNT.inc()
-    
+        
         data = request.get_json()
         try:
             
             email =data["email"]
             password = data["password"]
+            record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "login", 'bagInfo': json.dumps({"email": email, "password": password})}
+            write_a_record(handle, 'ic4302_logs', record)
             logger.debug(email)
             logger.debug(password)
             userInfo = json.dumps({"email": email, "password": password, "return_secure_token":True})
@@ -691,6 +692,8 @@ def register():
         pDisplayName = data["name"] + " " + data["last_name1"] + " " + data["last_name2"]        
         try:
             user = auth.create_user(email = pEmail, password = pPassword, phone_number = pPhone, display_name = pDisplayName)
+            record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "register", 'bagInfo': json.dumps({"email": pEmail, "password": pPassword, "phone": pPhone, "name": pDisplayName})}
+            write_a_record(handle, 'ic4302_logs', record)
             return {"success": {"code": 200, "message": "The user has been registered correctly"}}
         except Exception as e:
             logger.debug(str(e))
@@ -784,7 +787,8 @@ def update_pagepoints(pageId):
     REQUEST_COUNT.inc()
 
     value = request.json['value']
-
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "update_pagepoints", 'bagInfo': json.dumps({"pagId": pageId, "value": value})}
+    write_a_record(handle, 'ic4302_logs', record)
     cur = autonomous.cursor()
 
     params = [pageId, value]
@@ -799,8 +803,10 @@ def update_pagepoints(pageId):
 
 @app.route('/autonomous/get_page/<id>', methods=['POST'])
 def get_page(id):
-    
+    REQUEST_COUNT.inc()
     search = autonomousGetPage(id)
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "get_page", 'bagInfo': json.dumps({"id": id,"search": search})}
+    write_a_record(handle, 'ic4302_logs', record)
     app.logger.debug(search)
     return search
 
@@ -809,6 +815,8 @@ def get_pages_facets():
     REQUEST_COUNT.inc()
     
     filters = request.get_json()
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "get_pages_facets", 'bagInfo': json.dumps({"filters": filters})}
+    write_a_record(handle, 'ic4302_logs', record)
     print(filters)
     
     search = searchAutonomousWithFacets(filters[0], filters[1], filters[2], filters[3], filters[4], filters[5], filters[6], filters[7], filters[8], filters[9])
@@ -818,7 +826,9 @@ def get_pages_facets():
 
 @app.route('/autonomous/get_pages/<query>', methods=['GET'])
 def get_pages(query):
-    
+    REQUEST_COUNT.inc()
+    record = {'logId': int(time.time()) + random.randint(0, 30000), 'title': "get_pages", 'bagInfo': json.dumps({"query": query})}
+    write_a_record(handle, 'ic4302_logs', record)
     createAutonomousView(query)
     pages = []
     pages = searchAutonomous()
@@ -833,5 +843,6 @@ if __name__ == "__main__":
     autonomous = connectAutonomousDB()
 
     start_http_server(8000)
-    app.run(debug = True)
+    app.run(host='0.0.0.0')
+    # https://synchronizing.medium.com/running-a-simple-flask-application-inside-a-docker-container-b83bf3e07dd5
     

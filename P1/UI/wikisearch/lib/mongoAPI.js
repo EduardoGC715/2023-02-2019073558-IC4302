@@ -32,7 +32,7 @@ export async function getMongo(searchInput, facetObject){
       console.error("Error:", error);
       throw error; // Re-throw the error for the calling code to handle
     }
-  }
+}
 
 export async function getMongoDocument(id, searchQuery){
   try{

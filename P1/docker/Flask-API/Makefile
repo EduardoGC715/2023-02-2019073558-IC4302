@@ -6,20 +6,16 @@ MY_DIR := $(shell cd)
 # Mandar version
 # make build version=1 (o 2 o x.)
 
-run:
-	docker start -d controller
 
-stop:
-	docker stop controller
 
 build:
 	@echo "Building..."
-	docker build -t mongoflask:$(version) .
+	docker build -t wikiapi:$(version) .
 
-	docker tag mongoflask:$(version) mongoflask:latest
-	docker tag mongoflask:$(version) dandiego2356/mongoflask:$(version)
-	docker tag mongoflask:$(version) dandiego2356/mongoflask:latest
+	docker tag wikiapi:$(version) wikiapi:latest
+	docker tag wikiapi:$(version) dandiego235/wikiapi:$(version)
+	docker tag wikiapi:$(version) dandiego235/wikiapi:latest
 
 push:
-	docker push dandiego2356/mongoflask:$(version)
-	docker push dandiego2356/mongoflask:latest
+	docker push dandiego235/wikiapi:$(version)
+	docker push dandiego235/wikiapi:latest

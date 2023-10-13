@@ -19,6 +19,9 @@ from pymongo import MongoClient
 # https://docs.oracle.com/en-us/iaas/tools/python-sdk-examples/2.112.0/objectstorage/list_objects.py.html
 # https://www.geeksforgeeks.org/upsert-in-mongodb/
 # https://flask-pymongo.readthedocs.io/en/latest/#:~:text=PyMongo%20connects%20to%20the%20MongoDB,exposed%20as%20the%20db%20attribute.&text=Previous%20versions%20of%20Flask-PyMongo,2.2%2C%20this%20requirement%20is%20lifted.
+# https://pythonhosted.org/mwxml/
+# https://bigxml.rogdham.net/
+# https://python-oracledb.readthedocs.io/en/latest/user_guide/sql_execution.html#insert-and-update-statements
 
 @xml_handle_element("feed", "doc")
 @dataclass

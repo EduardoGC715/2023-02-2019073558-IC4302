@@ -19,4 +19,7 @@ echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docke
 apt-get update -y
 apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
 mkdir "/home/ubuntu/app"
+
 docker run -d -v "/home/ubuntu/app":/app/volume --name wikiloader dandiego235/wikiloader:10
+docker run -d -p 3000:3000 --name wikiui dandiego235/wikiui:3
+docker run -d -p 5000:5000 -p 8000:8000 --name wikiapi dandiego235/wikiapi:latest

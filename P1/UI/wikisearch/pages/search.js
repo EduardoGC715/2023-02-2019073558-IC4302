@@ -69,7 +69,11 @@ export default function Search() {
             }
             
         } catch {
-            alert("Error connecting to Mongo database.");
+            if (selectedEngine === "MongoAtlas") {
+                alert("Error connecting to Mongo database.");
+            } else {
+                alert("Error connecting to Autonomous database.");
+            }
             return;
         }
         if (!facetSearch['facets'].length){

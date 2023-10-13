@@ -1,11 +1,18 @@
-FROM python:3.11.4-alpine3.18
+FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+RUN pip install --upgrade pip
 
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY mongoFlask.py .
+COPY apiFlask.py .
+COPY logs ./logs
+COPY bibliotec-98a06-firebase-adminsdk-qiahh-ea76f83463.json .
 
-CMD [ "python", "-u", "./mongoFlask.py" ]
+EXPOSE 5000
+
+EXPOSE 8000
+
+CMD [ "python", "-u", "./apiFlask.py" ]
