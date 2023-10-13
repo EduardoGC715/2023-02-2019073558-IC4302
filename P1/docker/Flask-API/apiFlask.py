@@ -768,6 +768,7 @@ def get_doc (id, query):
         doc["PageText"].append({"type": "text", "value": nonHighText[1]})
 
     # incrustar el highlight en el texto completo link donde ocurre 
+    if linkHigh != None:
         pageLinkHigh = ""
         newPageLink = []
         for dictLinkHigh in linkHigh:
