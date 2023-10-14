@@ -21,7 +21,7 @@ export default function Search() {
       }
 
     const [selectedEngine, setSelectedEngine] = useState("MongoAtlas");
-
+    const [searchEngine, setSearchEngine] = useState("MongoAtlas"); // ["MongoAtlas", "SQL"
     const handleEngineChange = (event) => {
         setSelectedEngine(event.target.value);
     };
@@ -76,6 +76,7 @@ export default function Search() {
             }
             return;
         }
+        setSearchEngine(selectedEngine);
         if (!facetSearch['facets'].length){
                 alert("No documents found.");
             } else if (selectedEngine === "MongoAtlas") {
@@ -156,7 +157,7 @@ export default function Search() {
 
                 <div className={styles.contentGrid}>
                     <FacetTable facetList={facetList} facetObject={facetObject} handleFacetChange={handleFacetChange}/>
-                    <DocumentTable documentList={documentList} searchQuery={searchInput} searchEngine={selectedEngine}/>
+                    <DocumentTable documentList={documentList} searchQuery={searchInput} searchEngine={searchEngine}/>
                 </div>
                 <footer>
                     <button className={styles.logOutButton} onClick={logOut}>Log Out</button>

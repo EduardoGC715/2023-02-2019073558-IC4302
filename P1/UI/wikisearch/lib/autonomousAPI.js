@@ -1,6 +1,5 @@
 
 export async function getAutonomous(searchInput, facetObject){
-
     try{
       const list = [];
       list.push(facetObject["PageLastModifiedUserFacet"] == "None" ? "" : facetObject["PageLastModifiedUserFacet"]);
