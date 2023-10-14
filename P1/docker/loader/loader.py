@@ -263,7 +263,7 @@ if __name__ == "__main__":
                         str(page.namespace), 
                         page.redirect, 
                         pageHasRedirect4Mongo, 
-                        latestRevision, 
+                        latestRevision.timestamp, 
                         latestRevision.user.text, 
                         latestRevision.bytes,
                         latestRevision.text,
@@ -273,7 +273,7 @@ if __name__ == "__main__":
                         f"http://en.wikipedia.org/?curid={page.id}",
                         page.restrictions
                     ]
-
+                    
                     try:
                         # llamado a las funciones para insertar los datos obtenidos
                         
