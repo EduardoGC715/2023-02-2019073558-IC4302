@@ -93,6 +93,45 @@ resource "oci_core_security_list" "security_list" {
         }
         stateless  = false
     }
+    ingress_security_rules {
+        //flask
+        source = "0.0.0.0/0"
+        source_type = "CIDR_BLOCK"
+        protocol = "6"
+        tcp_options {
+
+            max = 5000
+            min = 5000
+
+        }
+        stateless  = false
+    }
+    ingress_security_rules {
+        //prometheus
+        source = "0.0.0.0/0"
+        source_type = "CIDR_BLOCK"
+        protocol = "6"
+        tcp_options {
+
+            max = 8000
+            min = 8000
+
+        }
+        stateless  = false
+    }
+    ingress_security_rules {
+        //ssh
+        source = "0.0.0.0/0"
+        source_type = "CIDR_BLOCK"
+        protocol = "6"
+        tcp_options {
+
+            max = 3000
+            min = 3000
+
+        }
+        stateless  = false
+    }
 }
 
 resource "oci_core_route_table_attachment" "public_rt_attachment" {

@@ -21,5 +21,5 @@ apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docke
 mkdir "/home/ubuntu/app"
 
 docker run -d -v "/home/ubuntu/app":/app/volume --name wikiloader dandiego235/wikiloader:10
-docker run -d -p 3000:3000 --name wikiui dandiego235/wikiui:4
-docker run -d -p 5000:5000 -p 8000:8000 --name wikiapi dandiego235/wikiapi:latest
+docker run -d -p 3000:3000 --name wikiui dandiego235/wikiui:8
+docker run -d -p 5000:5000 -p 8000:8000 --name wikiapi dandiego235/wikiapi:8
