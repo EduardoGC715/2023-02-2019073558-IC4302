@@ -137,34 +137,34 @@ metrics = {
         'AVG_TIME': Gauge('request_processing_seconds_avg_register', 'Average request processing time in register endpoint')
     },
     'get_pages_facets': {
-    'REQUEST_COUNT': Counter('flask_http_requests_get_pages_facets', 'Number of HTTP requests received in get_pages_facets endpoint'),
-    'MAX_TIME': Gauge('request_processing_seconds_max_get_pages_facets', 'Maximum request processing time in get_pages_facets endpoint'),
-    'MIN_TIME': Gauge('request_processing_seconds_min_get_pages_facets', 'Minimum request processing time in get_pages_facets endpoint'),
-    'AVG_TIME': Gauge('request_processing_seconds_avg_get_pages_facets', 'Average request processing time in get_pages_facets endpoint')
+        'REQUEST_COUNT': Counter('flask_http_requests_get_pages_facets', 'Number of HTTP requests received in get_pages_facets endpoint'),
+        'MAX_TIME': Gauge('request_processing_seconds_max_get_pages_facets', 'Maximum request processing time in get_pages_facets endpoint'),
+        'MIN_TIME': Gauge('request_processing_seconds_min_get_pages_facets', 'Minimum request processing time in get_pages_facets endpoint'),
+        'AVG_TIME': Gauge('request_processing_seconds_avg_get_pages_facets', 'Average request processing time in get_pages_facets endpoint')
     },
     'get_page': {
-    'REQUEST_COUNT': Counter('flask_http_requests_get_page', 'Number of HTTP requests received in get_page endpoint'),
-    'MAX_TIME': Gauge('request_processing_seconds_max_get_page', 'Maximum request processing time in get_page endpoint'),
-    'MIN_TIME': Gauge('request_processing_seconds_min_get_page', 'Minimum request processing time in get_page endpoint'),
-    'AVG_TIME': Gauge('request_processing_seconds_avg_get_page', 'Average request processing time in get_page endpoint')
+        'REQUEST_COUNT': Counter('flask_http_requests_get_page', 'Number of HTTP requests received in get_page endpoint'),
+        'MAX_TIME': Gauge('request_processing_seconds_max_get_page', 'Maximum request processing time in get_page endpoint'),
+        'MIN_TIME': Gauge('request_processing_seconds_min_get_page', 'Minimum request processing time in get_page endpoint'),
+        'AVG_TIME': Gauge('request_processing_seconds_avg_get_page', 'Average request processing time in get_page endpoint')
     },
     'update_pagepoints': {
-    'REQUEST_COUNT': Counter('flask_http_requests_update_pagepoints', 'Number of HTTP requests received in update_pagepoints endpoint'),
-    'MAX_TIME': Gauge('request_processing_seconds_max_update_pagepoints', 'Maximum request processing time in update_pagepoints endpoint'),
-    'MIN_TIME': Gauge('request_processing_seconds_min_update_pagepoints', 'Minimum request processing time in update_pagepoints endpoint'),
-    'AVG_TIME': Gauge('request_processing_seconds_avg_update_pagepoints', 'Average request processing time in update_pagepoints endpoint')
+        'REQUEST_COUNT': Counter('flask_http_requests_update_pagepoints', 'Number of HTTP requests received in update_pagepoints endpoint'),
+        'MAX_TIME': Gauge('request_processing_seconds_max_update_pagepoints', 'Maximum request processing time in update_pagepoints endpoint'),
+        'MIN_TIME': Gauge('request_processing_seconds_min_update_pagepoints', 'Minimum request processing time in update_pagepoints endpoint'),
+        'AVG_TIME': Gauge('request_processing_seconds_avg_update_pagepoints', 'Average request processing time in update_pagepoints endpoint')
     },
     'get_doc': {
-    'REQUEST_COUNT': Counter('flask_http_requests_get_doc', 'Number of HTTP requests received in get_doc endpoint'),
-    'MAX_TIME': Gauge('request_processing_seconds_max_get_doc', 'Maximum request processing time in get_doc endpoint'),
-    'MIN_TIME': Gauge('request_processing_seconds_min_get_doc', 'Minimum request processing time in get_doc endpoint'),
-    'AVG_TIME': Gauge('request_processing_seconds_avg_get_doc', 'Average request processing time in get_doc endpoint')
+        'REQUEST_COUNT': Counter('flask_http_requests_get_doc', 'Number of HTTP requests received in get_doc endpoint'),
+        'MAX_TIME': Gauge('request_processing_seconds_max_get_doc', 'Maximum request processing time in get_doc endpoint'),
+        'MIN_TIME': Gauge('request_processing_seconds_min_get_doc', 'Minimum request processing time in get_doc endpoint'),
+        'AVG_TIME': Gauge('request_processing_seconds_avg_get_doc', 'Average request processing time in get_doc endpoint')
     },
     'update_vote': {
-    'REQUEST_COUNT': Counter('flask_http_requests_update_vote', 'Number of HTTP requests received in update_vote endpoint'),
-    'MAX_TIME': Gauge('request_processing_seconds_max_update_vote', 'Maximum request processing time in update_vote endpoint'),
-    'MIN_TIME': Gauge('request_processing_seconds_min_update_vote', 'Minimum request processing time in update_vote endpoint'),
-    'AVG_TIME': Gauge('request_processing_seconds_avg_update_vote', 'Average request processing time in update_vote endpoint')
+        'REQUEST_COUNT': Counter('flask_http_requests_update_vote', 'Number of HTTP requests received in update_vote endpoint'),
+        'MAX_TIME': Gauge('request_processing_seconds_max_update_vote', 'Maximum request processing time in update_vote endpoint'),
+        'MIN_TIME': Gauge('request_processing_seconds_min_update_vote', 'Minimum request processing time in update_vote endpoint'),
+        'AVG_TIME': Gauge('request_processing_seconds_avg_update_vote', 'Average request processing time in update_vote endpoint')
     }
 }
 
