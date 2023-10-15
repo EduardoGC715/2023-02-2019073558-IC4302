@@ -1,5 +1,15 @@
 mongodb:
-  enabled: true
+  enabled: false
+elasticsearch:
+  enabled: false
+  elastic:
+    version: 8.6.1
+    replicas: 1
+    name: ic4302
+  kibana:
+    version: 8.6.1
+    replicas: 1
+    name: ic4302
 elastic:
   version: 8.6.1
   replicas: 1
@@ -8,3 +18,14 @@ kibana:
   version: 8.6.1
   replicas: 1
   name: ic4302
+postgresql:
+  enabled: true
+  primary:
+    resources:
+      limits:
+        cpu: "1"
+        memory: "4Gi"
+  auth:
+    database: "Pokemon"
+    username: "admin"
+    password: "admin"

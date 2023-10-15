@@ -29,3 +29,4 @@ dependencies:
   - name: eck-operator
     version: "2.6.1"
     repository: https://helm.elastic.co
+    condition: elasticsearch.enabled

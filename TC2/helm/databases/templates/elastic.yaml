@@ -1,9 +1,10 @@
+{{- if .Values.elasticsearch.enabled }}
 apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
 metadata:
-  name: {{ .Values.elastic.name }}
+  name: {{ .Values.elasticsearch.elastic.name }}
 spec:
-  version: {{ .Values.elastic.version }}
+  version: {{ .Values.elasticsearch.elastic.version }}
   secureSettings:
     - secretName: snapshot-secret
   http:
@@ -12,7 +13,7 @@ spec:
         disabled: true
   nodeSets:
   - name: default
-    count: {{ .Values.elastic.replicas }}
+    count: {{ .Values.elasticsearch.elastic.replicas }}
     podTemplate:
       spec:
         containers:
@@ -25,3 +26,4 @@ spec:
               memory: 2Gi
     config:
       node.store.allow_mmap: false
+{{- end }}

@@ -1,4 +1,7 @@
 aws:
-  accessKeyId: AKIAQ2VOGXQDQ3C2FE46
-  accessKey: RtvDAOkNrRmkCONvrvKlwRrbYyis+2vD5LBx/TTV
+  accessKeyId: AKIAQ2VOGXQDYTV2PWOT
+  accessKey: 0txHwdC8OGC44wDvkdisqxQudlchMtE/GydJXdDw
 namespace: default
+
+elasticsearch:
+  enabled: false
