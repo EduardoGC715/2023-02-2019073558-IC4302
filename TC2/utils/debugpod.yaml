@@ -1,0 +1,25 @@
+# docker image pull public.ecr.aws/aws-cli/aws-cli
+# kubectl exec --stdin --tty debug-pod -- /bin/bash
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-pod
+  labels:
+    app: debug-pod
+spec:
+  volumes:
+  - name: aws-credential
+    secret: 
+      secretName: aws-credential
+  containers:
+  - image: public.ecr.aws/aws-cli/aws-cli
+    command:
+      - "tail"
+      - "-f"
+      - "/dev/null"
+    imagePullPolicy: IfNotPresent
+    name: debug-pod
+    volumeMounts:
+    - name: aws-credential
+      mountPath: /root/.aws
+  restartPolicy: Always

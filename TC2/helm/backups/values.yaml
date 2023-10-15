@@ -1,0 +1,15 @@
+mongo:
+  enabled: true
+  config:
+    namespace: default
+    connectionString: databases-mongodb.default.svc.cluster.local:27017
+    bucketName: tec-ic4302-02-2023
+    path: 200420157/mongodb
+    maxBackups: 3
+    secret: databases-mongodb
+    name: mongo 
+    schedule: "0 */12 * * *"
+    diskSize: 2
+    storageClass: hostpath
+    provider: aws
+    type: backup
