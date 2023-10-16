@@ -1,4 +1,5 @@
 # docker image pull public.ecr.aws/aws-cli/aws-cli
+# kubectl apply -f debugpod.yaml
 # kubectl exec --stdin --tty debug-pod -- /bin/bash
 apiVersion: v1
 kind: Pod
