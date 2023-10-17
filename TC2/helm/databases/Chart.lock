@@ -2,8 +2,11 @@ dependencies:
 - name: mongodb
   repository: https://charts.bitnami.com/bitnami
   version: 13.6.7
+- name: mariadb
+  repository: https://charts.bitnami.com/bitnami
+  version: 11.4.6
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami
   version: 12.10.0
-digest: sha256:5abd6d95a42dffa14ff8c8dde6e2ee17dfbec3baef5bd8073341082a59973c62
-generated: "2023-10-15T15:04:29.0861944-06:00"
+digest: sha256:df176e43f34bc7cf48574226cf1913fa8d53e2e95619abf7c23ac8588eea0708
+generated: "2023-10-17T13:45:30.3560123-06:00"

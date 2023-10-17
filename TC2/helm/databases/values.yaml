@@ -1,5 +1,16 @@
 mongodb:
   enabled: false
+  resources: 
+    limits: 
+      cpu: "0.6"
+      memory: "2Gi"
+mariadb:
+  enabled: true
+  primary:
+    resources:
+      limits:
+        cpu: "1"
+        memory: "4Gi"
 elasticsearch:
   enabled: false
   elastic:
@@ -11,7 +22,7 @@ elasticsearch:
     replicas: 1
     name: ic4302
 postgresql:
-  enabled: true
+  enabled: false
   image:
     tag: 14.9.0
   primary:
