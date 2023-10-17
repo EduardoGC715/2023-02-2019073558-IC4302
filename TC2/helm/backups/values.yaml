@@ -25,9 +25,9 @@ postgresql:
     bucketName: tec-ic4302-02-2023
     path: 2019073558/postgresql
     maxBackups: 3
-    name: postgresql 
+    name: Pokemon-202310160400.sql 
     schedule: "0 */12 * * *"
     diskSize: 2
     storageClass: hostpath
     provider: aws
-    type: backup
+    type: restore
