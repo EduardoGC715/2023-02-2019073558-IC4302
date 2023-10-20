@@ -14,7 +14,7 @@ mongo:
     provider: aws
     type: backup
 postgresql:
-  enabled: true
+  enabled: false
   config:
     namespace: default
     host: databases-postgresql.default.svc.cluster.local

@@ -34,3 +34,5 @@ dependencies:
     version: "12.10.0"
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
+
+    
