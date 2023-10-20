@@ -5,7 +5,7 @@ Granados Retana, Diego - 2022158363
 Granados Retana, Daniel - 2022104692
 Mora Montes, Diego - 2022104866
 Gutierrez Conejo, Eduardo - 2019073558
-José Ricardo Cardona Quesada - 2021022613
+Cardona Quesada, Jose Ricardo - 2021022613
 
 
 
@@ -154,17 +154,40 @@ Cabe aclarar que el repo será adonde guardemos los backups, pero aún no se ha 
 
 Primero, para ingresar los datos a la base es necesario volver al menú principal de la interfaz de Kibana, una vez aqui buscamos la siguiente sección:
 
+![Alt text](imgs/BackupElastic/Devtools.png)
+
+Ingresamos a Dev Tools, y se presentará la siguiente interfaz:
+![Alt text](imgs/BackupElastic/devInterface.png)
+
+Aqui escribimos los siguientes comandos:
+`PUT /indice-backup`
+
+`POST /indice-backup/_doc`
+`{`
+  `"titulo": "Prueba Backups",`
+  `"contenido": "Este documento es una prueba de backups",`
+  `"integrantes": ["Granados Retana Diego", "Granados Retana Daniel","Mora Montes ``Diego","Gutierrez Conejo Eduardo","Cardona Quesada Jose Ricardo"]`
+`}`
+
+`GET /indice-backup/_search`
+`{`
+`  "query": {`
+`    "match": {`
+`      "titulo": "Prueba Backups" `
+`    }`
+`  }`
+`}`
+
+![Alt text](imgs/BackupElastic/insertData.png)
+
+Una vez hecho esto se insertaron datos y un índice para el cuál podemos hacer backups
 
 
+---
 
+#### Snapshots
 
-
-
-
-
-
-
-
+Para guardar snapshots de nuestra base completa o un índice en ella hay dos maneras, se puede hacer manualmente a través de comandos o automáticamente definiendo una política de guardado.
 
 
 
