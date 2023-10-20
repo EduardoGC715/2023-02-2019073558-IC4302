@@ -1,5 +1,17 @@
 mongodb:
   enabled: false
+  auth:
+    usernames: ["admin"]
+    passwords: ["admin"]
+    databases: ["Pokemon"]
+  global:
+    namespaceOverride: mongodb
+  architecture: replicaset
+  replicaCount: 1
+  resources: 
+    limits: 
+      cpu: "0.6"
+      memory: "2Gi"
 
 elasticsearch:
   enabled: true
@@ -25,3 +37,18 @@ postgresql:
     database: "Pokemon"
     username: "admin"
     password: "admin"
+
+mariadb:
+  enabled: false
+  auth:
+    rootPassword: "1234"
+  resources:
+    limits:
+      cpu: "0.5"
+      memory: "2Gi"
+
+neo4j:
+  enabled: false
+
+couchdb:
+  enabled: false
