@@ -1,7 +1,20 @@
 mongodb:
   enabled: false
+  auth:
+    usernames: ["admin"]
+    passwords: ["admin"]
+    databases: ["Pokemon"]
+  global:
+    namespaceOverride: mongodb
+  architecture: replicaset
+  replicaCount: 1
+  resources: 
+    limits: 
+      cpu: "0.6"
+      memory: "2Gi"
+
 elasticsearch:
-  enabled: false
+  enabled: true
   elastic:
     version: 8.6.1
     replicas: 1
@@ -10,16 +23,9 @@ elasticsearch:
     version: 8.6.1
     replicas: 1
     name: ic4302
-elastic:
-  version: 8.6.1
-  replicas: 1
-  name: ic4302
-kibana:
-  version: 8.6.1
-  replicas: 1
-  name: ic4302
+  
 postgresql:
-  enabled: true
+  enabled: false
   image:
     tag: 14.9.0
   primary:
@@ -31,3 +37,18 @@ postgresql:
     database: "Pokemon"
     username: "admin"
     password: "admin"
+
+mariadb:
+  enabled: false
+  auth:
+    rootPassword: "1234"
+  resources:
+    limits:
+      cpu: "0.5"
+      memory: "2Gi"
+
+neo4j:
+  enabled: false
+
+couchdb:
+  enabled: false
