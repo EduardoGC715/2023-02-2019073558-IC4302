@@ -36,4 +36,38 @@ Enabled hace referencia a si se quiere inicializar o no ese motor de base de dat
 
 En caso de querer correr ese motor cambiar `Enabled: True` por la versión actual, y al resto de motores ingresar `Enabled: False` para apagarlos
 
-Una vez hecho esto se debe ingresar a la carpeta
+Una vez hecho esto se debe ingresar a  `TC2\helm\backups\values.yaml`, y hacer lo mismo con las bases de datos que aparecen. 
+
+IMPORTANTE: En caso de querer ejecutar backups a través de elastic **NO es necesario** ingresar a `TC2\helm\backups\values.yaml` a habilitar la base también
+
+
+# Aqui nose si falta algo para habilitar si se quieren backups o restores.
+
+
+Finalmente, antes de ejecutar el código 
+
+
+#### Paso 2. Ejecución del Código
+
+Una vez se haya escogido la base, el siguiente paso es ejecutar los comandos para levantarla con sus respectivos parámetros, para esto ingresamos a cualquier terminal desde la cuál se puedan ejecutar comandos Linux. Una vez aqui abriremos la carpeta desde la terminal:
+
+![Alt text](imgs/image.png)
+
+Una vez en la carpeta donde hayamos descargado el proyecto se insertarán los siguientes comandos:
+
+`cd TC2`
+`cd helm`
+
+Una vez aqui la terminal se encuentra en la carpeta donde se pueden ejecutar los archivos para la instalacion y desinstalación de las bases de datos.
+
+##### Para Instalar la base deseada con los parámetros específicados
+
+En la terminal primero se recomienda ejecutar:
+
+`dos2unix install.sh`
+
+Seguido de esto ejecutamos el comando: `./install.sh`
+
+Una vez hecho esto la terminal comenzará a instalar todos los deployments necesarios para la ejecucuón correcta del programa:
+
+![Alt text](imgs/install.png)
