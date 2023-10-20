@@ -1,5 +1,5 @@
 mongodb:
-  enabled: true
+  enabled: false
   auth:
     usernames: ["admin"]
     passwords: ["admin"]
@@ -25,7 +25,7 @@ elasticsearch:
     name: ic4302
   
 postgresql:
-  enabled: true
+  enabled: false
   image:
     tag: 14.9.0
   primary:
@@ -39,7 +39,7 @@ postgresql:
     password: "admin"
 
 mariadb:
-  enabled: true
+  enabled: false
   auth:
     rootPassword: "1234"
   resources:
@@ -48,7 +48,7 @@ mariadb:
       memory: "2Gi"
 
 neo4j:
-  enabled: true
+  enabled: false
 
 couchdb:
-  enabled: true
+  enabled: false
