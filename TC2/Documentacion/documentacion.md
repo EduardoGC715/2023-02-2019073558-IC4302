@@ -97,8 +97,32 @@ Este código va a instalar un pod en la red de kubernetes donde se pueden ejecut
 
 ![Alt text](imgs/BackupElastic/debugpod.png)
 
-Aqui se pueden ingresar comand
+Aqui se pueden ingresar comandos para ver las distintas direcciones donde estan almacenados los backups, normalmente estas direcciones siguen el patrón:
 
+2019073558 / [nombre base]
+
+EJ:
+
+2019073558/elastic
+
+2019073558/postgresql
+
+El comando para ver los archivos en esa dirección es:
+
+aws s3 ls s3://tec-ic4302-02-2023/2019073558/[nombre Base]/
+
+EJ:
+
+aws s3 ls s3://tec-ic4302-02-2023/2019073558/postgresql/
+
+aws s3 ls s3://tec-ic4302-02-2023/2019073558/elastic/
+
+Al ejecutar estos comandos se puede ver lo siguiente:
+
+![Alt text](imgs/BackupElastic/consultasAWS.png)
+
+
+Claramente se despliegan los distintos backups que han sido creados hasta el momento para las respectivas bases.
 
 #### Elastic Search con Kibana
 
@@ -183,25 +207,25 @@ Ingresamos a Dev Tools, y se presentará la siguiente interfaz:
 Aqui escribimos los siguientes comandos:
 
 ---
-PUT /indice-backup
+**PUT /indice-backup**
 
 ---
-POST /indice-backup/_doc
+**POST /indice-backup/_doc
 {
   "titulo": "Prueba Backups",
   "contenido": "Este documento es una prueba de backups",
   "integrantes": ["Granados Retana Diego", "Granados Retana Daniel","Mora Montes Diego","Gutierrez Conejo Eduardo","Cardona Quesada Jose Ricardo"]
-}
+}**
 
 ---
-GET /indice-backup/_search 
+**GET /indice-backup/_search 
 {
   "query": {
     "match": {
       "titulo": "Prueba Backups" 
     }
   }
-}
+}**
 
 ![Alt text](imgs/BackupElastic/insertData.png)
 
@@ -239,11 +263,17 @@ La primera opción es ingresar a la sección de Stack Management y Snapshot-Rest
 
 ![Alt text](imgs/BackupElastic/EjemploSnapshot.png)
 
-Si se logro crear correctamente el snapshot, va a aparecer en esta sección. La segunda opción es a través de 
+Si se logro crear correctamente el snapshot, va a aparecer en esta sección. La segunda opción es a través de el debug-pod, como se menciona en la sección IMPORTANTE, previo a esta. Al utilizar el debug pod se puede observar el índice recién almacenado
+
+![Alt text](imgs/BackupElastic/consultasAWS2.png)
 
 
+#### Automático
+El segundo método para hacer backups, es estableciendolos automáticamente a través de un policy, usando uno de estos, se pueden establecer la creación de backups cada cierto tiempo automáticamente, junto con un tiempo para el cúal cuando se pase sean eliminados automáticamente también.
 
-![Alt text](imgs/BackupElastic/ResultadoPolicy.png)
+Para esto en la misma sección de Snapshots and Restore dentro de la plataforma de Kibana se abren l
+
+![Alt text](imgs/BackupElastic/restorePolicy.png)
 
 Paso 1 create policy
 
@@ -260,6 +290,8 @@ Una vez creado el policy
 
 
 Despues de crear el policy y repositorio si se crea un backup saldra lo siguiente
+
+![Alt text](imgs/BackupElastic/ResultadoPolicy.png)
 
 ![Alt text](imgs/BackupElastic/ExisteSnapshot.png)
 
