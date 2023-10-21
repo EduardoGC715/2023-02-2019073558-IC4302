@@ -14,7 +14,7 @@ mongo:
     provider: aws
     type: restore
 maria:
-  enabled: true
+  enabled: false
   config:
     namespace: default
     connectionString: databases-mariadb
@@ -29,7 +29,7 @@ maria:
     provider: aws
     type: restore
 postgresql:
-  enabled: false
+  enabled: true
   config:
     namespace: default
     host: databases-postgresql.default.svc.cluster.local
@@ -40,7 +40,7 @@ postgresql:
     bucketName: tec-ic4302-02-2023
     path: 2019073558/postgresql
     maxBackups: 3
-    name: Pokemon-202310211634.sql
+    name: Pokemon-202310212135.sql
     schedule: "0 */12 * * *"
     diskSize: 2
     storageClass: hostpath
