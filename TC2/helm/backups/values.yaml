@@ -7,12 +7,27 @@ mongo:
     path: 2019073558/mongodb
     maxBackups: 3
     secret: databases-mongodb
-    name: mongo 
+    name:  "202310202250"
     schedule: "0 */12 * * *"
-    diskSize: 2
+    diskSize: 1
     storageClass: hostpath
     provider: aws
-    type: backup
+    type: restore
+maria:
+  enabled: true
+  config:
+    namespace: default
+    connectionString: databases-mariadb
+    bucketName: tec-ic4302-02-2023
+    path: 2019073558/mariadb
+    maxBackups: 3
+    secret: databases-mariadb
+    name:  pokemon_db-202310210452.sql
+    schedule: "0 */12 * * *"
+    diskSize: 1
+    storageClass: hostpath
+    provider: aws
+    type: restore
 postgresql:
   enabled: false
   config:
@@ -25,9 +40,9 @@ postgresql:
     bucketName: tec-ic4302-02-2023
     path: 2019073558/postgresql
     maxBackups: 3
-    name: postgresql 
+    name: Pokemon-202310181455.sql 
     schedule: "0 */12 * * *"
     diskSize: 2
     storageClass: hostpath
     provider: aws
-    type: backup
+    type: restore

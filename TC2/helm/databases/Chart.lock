@@ -2,17 +2,11 @@ dependencies:
 - name: mongodb
   repository: https://charts.bitnami.com/bitnami
   version: 13.6.7
+- name: mariadb
+  repository: https://charts.bitnami.com/bitnami
+  version: 11.4.6
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami
   version: 12.10.0
-- name: mariadb
-  repository: https://charts.bitnami.com/bitnami
-  version: 11.1.2
-- name: neo4j
-  repository: https://helm.neo4j.com/neo4j
-  version: 5.7.0
-- name: couchdb
-  repository: https://apache.github.io/couchdb-helm
-  version: 4.4.0
-digest: sha256:eb31df904a98f3d004a7758a616028652cc60cc08da6cc128f5aa95421949ba6
-generated: "2023-10-20T11:27:02.356186948-06:00"
+digest: sha256:df176e43f34bc7cf48574226cf1913fa8d53e2e95619abf7c23ac8588eea0708
+generated: "2023-10-17T13:45:30.3560123-06:00"

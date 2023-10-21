@@ -1,0 +1,22 @@
+### ACCESS ###
+mysql -u root -p
+
+### SCRIPTS ###
+
+## CREATE ##
+CREATE DATABASE IF NOT EXISTS pokemon_db;
+USE pokemon_db;
+CREATE TABLE IF NOT EXISTS pokemon_data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    type VARCHAR(20) NOT NULL,
+    level INT NOT NULL
+);
+INSERT INTO pokemon_data (name, type, level)
+VALUES ('Pikachu', 'Electric', 25);
+
+## SEARCH ##
+SELECT * FROM pokemon_data;
+
+## DELETE ##
+DELETE FROM pokemon_data;
