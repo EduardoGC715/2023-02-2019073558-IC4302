@@ -1,7 +1,9 @@
 mongodb:
   enabled: false
+mariadb:
+  enabled: true
 elasticsearch:
-  enabled: false
+  enabled: true
   elastic:
     version: 8.6.1
     replicas: 1
@@ -10,14 +12,6 @@ elasticsearch:
     version: 8.6.1
     replicas: 1
     name: ic4302
-elastic:
-  version: 8.6.1
-  replicas: 1
-  name: ic4302
-kibana:
-  version: 8.6.1
-  replicas: 1
-  name: ic4302
 postgresql:
   enabled: false
   image:
@@ -52,3 +46,7 @@ neo4j:
       defaultStorageClass:
         requests:
           storage: 2Gi
+neo4j:
+  enabled: false
+couchdb:
+  enabled: false
