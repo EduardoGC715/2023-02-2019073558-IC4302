@@ -1,3 +1,218 @@
+{{- if .Values.maria.enabled }}
+{{- if eq .Values.maria.config.type "backup" }}
+apiVersion: v1 
+kind: ConfigMap
+metadata:
+  name: maria-backups-script
+  namespace: {{ .Values.namespace }}
+data:
+{{ (.Files.Glob "scripts/mariadbBackup.sh").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: maria-snapshotter
+  namespace: {{ .Values.maria.config.namespace }}
+spec:
+  storageClassName: {{ .Values.maria.config.storageClass }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.maria.config.diskSize }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: "maria-backup"
+  namespace: {{ .Values.maria.config.namespace }}
+spec:
+  schedule: {{ .Values.maria.config.schedule }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          terminationGracePeriodSeconds: 0
+          restartPolicy: Never
+          volumes:
+          - name: scripts
+            configMap:
+              name: maria-backups-script
+              defaultMode: 0700
+          - name: maria-snapshotter
+            persistentVolumeClaim:
+              claimName: maria-snapshotter
+          - name: aws-credential
+            secret: 
+              secretName: aws-credential
+          containers:
+            - image: public.ecr.aws/aws-cli/aws-cli
+              name: maria-snapshotter
+              env:
+                - name: MARIA_CONNECTION_STRING
+                  value: "{{ .Values.maria.config.connectionString }}"
+                - name: BUCKET_NAME
+                  value: "{{ .Values.maria.config.bucketName }}"
+                - name: BACKUP_PATH
+                  value: "{{ .Values.maria.config.path }}"
+                - name: MAX_BACKUPS
+                  value: "{{ .Values.maria.config.maxBackups }}"
+                - name: MARIA_USERNAME
+                  value: "root"
+                - name: MARIA_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: "{{ .Values.maria.config.secret }}"
+                      key: mariadb-root-password #TODO
+                      optional: false
+              volumeMounts:
+                - mountPath: "/mariadump"
+                  name: maria-snapshotter
+                - name: scripts
+                  mountPath: /scripts
+                - name: aws-credential
+                  mountPath: /root/.aws
+              command:
+                - "/scripts/mariadbBackup.sh"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: maria-backup-0
+  namespace: {{ .Values.maria.config.namespace }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.maria.config.serviceAccount }}
+      volumes:
+      - name: scripts
+        configMap:
+          name: maria-backups-script
+          defaultMode: 0777
+      - name: maria-snapshotter
+        persistentVolumeClaim:
+          claimName: maria-snapshotter
+      - name: aws-credential
+        secret: 
+          secretName: aws-credential
+      containers:
+        - image: public.ecr.aws/aws-cli/aws-cli
+          name: maria-snapshotter
+          env:
+            - name: MARIA_CONNECTION_STRING
+              value: "{{ .Values.maria.config.connectionString }}"
+            - name: BUCKET_NAME
+              value: "{{ .Values.maria.config.bucketName }}"
+            - name: BACKUP_PATH
+              value: "{{ .Values.maria.config.path }}"
+            - name: MAX_BACKUPS
+              value: "{{ .Values.maria.config.maxBackups }}"
+            - name: MARIA_USERNAME
+              value: "root"
+            - name: MARIA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.maria.config.secret }}"
+                  key: mariadb-root-password
+                  optional: false
+          volumeMounts:
+            - mountPath: "/mariadump"
+              name: maria-snapshotter
+            - name: scripts
+              mountPath: /scripts
+            - name: aws-credential
+              mountPath: /root/.aws
+          command:
+            - "/scripts/mariadbBackup.sh"
+            # - "tail"
+            # - "-f"
+            # - "/dev/null"
+      restartPolicy: Never
+  backoffLimit: 1
+{{- end }}
+{{- if eq .Values.maria.config.type "restore" }}
+apiVersion: v1 
+kind: ConfigMap
+metadata:
+  name: maria-restore-script
+  namespace: {{ .Values.namespace }}
+data:
+{{ (.Files.Glob "scripts/mariadbRestore.sh").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: maria-snapshotter
+  namespace: {{ .Values.maria.config.namespace }}
+spec:
+  storageClassName: {{ .Values.maria.config.storageClass }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.maria.config.diskSize }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: maria-restore-0
+  namespace: {{ .Values.maria.config.namespace }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.maria.config.serviceAccount }}
+      volumes:
+      - name: scripts
+        configMap:
+          name: maria-restore-script
+          defaultMode: 0777
+      - name: maria-snapshotter
+        persistentVolumeClaim:
+          claimName: maria-snapshotter
+      - name: aws-credential
+        secret: 
+          secretName: aws-credential
+      containers:
+        - image: public.ecr.aws/aws-cli/aws-cli
+          name: maria-snapshotter
+          env:
+            - name: MARIA_CONNECTION_STRING
+              value: "{{ .Values.maria.config.connectionString }}"
+            - name: BUCKET_NAME
+              value: "{{ .Values.maria.config.bucketName }}"
+            - name: BACKUP_PATH
+              value: "{{ .Values.maria.config.path }}"
+            - name: MAX_BACKUPS
+              value: "{{ .Values.maria.config.maxBackups }}"
+            - name: MARIA_USERNAME
+              value: "root"
+            - name: RESTORE_FILE
+              value: "{{ .Values.maria.config.name }}"
+            - name: MARIA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.maria.config.secret }}"
+                  key: mariadb-root-password
+                  optional: false
+          volumeMounts:
+            - mountPath: "/mariadump"
+              name: maria-snapshotter
+            - name: scripts
+              mountPath: /scripts
+            - name: aws-credential
+              mountPath: /root/.aws
+          command:
+            - "/scripts/mariadbRestore.sh"
+            # - "tail"
+            # - "-f"
+            # - "/dev/null"
+      restartPolicy: Never
+  backoffLimit: 1
+{{- end }}
+{{- end }}
 #########################################################MONGODB######################################################
 {{- if .Values.mongo.enabled }}
 {{- if eq .Values.mongo.config.type "backup" }}

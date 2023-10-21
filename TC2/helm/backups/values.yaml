@@ -1,5 +1,5 @@
 mongo:
-  enabled: true
+  enabled: false
   config:
     namespace: default
     connectionString: databases-mongodb.default.svc.cluster.local:27017
@@ -8,6 +8,21 @@ mongo:
     maxBackups: 3
     secret: databases-mongodb
     name:  "202310202250"
+    schedule: "0 */12 * * *"
+    diskSize: 1
+    storageClass: hostpath
+    provider: aws
+    type: restore
+maria:
+  enabled: true
+  config:
+    namespace: default
+    connectionString: databases-mariadb
+    bucketName: tec-ic4302-02-2023
+    path: 2019073558/mariadb
+    maxBackups: 3
+    secret: databases-mariadb
+    name:  pokemon_db-202310210452.sql
     schedule: "0 */12 * * *"
     diskSize: 1
     storageClass: hostpath
