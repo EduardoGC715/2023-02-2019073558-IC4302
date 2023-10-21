@@ -79,7 +79,28 @@ Este código habilita la base deseada para las pruebas que se quieran ejecutar c
 
 ### Ejecución de Bases y pruebas
 
-#### Elastic
+#### IMPORTANTE
+
+Para poder verificar si los archivos correspondientes a una de las bases se encuentran en el bucket, se puede hacer lo siguiente:
+
+En la terminal, con el proyecto abierto, nos aseguramos de volver a la carpeta TC2 y en caso de estar adentro de Helm, hay que regresar. Para esto, se ejecuta el comando `cd ..` hasta regresar a la dirección del TC2.
+
+Una vez en esta dirección,se ejecutan los comandos:
+
+`cd utils`
+
+`dos2unix install.sh`
+
+`./install.sh`
+
+Este código va a instalar un pod en la red de kubernetes donde se pueden ejecutar comandos para verificar si el bucket tiene archivos en la dirección que se quiere revisar. Al finalizar se podrá ver lo siguiente:
+
+![Alt text](imgs/BackupElastic/debugpod.png)
+
+Aqui se pueden ingresar comand
+
+
+#### Elastic Search con Kibana
 
 A continuación se muestra una guía para hacer backups y restores en la base elasticsearch a través de su interfaz kibana. Para este paso se asume que ya se habilito la base y se ejecuto el script de instalación desde la terminal.
 
@@ -160,23 +181,27 @@ Ingresamos a Dev Tools, y se presentará la siguiente interfaz:
 ![Alt text](imgs/BackupElastic/devInterface.png)
 
 Aqui escribimos los siguientes comandos:
-`PUT /indice-backup`
 
-`POST /indice-backup/_doc`
-`{`
-  `"titulo": "Prueba Backups",`
-  `"contenido": "Este documento es una prueba de backups",`
-  `"integrantes": ["Granados Retana Diego", "Granados Retana Daniel","Mora Montes ``Diego","Gutierrez Conejo Eduardo","Cardona Quesada Jose Ricardo"]`
-`}`
+---
+PUT /indice-backup
 
-`GET /indice-backup/_search`
-`{`
-`  "query": {`
-`    "match": {`
-`      "titulo": "Prueba Backups" `
-`    }`
-`  }`
-`}`
+---
+POST /indice-backup/_doc
+{
+  "titulo": "Prueba Backups",
+  "contenido": "Este documento es una prueba de backups",
+  "integrantes": ["Granados Retana Diego", "Granados Retana Daniel","Mora Montes Diego","Gutierrez Conejo Eduardo","Cardona Quesada Jose Ricardo"]
+}
+
+---
+GET /indice-backup/_search 
+{
+  "query": {
+    "match": {
+      "titulo": "Prueba Backups" 
+    }
+  }
+}
 
 ![Alt text](imgs/BackupElastic/insertData.png)
 
@@ -188,6 +213,33 @@ Una vez hecho esto se insertaron datos y un índice para el cuál podemos hacer 
 #### Snapshots
 
 Para guardar snapshots de nuestra base completa o un índice en ella hay dos maneras, se puede hacer manualmente a través de comandos o automáticamente definiendo una política de guardado.
+
+##### Método Manual
+Para hacer un backup manualmente, desde la misma interfaz de Dev Tools se puede ingresar un comando como este:
+
+**PUT /_snapshot/ [NOMBRE_REPOSITORIO] / [NOMBRE_SNAPSHOT]
+{
+  "indices": "[NOMBRE INDICE]",
+  "ignore_unavailable": true,
+  "include_global_state": false 
+}**
+
+Donde se reemplaza la dirección con el nombre del indice al que queremos tomar un snapshot. En este caso para el ejemplo se usara el siguiente:
+
+**PUT /_snapshot/BackupsElastic/indice-backup_20231020
+{
+  "indices": "indice-backup",  
+  "ignore_unavailable": true,
+  "include_global_state": false 
+}**
+
+Para revisar que este snapshot se encuentra disponible en el repositorio y en AWS se puede revisar de dos maneras:
+
+La primera opción es ingresar a la sección de Stack Management y Snapshot-Restore dentro de la interfaz de Kibana. Una vez aqui se verá lo siguiente:
+
+![Alt text](imgs/BackupElastic/EjemploSnapshot.png)
+
+Si se logro crear correctamente el snapshot, va a aparecer en esta sección. La segunda opción es a través de 
 
 
 
