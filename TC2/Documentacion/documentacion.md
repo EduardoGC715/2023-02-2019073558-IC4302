@@ -97,8 +97,32 @@ Este código va a instalar un pod en la red de kubernetes donde se pueden ejecut
 
 ![Alt text](imgs/BackupElastic/debugpod.png)
 
-Aqui se pueden ingresar comand
+Aqui se pueden ingresar comandos para ver las distintas direcciones donde estan almacenados los backups, normalmente estas direcciones siguen el patrón:
 
+2019073558 / [nombre base]
+
+EJ:
+
+2019073558/elastic
+
+2019073558/postgresql
+
+El comando para ver los archivos en esa dirección es:
+
+aws s3 ls s3://tec-ic4302-02-2023/2019073558/[nombre Base]/
+
+EJ:
+
+aws s3 ls s3://tec-ic4302-02-2023/2019073558/postgresql/
+
+aws s3 ls s3://tec-ic4302-02-2023/2019073558/elastic/
+
+Al ejecutar estos comandos se puede ver lo siguiente:
+
+![Alt text](imgs/BackupElastic/consultasAWS.png)
+
+
+Claramente se despliegan los distintos backups que han sido creados hasta el momento para las respectivas bases.
 
 #### Elastic Search con Kibana
 
@@ -183,25 +207,25 @@ Ingresamos a Dev Tools, y se presentará la siguiente interfaz:
 Aqui escribimos los siguientes comandos:
 
 ---
-PUT /indice-backup
+**PUT /indice-backup**
 
 ---
-POST /indice-backup/_doc
+**POST /indice-backup/_doc
 {
   "titulo": "Prueba Backups",
   "contenido": "Este documento es una prueba de backups",
   "integrantes": ["Granados Retana Diego", "Granados Retana Daniel","Mora Montes Diego","Gutierrez Conejo Eduardo","Cardona Quesada Jose Ricardo"]
-}
+}**
 
 ---
-GET /indice-backup/_search 
+**GET /indice-backup/_search 
 {
   "query": {
     "match": {
       "titulo": "Prueba Backups" 
     }
   }
-}
+}**
 
 ![Alt text](imgs/BackupElastic/insertData.png)
 
@@ -239,35 +263,121 @@ La primera opción es ingresar a la sección de Stack Management y Snapshot-Rest
 
 ![Alt text](imgs/BackupElastic/EjemploSnapshot.png)
 
-Si se logro crear correctamente el snapshot, va a aparecer en esta sección. La segunda opción es a través de 
+Si se logro crear correctamente el snapshot, va a aparecer en esta sección. La segunda opción es a través de el debug-pod, como se menciona en la sección IMPORTANTE, previo a esta. Al utilizar el debug pod se puede observar el índice recién almacenado
+
+![Alt text](imgs/BackupElastic/consultasAWS2.png)
 
 
+#### Automático
+El segundo método para hacer backups, es estableciendolos automáticamente a través de un policy, usando uno de estos, se pueden establecer la creación de backups cada cierto tiempo automáticamente, junto con un tiempo para el cúal cuando se pase sean eliminados automáticamente también.
 
-![Alt text](imgs/BackupElastic/ResultadoPolicy.png)
+Para esto en la misma sección de Snapshots and Restore dentro de la Interfaz de Kibana se accede a la sección de Snapshot and Restore y una vez ahi se entra a Policies/Create a Policy:
 
-Paso 1 create policy
+![Alt text](imgs/BackupElastic/restorePolicy.png)
+
+Si se ingresa a esta Interfaz se le presenta al usuario con lo siguiente:
+
 
 ![Alt text](imgs/BackupElastic/creacionPolicy.png)
 
+Aqui se solicitan los siguientes datos del usuario:
+
+* **Policy Name:** Aqui se le pone un nombre a la política, este valor es a gusto del usuario
+* **Snapshot Name:** En esta sección se le debe de poner un nombre a los snapshots que se van a almacenar, la plataforma automáticamente les agrega un identificador único al final
+* **Repository:** Aqui se debe poner el nombre del repositorio previamente creado, si no se ingresa un repositorio válido no se creará la política
+* **Schedule:** En esta parte se debe definir cada cuanto tiempo se quieren hacer backups de la plataforma, se puede definir si se quiere cada ciertas horas, dias, mes, etc.
+
+Una vez se han ingresado los datos, se pasa a la siguiente página:
+
 ![Alt text](imgs/BackupElastic/dejarigual.png)
+
+En esta sección no es necesario cambiar nada, es cuestión de dejarlo con sus configuraciones por default, esto va a guardar todos los indices de la base automáticamente, sin embargo, si se quiere guardar solo un índice
+
+![Alt text](imgs/BackupElastic/backupsUnsoloIndex.png)
+
+Se puede apagar esta configuración, aqui se pueden seleccionar los indices que si se quieran guardar, si tienen un check a la izquierda van a ser parte del snapshot, sino no se incluyen.
+
+Se pasa a la siguiente página:
 
 ![Alt text](imgs/BackupElastic/eliminardespuesCiertoTIempo.png)
 
+Esta es la sección final para crear un policy, aquí se puede definir **Si se quieren borrar los backups después de cierto tiempo, y si se quieren definir un mínimo a mantener**. A través de esta sección se puede configurar los puntos extra de la tarea, indicando la cantidad de días tras los que se quiere borrar los backups.
 
-Una vez creado el policy
+Finalmente, le damos next y se va a crear el policy en esta sección:
 
 ![Alt text](imgs/BackupElastic/CreatePolicy.png)
 
+Confirmamos que los datos están correctos y se le da crear,como resultado, si se hizo bien debe de aparecer lo siguiente:
 
-Despues de crear el policy y repositorio si se crea un backup saldra lo siguiente
+![Alt text](imgs/BackupElastic/ResultadoPolicy.png)
+
+En este ejemplo solo se esta haciendo backup del index llamado: `indice-backup`
+
+Despues de crear el policy y repositorio se van a crear backups automáticamente cada cierto tiempo dependiendo de lo definido al crear el policy.
 
 ![Alt text](imgs/BackupElastic/ExisteSnapshot.png)
-
-Al revisar el repo tambien se podra observar que hay un snapshot disponible
-
-![Alt text](imgs/BackupElastic/HayunSnapshot.png)
-
 
 Verificar si se subieron al AWS Bucket los backups
 ![Alt text](imgs/BackupElastic/Ev1Bups.png)
 
+#### Restore
+
+Para probar la restauración de datos usando Kibana, se deben haber hecho los pasos anteriores y al menos se debe tener:
+
+* Un indice con datos
+* Un Snapshot del Indice
+
+Una vez se tienen esto, la forma más sencilla de probar es desde la sección DEV TOOLS de la interfaz de kibana, borrar el indice y tratar de restaurar sus datos usando el snapshot.
+
+Si hacemos un GET del indice queda claro que si existe y sus datos son los siguientes:
+
+![Alt text](imgs/BackupElastic/getindexP.png)
+
+Ahora se procede a verificar que si existe un snapshot con ese index:
+
+![Alt text](imgs/BackupElastic/RevisarSiexisteBackup.png)
+
+Para esto se uso el comando: **`GET /_snapshot/BackupsElastic/_all`**
+
+Una vez verificados ambos, se va a borrar el índice de la base de datos elasticSearch:
+![Alt text](imgs/BackupElastic/deleteIndex.png)
+
+Se utiliza el comando: **`DELETE /indice-backup`**
+
+Revisando si todavía existen los datos usando GET, se obtiene:
+
+![Alt text](imgs/BackupElastic/GetDEL.png)
+
+##### Restauración
+
+Una vez eliminado, hay dos maneras de restaurar el índice dentro de Kibana:
+
+###### Comandos
+La primera opción para restaurar el índice o la base es utilizando comandos y el nombre del snapshot que se quiere restaurar, el comando sería similar a esto:
+
+
+
+**POST /_snapshot/[Nombre Repo]/[Nombre Snapshot]/_restore
+{
+  "indices": "[Indice a restaurar]",
+  "include_global_state": false
+}**
+
+En el caso de nuestro ejemplo se ejecuta el siguiente comando:
+
+**POST /_snapshot/BackupsElastic/indice-backup_20231020/_restore
+{
+  "indices": "indice-backup",
+  "include_global_state": false
+}**
+
+![Alt text](imgs/BackupElastic/restore1.png)
+
+Ahora si probamos el GET, deberían de volver a aparecer los datos del Index:
+
+![Alt text](imgs/BackupElastic/Restore2.png)
+
+
+###### Usando Interfaz Snapshot and Restore
+
+La segunda opción para restaurar un índice eliminado es a través de la Sección Snapshot and Restore dentro de la Interfaz de Kibana en la sección de Stack Management. Una vez aqui buscamos lo siguiente:
