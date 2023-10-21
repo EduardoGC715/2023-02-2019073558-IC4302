@@ -1,33 +1,20 @@
-mongo:
-  enabled: false
-  config:
-    namespace: default
-    connectionString: databases-mongodb.default.svc.cluster.local:27017
-    bucketName: tec-ic4302-02-2023
-    path: 2019073558/mongodb
-    maxBackups: 3
-    secret: databases-mongodb
-    name: mongo 
-    schedule: "0 */12 * * *"
-    diskSize: 2
-    storageClass: hostpath
-    provider: aws
-    type: backup
-postgresql:
+couchdb:
   enabled: true
   config:
     namespace: default
-    host: databases-postgresql.default.svc.cluster.local
+    host: databases-couchdb-0.default.svc.cluster.local
+    secret: databases-couchdb
     db: "Pokemon"
     user: "admin"
-    password: "admin"
-    port: "5432"
+    port: "5984"
     bucketName: tec-ic4302-02-2023
-    path: 2019073558/postgresql
+    path: 2019073558/couchdb
     maxBackups: 3
-    name: postgresql 
+    name: couchdb 
     schedule: "0 */12 * * *"
     diskSize: 2
     storageClass: hostpath
     provider: aws
     type: backup
+
+    name: Pokemon-202310181455.sql 

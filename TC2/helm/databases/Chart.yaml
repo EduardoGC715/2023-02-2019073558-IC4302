@@ -34,3 +34,9 @@ dependencies:
     version: "12.10.0"
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
+  # CouchDB
+  - name: couchdb
+    version: "4.4.1"
+    repository: https://apache.github.io/couchdb-helm
+    uuid: couchdb.couchdbConfig.couchdb.uuid
+    condition: couchdb.enabled
