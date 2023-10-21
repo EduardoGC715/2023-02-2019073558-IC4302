@@ -1,5 +1,5 @@
 mongo:
-  enabled: false
+  enabled: true
   config:
     namespace: default
     connectionString: databases-mongodb.default.svc.cluster.local:27017
@@ -7,14 +7,14 @@ mongo:
     path: 2019073558/mongodb
     maxBackups: 3
     secret: databases-mongodb
-    name: mongo 
+    name:  "202310202250"
     schedule: "0 */12 * * *"
-    diskSize: 2
+    diskSize: 1
     storageClass: hostpath
     provider: aws
-    type: backup
+    type: restore
 postgresql:
-  enabled: true
+  enabled: false
   config:
     namespace: default
     host: databases-postgresql.default.svc.cluster.local

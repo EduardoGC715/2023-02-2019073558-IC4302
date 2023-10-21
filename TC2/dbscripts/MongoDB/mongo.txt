@@ -1,0 +1,15 @@
+### ACCESS ###
+mongosh --username root -p
+
+### SCRIPTS ###
+
+## CREATE ##
+use pokemon_db
+db.createCollection('pokemon')
+db.pokemon.insertOne({name: 'Pikachu', type: 'Electric', level: 25})
+
+## SEARCH ##
+db.pokemon.find()
+
+## DELETE ##
+db.pokemon.deleteMany({})

@@ -1,12 +1,13 @@
+#########################################################MONGODB######################################################
 {{- if .Values.mongo.enabled }}
-
+{{- if eq .Values.mongo.config.type "backup" }}
 apiVersion: v1 
 kind: ConfigMap
 metadata:
   name: mongo-backups-script
   namespace: {{ .Values.namespace }}
 data:
-{{ (.Files.Glob "scripts/mongodb.sh").AsConfig | indent 2 }}
+{{ (.Files.Glob "scripts/mongodbBackup.sh").AsConfig | indent 2 }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -76,7 +77,7 @@ spec:
                 - name: aws-credential
                   mountPath: /root/.aws
               command:
-                - "/scripts/mongodb.sh"
+                - "/scripts/mongodbBackup.sh"
 ---
 apiVersion: batch/v1
 kind: Job
@@ -126,15 +127,94 @@ spec:
             - name: aws-credential
               mountPath: /root/.aws
           command:
-            - "/scripts/mongodb.sh"
+            - "/scripts/mongodbBackup.sh"
             # - "tail"
             # - "-f"
             # - "/dev/null"
       restartPolicy: Never
   backoffLimit: 1
-
 {{- end }}
-
+{{- if eq .Values.mongo.config.type "restore" }}
+apiVersion: v1 
+kind: ConfigMap
+metadata:
+  name: mongo-restore-script
+  namespace: {{ .Values.namespace }}
+data:
+{{ (.Files.Glob "scripts/mongodbRestore.sh").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-snapshotter
+  namespace: {{ .Values.mongo.config.namespace }}
+spec:
+  storageClassName: {{ .Values.mongo.config.storageClass }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.mongo.config.diskSize }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongo-restore-0
+  namespace: {{ .Values.mongo.config.namespace }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.mongo.config.serviceAccount }}
+      volumes:
+      - name: scripts
+        configMap:
+          name: mongo-restore-script
+          defaultMode: 0777
+      - name: mongo-snapshotter
+        persistentVolumeClaim:
+          claimName: mongo-snapshotter
+      - name: aws-credential
+        secret: 
+          secretName: aws-credential
+      containers:
+        - image: public.ecr.aws/aws-cli/aws-cli
+          name: mongo-snapshotter
+          env:
+            - name: MONGO_CONNECTION_STRING
+              value: "{{ .Values.mongo.config.connectionString }}"
+            - name: BUCKET_NAME
+              value: "{{ .Values.mongo.config.bucketName }}"
+            - name: BACKUP_PATH
+              value: "{{ .Values.mongo.config.path }}"
+            - name: MAX_BACKUPS
+              value: "{{ .Values.mongo.config.maxBackups }}"
+            - name: MONGO_USERNAME
+              value: "root"
+            - name: RESTORE_FILE
+              value: "{{ .Values.mongo.config.name }}"
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.mongo.config.secret }}"
+                  key: mongodb-root-password
+                  optional: false
+          volumeMounts:
+            - mountPath: "/mongodump"
+              name: mongo-snapshotter
+            - name: scripts
+              mountPath: /scripts
+            - name: aws-credential
+              mountPath: /root/.aws
+          command:
+            - "/scripts/mongodbRestore.sh"
+            # - "tail"
+            # - "-f"
+            # - "/dev/null"
+      restartPolicy: Never
+  backoffLimit: 1
+{{- end }}
+{{- end }}
+########################################################POSTGRESQL####################################################
 {{- if .Values.postgresql.enabled }}
 {{- if eq .Values.postgresql.config.type "backup" }}
 apiVersion: v1 

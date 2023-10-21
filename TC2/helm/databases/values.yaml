@@ -1,16 +1,7 @@
 mongodb:
-  enabled: false
-  resources: 
-    limits: 
-      cpu: "0.6"
-      memory: "2Gi"
-mariadb:
   enabled: true
-  primary:
-    resources:
-      limits:
-        cpu: "1"
-        memory: "4Gi"
+mariadb:
+  enabled: false
 elasticsearch:
   enabled: false
   elastic:
