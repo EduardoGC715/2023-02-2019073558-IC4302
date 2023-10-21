@@ -30,3 +30,6 @@ dependencies:
     version: "2.6.1"
     repository: https://helm.elastic.co
     condition: elasticsearch.enabled
+
+namespaces:
+  - neo4j
