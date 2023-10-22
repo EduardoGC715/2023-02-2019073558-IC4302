@@ -11,5 +11,11 @@ dependencies:
 - name: neo4j
   repository: https://helm.neo4j.com/neo4j
   version: 5.12.0
-digest: sha256:cd3e4eb3d3799a9a22ec70eff033cfa9762580470c572bdaa2a7e6c5ba5f6e6c
-generated: "2023-10-17T14:42:09.330039-06:00"
+- name: mariadb
+  repository: https://charts.bitnami.com/bitnami
+  version: 11.1.2
+- name: couchdb
+  repository: https://apache.github.io/couchdb-helm
+  version: 4.4.0
+digest: sha256:75462969d203bb2e7e274cc6e74921a701dab785d0ea2b5278e85a512d866fba
+generated: "2023-10-21T17:44:28.2111026-06:00"

@@ -1,9 +1,9 @@
 mongodb:
   enabled: false
 mariadb:
-  enabled: true
+  enabled: false
 elasticsearch:
-  enabled: true
+  enabled: false
   elastic:
     version: 8.6.1
     replicas: 1
@@ -25,20 +25,24 @@ postgresql:
     database: "Pokemon"
     username: "admin"
     password: "admin"
-
+couchdb:
+  enabled: false
+  clusterSize: 1
+  resources:
+    limits:
+      cpu: "1"
+      memory: "4Gi"
+  couchdbConfig:
+    couchdb:
+      uuid: $(shell curl -s https://www.uuidgenerator.net/api/version4 2>/dev/null | tr -d -)
 neo4j:
+  enabled: true
   neo4j:
     name: my-standalone
     resources:
       cpu: "0.5"
       memory: "2Gi"
-
-    # Uncomment to set the initial password
-    #password: "my-initial-password"
-
-    # Uncomment to use enterprise edition
-    #edition: "enterprise"
-    #acceptLicenseAgreement: "yes"
+    password: "neo4j-password"
 
   volumes:
     data:
@@ -46,7 +50,3 @@ neo4j:
       defaultStorageClass:
         requests:
           storage: 2Gi
-neo4j:
-  enabled: false
-couchdb:
-  enabled: false
