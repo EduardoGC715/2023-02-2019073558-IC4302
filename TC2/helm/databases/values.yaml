@@ -34,10 +34,10 @@ postgresql:
 couchdb:
   enabled: true
   clusterSize: 1
-  resources:
-    limits:
-      cpu: "1"
-      memory: "4Gi"
+  adminUsername: "admin"
+  adminPassword: "admin"
+  image:
+    tag: 3.3.2
   couchdbConfig:
     couchdb:
       uuid: $(shell curl -s https://www.uuidgenerator.net/api/version4 2>/dev/null | tr -d -)

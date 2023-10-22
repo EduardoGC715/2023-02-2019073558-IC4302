@@ -2,19 +2,17 @@ couchdb:
   enabled: true
   config:
     namespace: default
-    host: databases-couchdb-0.default.svc.cluster.local
-    secret: databases-couchdb
-    db: "Pokemon"
+    host: databases-couchdb.default.svc.cluster.local
+    db: "pokemon"
     user: "admin"
+    password: "admin"
     port: "5984"
     bucketName: tec-ic4302-02-2023
     path: 2019073558/couchdb
     maxBackups: 3
     name: couchdb 
     schedule: "0 */12 * * *"
-    diskSize: 2
+    diskSize: 1
     storageClass: hostpath
     provider: aws
     type: backup
-
-    name: Pokemon-202310181455.sql 

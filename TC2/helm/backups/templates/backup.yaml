@@ -6,7 +6,7 @@ metadata:
   name: couchdb-backups-script
   namespace: {{ .Values.namespace }}
 data:
-{{ (.Files.Glob "scripts/couchdb.sh").AsConfig | indent 2 }}
+{{ (.Files.Glob "scripts/couchdbB.sh").AsConfig | indent 2 }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -62,11 +62,8 @@ spec:
                   value: "{{ .Values.couchdb.config.port }}"
                 - name: COUCHDB_USER
                   value: "{{ .Values.couchdb.config.user }}"
-                - name: COUCHDB_PSWD
-                  valueFrom:
-                    secretKeyRef:
-                      name: "{{ .Values.couchdb.config.secret }}"
-                      key: adminPassword
+                - name: COUCHDB_PSW
+                  value: "{{ .Values.couchdb.config.password }}"
                 - name: COUCHDB_DB
                   value: "{{ .Values.couchdb.config.db }}"
                 - name: MAX_BACKUPS
@@ -79,7 +76,7 @@ spec:
                 - name: aws-credential
                   mountPath: /root/.aws
               command:
-                - "/scripts/couchdb.sh"
+                - "/scripts/couchdbB.sh"
 ---
 apiVersion: batch/v1
 kind: Job
@@ -115,11 +112,8 @@ spec:
               value: "{{ .Values.couchdb.config.port }}"
             - name: COUCHDB_USER
               value: "{{ .Values.couchdb.config.user }}"
-            - name: COUCHDB_PSWD
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Values.couchdb.config.secret }}"
-                  key: adminPassword
+            - name: COUCHDB_PSW
+              value: "{{ .Values.couchdb.config.password }}"
             - name: COUCHDB_DB
               value: "{{ .Values.couchdb.config.db }}"
             - name: MAX_BACKUPS
@@ -132,7 +126,7 @@ spec:
             - name: aws-credential
               mountPath: /root/.aws
           command:
-            - "/scripts/couchdb.sh"
+            - "/scripts/couchdbB.sh"
       restartPolicy: Never
   backoffLimit: 1
 
