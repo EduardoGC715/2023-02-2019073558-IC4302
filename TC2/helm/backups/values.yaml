@@ -10,9 +10,9 @@ couchdb:
     bucketName: tec-ic4302-02-2023
     path: 2019073558/couchdb
     maxBackups: 3
-    name: couchdb 
+    name: couchdb-202310230113.json 
     schedule: "0 */12 * * *"
     diskSize: 1
     storageClass: hostpath
     provider: aws
-    type: backup
+    type: restore
