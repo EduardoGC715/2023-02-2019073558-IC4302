@@ -43,6 +43,8 @@ neo4j:
       cpu: "0.5"
       memory: "2Gi"
     password: "neo4j-password"
+    edition: "enterprise"
+    acceptLicenseAgreement: "yes"
   config:
     server.directories.plugins: "/var/lib/neo4j/labs"
     dbms.security.procedures.unrestricted: "apoc.export.*,apoc.import.*,apoc.*,apoc.export"
