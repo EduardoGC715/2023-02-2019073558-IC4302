@@ -43,7 +43,18 @@ neo4j:
       cpu: "0.5"
       memory: "2Gi"
     password: "neo4j-password"
-
+  config:
+    server.directories.plugins: "/var/lib/neo4j/labs"
+    dbms.security.procedures.unrestricted: "apoc.export.*,apoc.import.*,apoc.*,apoc.export"
+    server.config.strict_validation.enabled: "false"
+    dbms.security.procedures.allowlist: "apoc.export.*,apoc.import.*"
+  apoc_config:
+    apoc.trigger.enabled: "true"
+    apoc.jdbc.neo4j.url: "jdbc:foo:bar"
+    apoc.import.file.enabled: "true"
+    apoc.export.file.enabled: "true"
+  env:
+    NEO4J_PLUGINS: '["apoc"]'
   volumes:
     data:
       mode: defaultStorageClass
