@@ -29,3 +29,11 @@ neo4j:
   enabled: false
 couchdb:
   enabled: false
+  clusterSize: 1
+  adminUsername: "admin"
+  adminPassword: "admin"
+  image:
+    tag: 3.3.2
+  couchdbConfig:
+    couchdb:
+      uuid: $(shell curl -s https://www.uuidgenerator.net/api/version4 2>/dev/null | tr -d -)

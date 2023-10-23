@@ -46,3 +46,22 @@ postgresql:
     storageClass: hostpath
     provider: aws
     type: restore
+couchdb:
+  enabled: false
+  config:
+    namespace: default
+    host: databases-couchdb.default.svc.cluster.local
+    db: "pokemon"
+    user: "admin"
+    password: "admin"
+    port: "5984"
+    bucketName: tec-ic4302-02-2023
+    path: 2019073558/couchdb
+    maxBackups: 3
+    name: couchdb-202310230113.json 
+    schedule: "0 */12 * * *"
+    diskSize: 1
+    storageClass: hostpath
+    provider: aws
+    type: restore
+    

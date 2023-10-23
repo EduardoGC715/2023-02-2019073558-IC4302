@@ -49,10 +49,11 @@ dependencies:
     version: "5.7.0"
     repository: https://helm.neo4j.com/neo4j
     condition: neo4j.enabled
-    #couchdb
+  # CouchDB
   - name: couchdb
-    version: "4.4.0"
+    version: "4.4.1"
     repository: https://apache.github.io/couchdb-helm
+    uuid: couchdb.couchdbConfig.couchdb.uuid
     condition: couchdb.enabled
 
     
