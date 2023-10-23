@@ -478,9 +478,41 @@ En base a estos índices se estableció una política que guarde los datos asoci
 
 Ahora se van a borrar los dos índices y tratar de restaurarlos a través de hacer 3 experimentos:
 
+##### Se borran los índices:
+
+**`DELETE pokemon-names`**
+
+**`DELETE pokemon-regions`**
+
+Probando obtener los datos:
+
+![Alt text](imgs/BackupElastic/deletedregion.png)
+
+![Alt text](imgs/BackupElastic/restoreI3.png)
 
 
+##### Experimento #1 (Restaurar Un solo índice y el otro no)
 
+![Alt text](imgs/BackupElastic/restoreEX1.png)
+
+Se va a restaurar solamente el índice **pokemon-region** con el nombre **"pokemon-regions12"**
+
+Haciendo el restore, se consultan ambos índices:
+
+##### Consultando el índice pokemon-regions12
+
+![Alt text](imgs/BackupElastic/restoreEX12.png)
+
+##### Consultando el índice pokemon-regions
+
+![Alt text](imgs/BackupElastic/res123.png)
+
+Como se puede ver ahora se restauro el índice pokemon-regions con el nombre **pokemon-regions12.**
+
+También se puede observar que al consultar el índice **pokemon-names**, ya no existe:
+
+
+![Alt text](imgs/BackupElastic/restore43.png)
 
 ---
 ### Conclusiones y Recomendaciones
