@@ -99,23 +99,23 @@ Este código va a instalar un pod en la red de kubernetes donde se pueden ejecut
 
 Aqui se pueden ingresar comandos para ver las distintas direcciones donde estan almacenados los backups, normalmente estas direcciones siguen el patrón:
 
-2019073558 / [nombre base]
+**`2019073558 / [nombre base]`**
 
 EJ:
-
-2019073558/elastic
-
-2019073558/postgresql
+**`
+2019073558/elastic`**
+**`
+2019073558/postgresql`**
 
 El comando para ver los archivos en esa dirección es:
 
-aws s3 ls s3://tec-ic4302-02-2023/2019073558/[nombre Base]/
+**`aws s3 ls s3://tec-ic4302-02-2023/2019073558/[nombre Base]/`**
 
 EJ:
 
-aws s3 ls s3://tec-ic4302-02-2023/2019073558/postgresql/
+**`aws s3 ls s3://tec-ic4302-02-2023/2019073558/postgresql/`**
 
-aws s3 ls s3://tec-ic4302-02-2023/2019073558/elastic/
+**`aws s3 ls s3://tec-ic4302-02-2023/2019073558/elastic/`**
 
 Al ejecutar estos comandos se puede ver lo siguiente:
 
@@ -476,7 +476,7 @@ En base a estos índices se estableció una política que guarde los datos asoci
 
 ![Alt text](imgs/BackupElastic/snapshotspokemon.png)
 
-Ahora se van a borrar los dos índices y tratar de restaurarlos a través de hacer 3 experimentos:
+Ahora se van a borrar los dos índices y tratar de restaurarlos a través de hacer 2 experimentos:
 
 ##### Se borran los índices:
 
@@ -515,6 +515,36 @@ También se puede observar que al consultar el índice **pokemon-names**, ya no 
 ![Alt text](imgs/BackupElastic/restore43.png)
 
 ---
+
+##### Experimento #2 (Restaurar ambos índices después de Experimento1)
+
+Para este experimento se hace un restore normal del snapshot completo:
+
+![Alt text](imgs/BackupElastic/restoreEX2.png)
+
+Despúes de hacer esto, se puede observar en la sección de Restored dentro de la interfaz de Kibana lo siguiente:
+
+![Alt text](imgs/BackupElastic/Evidencia_Restore.png)
+
+Se muestran los archivos de los 3 índices restaurados, debido a que en el experimento 1 no se restauro el índice **`Pokemon-regions`** con el mismo nombre, se restauran 2 veces en vez de sobreescribir el índice restaurado previamente con la versión nueva del snapshot
+
+Revisando **`Pokemon-regions`**
+![Alt text](imgs/BackupElastic/restoreEX141.png)
+
+**`Pokemon-regions12`**:
+
+![Alt text](imgs/BackupElastic/restoreEX111.png)
+
+
+Y si se trata de obtener **`Pokemon-names`**
+![Alt text](imgs/BackupElastic/restoreEX122.png)
+
+Como se puede ver, cuando se restaura un índice desde un snapshot, se está creando un índice nuevo a partir de una copia de seguridad. Si se restaura un índice con el mismo nombre que ya existía previamente, Elasticsearch sobreescribirá el índice existente con la versión restaurada desde el snapshot.
+
+Sin embargo, si se restaura el índice con un nombre diferente al que tenía originalmente, Elasticsearch creará un nuevo índice con ese nuevo nombre, en lugar de sobreescribir.
+
+---
+
 ### Conclusiones y Recomendaciones
 
 #### Conclusiones
