@@ -381,3 +381,44 @@ Ahora si probamos el GET, deberían de volver a aparecer los datos del Index:
 ###### Usando Interfaz Snapshot and Restore
 
 La segunda opción para restaurar un índice eliminado es a través de la Sección Snapshot and Restore dentro de la Interfaz de Kibana en la sección de Stack Management. Una vez aqui buscamos lo siguiente:
+
+![Alt text](imgs/BackupElastic/listaSnapS.png)
+
+
+Aqui aparecerán todos los snapshots creados, ya sea que se crearon manualmente con comandos o a través de una política. Estos se encuentran en orden descendente del creado más reciente al más antiguo. Se recomienda usar snapshots más nuevos para regresar a un estado más reciente de la base de datos en caso de un fallo.
+
+Se selecciona el snapshot que se quiera restaurar y se clickea para ver detalles de este. Una vez abierto podremos ver la opción de restaurar:
+
+![Alt text](imgs/BackupElastic/restoreInterface.png)
+
+Si seleccionamos esta opcíon se desplegará un menú interactivo de restauración donde se pueden seleccionar los indices del snapshot que se quieren restaurar, si se quieren mantener los mismos nombres para los indices o cambiarlos, etc. A continuación se presenta este menú:
+
+![Alt text](imgs/BackupElastic/restoreInterface2.png)
+
+
+### Conclusiones y Recomendaciones
+
+#### Conclusiones
+
+* El uso de almacenamiento en la nube con AWS S3 facilita la escalabilidad y accesibilidad de los backups, pero requiere tomar en cuenta consideraciones adicionales de seguridad a la hora de hacer el código y mantener su versionamiento. 
+
+* Si bien Elasticsearch requiere una configuración inicial más elaborada y el proceso para habilitar snapshots es más manual, una vez que se tienen los componentes configurados adecuadamente, la automatización de snapshots y restores resulta bastante sencilla y más fácil de entender desde una perspectiva de usuario 
+
+
+#### Recomendaciones
+
+* Para implementar los backups desarrollados en este proyecto en un escenario real, se podrían implementar junto con herramientas de monitoreo como Prometheus y Grafana. Contar con dashboards personalizados en Grafana facilitaría identificar tendencias, bottlenecks y problemas en los procesos de backup. 
+
+* Para establecer backups en Elasticsearch, se recomienda hacer uso de la interfaz interactiva de Kibana para crear políticas de snapshots. Esto en lugar de ejecutar comandos manuales sobre la base ElasticSearch para hacer cada backup de forma individual, ya que provee una experiencia más amigable e intuitiva para los usuarios. 
+
+* En lugar de tener las credenciales de acceso a la nube y el bucket hardcoded en los scripts de backup, se recomienda almacenar estas credenciales como secrets de Kubernetes . De esta manera se centraliza la gestión de credenciales sensibles y se evita exponerlas en el código. 
+
+* Es crítico que el repositorio de código donde se almacena la tarea de backup se mantenga privado y con acceso restringido. De esta manera se evita que personas no deseadas puedan ver el código fuente y obtener las credenciales que dan acceso a la cuenta de AWS u otra plataforma en la nube. 
+
+* Para optimizar el uso de almacenamiento en AWS, se recomienda hacer uso de una política de retención de backups automatizada. En lugar de retener todos los backups por tiempo indefinido, usar una política conserve los backups más recientes y necesarios, y elimine versiones antiguas que ya no son relevantes. 
+
+* Es crítico validar periódicamente que al implementar backups, estos sean funcionales y permitan restaurar los datos correctamente. Por eso, al implementar componentes de backups se recomienda realizar pruebas regulares de restore a partir de los mismos para confirmar su correcto funcionamiento y capacidad de recuperación de información. 
+
+* En una tarea de este tipo, dividir el trabajo es importante, pero también es importante que cada persona del equipo entienda su tarea. Se recomienda mantener una buena comunicación durante el desarrollo del proyecto y nunca quedarse con dudas. 
+
+* A la hora de probar los backups generados, se recomienda hacer uso de un pod de depuración como el incluido en la solución de esta tarea. Dicho pod proporciona una terminal con conectividad directa al bucket de almacenamiento en AWS. Esto permite validar de forma efectiva que los respaldos se estén ejecutando correctamente y subiendo a la nube según lo esperado. 
