@@ -395,7 +395,94 @@ Si seleccionamos esta opcíon se desplegará un menú interactivo de restauraci�
 
 ![Alt text](imgs/BackupElastic/restoreInterface2.png)
 
+Seleccionamos las configuraciones que se deseen aplicar al restore y se pasa a la siguiente página:
 
+![Alt text](imgs/BackupElastic/restoreInterface3.png)
+
+Se le da restore snapshot y listo, los datos de la base junto con los indices y configuraciones en el snapshot se restauraron a la base.
+
+#### Pruebas Realizadas
+
+Para las pruebas realizadas en elasticSearch, se crearon dos índices:
+
+![Alt text](imgs/BackupElastic/Ejemplo1.png)
+
+A continuación se presentan los comandos para crear los índices e insertar datos en cada uno:
+
+---
+#### pokemon-names
+
+**PUT pokemon-names
+{
+  "mappings": {
+    "properties": {
+      "name": { "type": "keyword" }  
+    }
+  }
+}** 
+
+---
+#####  >>>> Datos:
+
+**POST pokemon-names/_doc
+{
+  "name": "Pikachu"
+}**
+
+
+**POST pokemon-names/_doc  
+{
+  "name": "Charmander"
+}**
+
+
+Consultando al indice se obtienen los datos:
+
+![Alt text](imgs/BackupElastic/index1Backup.png)
+
+El comando para consultar el índice es: **`GET pokemon-names/_search`**
+
+---
+#### pokemon-regions
+
+**PUT pokemon-regions 
+{
+  "mappings": {
+    "properties": {
+      "region": { "type": "keyword" }
+    }
+  }
+}**
+
+---
+#####  >>>> Datos:
+
+**POST pokemon-regions/_doc
+{
+  "region": "Kanto" 
+}**
+
+**POST pokemon-regions/_doc
+{
+  "region": "Johto"
+}**
+
+Consultando al indice se obtienen los datos:
+
+![Alt text](imgs/BackupElastic/index2Backup.png)
+
+
+En base a estos índices se estableció una política que guarde los datos asociados a estos dos índices cada hora. La política es:
+
+![Alt text](imgs/BackupElastic/snapshotspokemon.png)
+
+Ahora se van a borrar los dos índices y tratar de restaurarlos a través de hacer 3 experimentos:
+
+
+
+
+
+---
 ### Conclusiones y Recomendaciones
 
 #### Conclusiones
