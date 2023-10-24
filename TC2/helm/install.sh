@@ -6,19 +6,19 @@
 #helm repo update
 
 cd bootstrap
-rm -rf Char.lock
+rm -rf Chart.lock
 helm dependency build --skip-refresh
 cd ..
 helm upgrade --install bootstrap bootstrap
 sleep 20
 cd databases
-rm -rf Char.lock
+rm -rf Chatr.lock
 helm dependency build --skip-refresh
 cd ..
 helm upgrade --install databases databases
 sleep 60
 cd backups
-rm -rf Char.lock
+rm -rf Chart.lock
 helm dependency build --skip-refresh
 cd ..
 helm upgrade --install backups backups

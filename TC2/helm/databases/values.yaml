@@ -1,9 +1,9 @@
 mongodb:
   enabled: false
 mariadb:
-  enabled: true
+  enabled: false
 elasticsearch:
-  enabled: true
+  enabled: false
   elastic:
     version: 8.6.1
     replicas: 1
@@ -28,7 +28,7 @@ postgresql:
 neo4j:
   enabled: false
 couchdb:
-  enabled: false
+  enabled: true
   clusterSize: 1
   adminUsername: "admin"
   adminPassword: "admin"

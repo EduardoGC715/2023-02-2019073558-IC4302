@@ -29,7 +29,7 @@ maria:
     provider: aws
     type: restore
 postgresql:
-  enabled: true
+  enabled: false
   config:
     namespace: default
     host: databases-postgresql.default.svc.cluster.local
@@ -47,7 +47,7 @@ postgresql:
     provider: aws
     type: restore
 couchdb:
-  enabled: false
+  enabled: true
   config:
     namespace: default
     host: databases-couchdb.default.svc.cluster.local
@@ -58,7 +58,7 @@ couchdb:
     bucketName: tec-ic4302-02-2023
     path: 2019073558/couchdb
     maxBackups: 3
-    name: couchdb-202310230113.json 
+    name: couchdb-202310241624.json 
     schedule: "0 */12 * * *"
     diskSize: 1
     storageClass: hostpath
