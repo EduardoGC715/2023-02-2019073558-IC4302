@@ -543,6 +543,126 @@ Como se puede ver, cuando se restaura un índice desde un snapshot, se está cre
 
 Sin embargo, si se restaura el índice con un nombre diferente al que tenía originalmente, Elasticsearch creará un nuevo índice con ese nuevo nombre, en lugar de sobreescribir.
 
+#### CouchDB 
+
+Para realizar la instalacion de CouchDB utilizamos la instalacion del [helm chart hecho por Apache], https://github.com/apache/couchdb-helm/tree/main/couchdb). 
+
+Para realizar la instalación, se habilita en el `databases/values.yaml` y en `backups/values.yaml` en el folder de `helm` la opción de enabled para realizar la instalación de la base de datos deseada. 
+
+En el archivo de `databases/values.yaml`, se indica la versión de la imagen que se va a utilizar en este caso la 3.3.2 , también se define el usuario y la contraseña que se van a utilizar para poder acceder a la base de datos y por último se va a generar un UUID (Universal Unique Identifier) necesario para la creación de la base de datos, este lo creamos aleatoriamente mediante el uso del link (https://www.uuidgenerator.net/api/version4). 
+
+``` 
+couchdb: 
+  enabled: true 
+  clusterSize: 1 
+  adminUsername: "admin" 
+  adminPassword: "admin" 
+  image: 
+    tag: 3.3.2 
+  couchdbConfig: 
+    couchdb: 
+      uuid: $(shell curl -s https://www.uuidgenerator.net/api/version4 2>/dev/null | tr -d -) 
+``` 
+
+Si se desea realizar un backup, en el archivo de backups/values.yaml se pone `type: backup` en el campo de couchdb.config.type. Los backups de CouchDB se van a guardar en `s3://tec-ic4302-02-2023/2019073558/couchdb/`. El campo de schedule debe contener un horario válido para un [CronJob](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/). En nuestra configuración, está configurado para correr dos veces al día, 1 vez a medio día y otra vez a media noche. El host va a tener la dirección de la base de datos de CouchDB dentro del cluster para que así pueda localizarlo y hacer el backup, la bd va a ser la base de datos ya definida de la cual se va a hacer el backup, el port va a ser el predefinido por el helm chart de CouchDB por el cual vamos a tener acceso al API. Y tenemos el user y password que van a ser los mismos que definimos previamente, por utlimo para el caso del restore se le indica un name, que va a ser el nombre del archivo en el cual se está guardando el backup que se quiera restaurar.  
+
+``` 
+couchdb: 
+  enabled: true 
+  config: 
+    namespace: default 
+    host: databases-couchdb.default.svc.cluster.local 
+    db: "pokemon" 
+    user: "admin" 
+    password: "admin" 
+    port: "5984" 
+    bucketName: tec-ic4302-02-2023 
+    path: 2019073558/couchdb 
+    maxBackups: 3 
+    name: couchdb-202310230113.json  
+    schedule: "0 */12 * * *" 
+    diskSize: 1 
+    storageClass: hostpath 
+    provider: aws 
+    type: backup 
+``` 
+ 
+Luego se puede correr el script de `install.sh` en helm para correr el backup. 
+
+Cuando se instala en modo “backup”, se crean dos objetos principales de Kubernetes: un CronJob que se va a ejecutar dos veces al día cada 12 horas, y un Job que se ejecuta de una vez y realiza el respaldo a la base de datos. Estos jobs van a ejecutar el script `TC2/helm/backups/scripts/couchdbB.sh`. Debido a que CouchDB no tiene definido ningún método para realizar los backups, hacemos uso del [API de CouchDB](https://docs.couchdb.org/en/latest/api/) para así extraer los documentos que contenga la base de datos y poder crear un respaldo de estos. Para realizar el backup utilizamos el siguiente metodo: 
+``` 
+URL="http://$COUCHDB_USER:$COUCHDB_PSW@$COUCHDB_HOST:$COUCHDB_PORT/$COUCHDB_DB/_all_docs?include_docs=true" 
+
+curl -X GET "$URL" -H "Accept: application/json" | jq '{ docs: [.rows[] | .doc] }' > /couchdump/$DATE/couchdb-$DATE.json 
+``` 
+
+En donde de primero definimos el path que vamos a utilizar para hacer la llamada al API, en este caso utilizamos unas variables de entorno definidas con los datos del values.yaml, el endpoint que utilziamos es **db/_all_docs?include_docs=true**, el cual nos va a retornar todos los documentos de la base de datos que indiquemos para asi poder almacenarlos en un archivo .json, ya teniendo el path para el llamado utilizamos el metodo **curl** para hacer el llamado, en este indicamos que es un GET, y le definimos el url, e indicamos el tipo de dato que esperamos de vuelta, al mismo tiempo estamos utilizando el método **jq** para así cambiarle el formato al archivo de respuesta para así tenerlo en un formato que luego pueda ser utilizado para el recovery , y por ultimo le indicamos el path en el cual queremos que se almacene y el nombre del archivo que queremos que tenga.  
+
+Finalmente, se utiliza la siguiente instrucción para subir el backup al bucket S3 de aws: 
+
+`aws s3 cp /couchdump/$DATE s3://$BUCKET_NAME/$BACKUP_PATH/ --recursive` 
+
+Este script crea backups dentro del S3 dentro de un archivo con la fecha de cuando se realizó el backup. 
+
+En el caso del restore, es bastante similar al backup pero tiene ciertas diferencias, entre estas esta que se utiliza el endpoint del API **_bulk_docs** al cual se le da el archivo .json extraído del path y con el nombre indicado e inserta en la base de datos todos los documentos dentro de este archivo.  
+
+##### Ejemplo de Backup y Restore: 
+
+Para tener más control, podemos instalar los helm charts por separado. Primero, hay que installar bootstrap. Ubicándonos en el folder de helm, hacemos: 
+
+`helm install bootstrap bootstrap` 
+
+Luego, tras asegurarnos de que Couchdb está habilitado en el values.yaml de databases, hacemos: 
+
+`helm install databases databases` 
+
+Esto crea el pod de la base de datos. 
+
+Una vez creado hacemos un port foward dentro de lens del puerto de couchdb para asi poder hacer uso del API en herramientas como Postman o Thunderclient.  
+
+Con esto ya podemos hacer la creación de la base de datos y la inserción de los archivos mediante llamados al API, para este ejemplo los llamados utilizados son los siguientes.  
+
+``` 
+PUT http://127.0.0.1:50209/pokemon 
+
+PUT http://127.0.0.1:50209/pokemon/001 
+
+{"name": "Pikachu", "type": "Electric", "level": 25} 
+``` 
+
+Ya con información en la base de datos, podemos instalar el helm chart de backups para que el Job realice el respaldo: 
+
+`helm install backups backups` 
+
+Podemos ir a Lens y la sección de Jobs. Aquí podemos abrir la consola del pod y ver el progreso del script. Si sale un error de que no encuentra el script, hay que hacer la instrucción en la consola de y reinstalar el helm chart de backups: 
+
+`dos2unix backups/scripts/postgresqlBackup.sh` 
+
+Una vez creado el backup volvemos a Postman y eliminamos nuestros datos en este caso el llamado utilizado es: 
+
+` DELETE http://127.0.0.1:50209/pokemon/001?rev=1-a11edc90c0d2388866469ce2f5235047` 
+
+Donde el rev es autogenerado por CouchDB por cada registro, podemos ver cual es el rev de nuestro registro con el llamado: 
+
+` GET http://127.0.0.1:50209/pokemon/_all_docs?include_docs=true ` 
+
+Para realizar el restore, se escribe el nombre del backup generado, este lo recibimos cuando se ejecute el backup en el pod logs, este dato se agrega en el campo de name en el values.yaml de backups y cambiamos el type a restore. Tras hacer esto, podemos reinstalar el helm chart con: 
+
+` helm uninstall backups `
+
+` helm install backups backups `
+ 
+
+Cuando está en modo restore, no crea un CronJob, solo ejecuta un Job. Por lo tanto, podemos ver el progreso del Job en la pestaña de Jobs en Lens: 
+
+Al final, podemos saber que el Job terminó cuando la columna de Completions salga en 1/1. 
+
+Ahora mediante el mismo llamado en Postman: 
+
+` GET http://127.0.0.1:50209/pokemon/_all_docs?include_docs=true `  
+
+Y con el response se puede observar que el restore ha sido exitoso. 
+
 ---
 
 ### Conclusiones y Recomendaciones
