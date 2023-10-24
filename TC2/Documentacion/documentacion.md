@@ -545,7 +545,7 @@ Sin embargo, si se restaura el índice con un nombre diferente al que tenía ori
 
 #### CouchDB 
 
-Para realizar la instalacion de CouchDB utilizamos la instalacion del [helm chart hecho por Apache], https://github.com/apache/couchdb-helm/tree/main/couchdb). 
+Para realizar la instalacion de CouchDB utilizamos la instalacion del [helm chart hecho por Apache](https://github.com/apache/couchdb-helm/tree/main/couchdb). 
 
 Para realizar la instalación, se habilita en el `databases/values.yaml` y en `backups/values.yaml` en el folder de `helm` la opción de enabled para realizar la instalación de la base de datos deseada. 
 
