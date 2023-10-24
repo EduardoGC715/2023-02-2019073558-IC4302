@@ -856,3 +856,202 @@ spec:
   backoffLimit: 1
 {{- end }}
 {{- end }}
+
+########################################################NEO4J####################################################
+{{- if .Values.neo4j.enabled }}
+{{- if eq .Values.neo4j.config.type "backup" }}
+apiVersion: v1 
+kind: ConfigMap
+metadata:
+  name: neo4j-backups-script
+  namespace: {{ .Values.namespace }}
+data:
+{{ (.Files.Glob "scripts/neo4jBackup.sh").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: neo4j-snapshotter
+  namespace: {{ .Values.neo4j.config.namespace }}
+spec:
+  storageClassName: {{ .Values.neo4j.config.storageClass }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.neo4j.config.diskSize }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: "neo4j-backup"
+  namespace: {{ .Values.neo4j.config.namespace }}
+spec:
+  schedule: {{ .Values.neo4j.config.schedule }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          terminationGracePeriodSeconds: 0
+          restartPolicy: Never
+          volumes:
+          - name: scripts
+            configMap:
+              name: neo4j-backups-script
+              defaultMode: 0700
+          - name: neo4j-snapshotter
+            persistentVolumeClaim:
+              claimName: neo4j-snapshotter
+          - name: aws-credential
+            secret: 
+              secretName: aws-credential
+          containers:
+            - image: public.ecr.aws/aws-cli/aws-cli
+              name: neo4j-snapshotter
+              env:
+                - name: NEO4J_SERVICE
+                  value: "{{ .Values.neo4j.config.host }}"
+                - name: BUCKET_NAME
+                  value: "{{ .Values.neo4j.config.bucketName }}"
+                - name: BACKUP_PATH
+                  value: "{{ .Values.neo4j.config.path }}"
+                - name: MAX_BACKUPS
+                  value: "{{ .Values.neo4j.config.maxBackups }}"
+                - name: NEO4J_PORT
+                  value: "{{ .Values.neo4j.config.port }}"
+              volumeMounts:
+                - mountPath: "/"
+                  name: neo4j-snapshotter
+                - name: scripts
+                  mountPath: /scripts
+                - name: aws-credential
+                  mountPath: /root/.aws
+              command:
+                - "/scripts/neo4jBackup.sh"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: neo4j-backup-0
+  namespace: {{ .Values.neo4j.config.namespace }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.neo4j.config.serviceAccount }}
+      volumes:
+      - name: scripts
+        configMap:
+          name: neo4j-backups-script
+          defaultMode: 0777
+      - name: neo4j-snapshotter
+        persistentVolumeClaim:
+          claimName: neo4j-snapshotter
+      - name: aws-credential
+        secret: 
+          secretName: aws-credential
+      containers:
+        - image: public.ecr.aws/aws-cli/aws-cli
+          name: neo4j-snapshotter
+          env:
+            - name: NEO4J_SERVICE
+              value: "{{ .Values.neo4j.config.host }}"
+            - name: BUCKET_NAME
+              value: "{{ .Values.neo4j.config.bucketName }}"
+            - name: BACKUP_PATH
+              value: "{{ .Values.neo4j.config.path }}"
+            - name: MAX_BACKUPS
+              value: "{{ .Values.neo4j.config.maxBackups }}"
+            - name: NEO4J_PORT
+              value: "{{ .Values.neo4j.config.port }}"
+          volumeMounts:
+            - mountPath: "/neodump"
+              name: neo4j-snapshotter
+            - name: scripts
+              mountPath: /scripts
+            - name: aws-credential
+              mountPath: /root/.aws
+          command:
+            - "/scripts/neo4jBackup.sh"
+            # - "tail"
+            # - "-f"
+            # - "/dev/null"
+      restartPolicy: Never
+  backoffLimit: 1
+{{- end }}
+{{- if eq .Values.neo4j.config.type "restore" }}
+apiVersion: v1 
+kind: ConfigMap
+metadata:
+  name: neo4j-restore-script
+  namespace: {{ .Values.namespace }}
+data:
+{{ (.Files.Glob "scripts/neo4jRestore.sh").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: neo4j-snapshotter
+  namespace: {{ .Values.neo4j.config.namespace }}
+spec:
+  storageClassName: {{ .Values.neo4j.config.storageClass }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.neo4j.config.diskSize }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: neo4j-restore-0
+  namespace: {{ .Values.neo4j.config.namespace }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.neo4j.config.serviceAccount }}
+      volumes:
+      - name: scripts
+        configMap:
+          name: neo4j-restore-script
+          defaultMode: 0777
+      - name: neo4j-snapshotter
+        persistentVolumeClaim:
+          claimName: neo4j-snapshotter
+      - name: aws-credential
+        secret: 
+          secretName: aws-credential
+      containers:
+        - image: public.ecr.aws/aws-cli/aws-cli
+          name: neo4j-snapshotter
+          env:
+            - name: NEO4J_SERVICE
+              value: "{{ .Values.neo4j.config.host }}"
+            - name: BUCKET_NAME
+              value: "{{ .Values.neo4j.config.bucketName }}"
+            - name: BACKUP_PATH
+              value: "{{ .Values.neo4j.config.path }}"
+            - name: MAX_BACKUPS
+              value: "{{ .Values.neo4j.config.maxBackups }}"
+            - name: NEO4J_PORT
+              value: "{{ .Values.neo4j.config.port }}"
+            - name: RESTORE_FILE
+              value: "{{ .Values.neo4j.config.name }}"
+          volumeMounts:
+            - mountPath: "/neodump"
+              name: neo4j-snapshotter
+            - name: scripts
+              mountPath: /scripts
+            - name: aws-credential
+              mountPath: /root/.aws
+          command:
+            - "/scripts/neo4jRestore.sh"
+            # - "tail"
+            # - "-f"
+            # - "/dev/null"
+      restartPolicy: Never
+  backoffLimit: 1
+{{- end }}
+{{- end }}

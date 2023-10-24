@@ -65,3 +65,18 @@ couchdb:
     provider: aws
     type: restore
     
+neo4j:
+  enabled: true
+  config:
+    namespace: default
+    host: databases-admin.default.svc.cluster.local
+    port: "6362"
+    bucketName: tec-ic4302-02-2023
+    path: 2019073558/neo4j
+    maxBackups: 3
+    name: neo4j-2023-10-23T20-53-22.backup
+    schedule: "0 */12 * * *"
+    diskSize: 2
+    storageClass: hostpath
+    provider: aws
+    type: backup

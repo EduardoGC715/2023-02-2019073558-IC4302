@@ -25,8 +25,6 @@ postgresql:
     database: "Pokemon"
     username: "admin"
     password: "admin"
-neo4j:
-  enabled: false
 couchdb:
   enabled: true
   clusterSize: 1
@@ -37,3 +35,31 @@ couchdb:
   couchdbConfig:
     couchdb:
       uuid: $(shell curl -s https://www.uuidgenerator.net/api/version4 2>/dev/null | tr -d -)
+neo4j:
+  enabled: true
+  neo4j:
+    name: my-standalone
+    resources:
+      cpu: "0.5"
+      memory: "2Gi"
+    password: "neo4j-password"
+    edition: "enterprise"
+    acceptLicenseAgreement: "yes"
+  config:
+    server.directories.plugins: "/var/lib/neo4j/labs"
+    dbms.security.procedures.unrestricted: "apoc.export.*,apoc.import.*,apoc.*,apoc.export"
+    server.config.strict_validation.enabled: "false"
+    dbms.security.procedures.allowlist: "apoc.export.*,apoc.import.*"
+  apoc_config:
+    apoc.trigger.enabled: "true"
+    apoc.jdbc.neo4j.url: "jdbc:foo:bar"
+    apoc.import.file.enabled: "true"
+    apoc.export.file.enabled: "true"
+  env:
+    NEO4J_PLUGINS: '["apoc"]'
+  volumes:
+    data:
+      mode: defaultStorageClass
+      defaultStorageClass:
+        requests:
+          storage: 2Gi
