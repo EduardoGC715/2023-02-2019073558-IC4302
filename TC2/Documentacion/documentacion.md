@@ -664,6 +664,216 @@ Ahora mediante el mismo llamado en Postman:
 Y con el response se puede observar que el restore ha sido exitoso. 
 
 ---
+#### Neo4j
+Para instalar Neo4j, se utilizó el Helm Chart oficial de Neo4j. Este se puede acceder de https://helm.neo4j.com/neo4j. Para añadir el repositorio, hay que hacer 
+```
+helm repo add neo4j https://helm.neo4j.com/neo4j
+```
+ Los Helm Charts disponibles de Neo4j son los siguientes.
+```
+neo4j/neo4j                       5.13.0  5.13.0  Neo4j is the world's leading graph database
+neo4j/neo4j-admin                 5.13.0  5.13.0  Neo4j is the world's leading graph database
+neo4j/neo4j-headless-service      5.13.0  -       Neo4j is the world's leading graph database
+neo4j/neo4j-persistent-volume     5.13.0  -       Sets up persistent disks suitable for a Neo4j H...
+neo4j/neo4j-reverse-proxy         5.13.0  5.13.0  Sets up an http server and a reverse proxy for ...
+```
+
+Para instalar la base de datos en sí, se tiene que añadir la dependencia al Chart.yaml del chart de databases. 
+```
+- name: neo4j
+    version: "5.12.0"
+    repository: https://helm.neo4j.com/neo4j
+    condition: neo4j.enabled
+```
+En los values.yaml, hay que poner los siguientes valores.
+```
+neo4j:
+  enabled: true
+  neo4j:
+    name: my-standalone
+    resources:
+      cpu: "0.5"
+      memory: "2Gi"
+    password: "neo4j-password"
+    edition: "enterprise"
+    acceptLicenseAgreement: "yes"
+  config:
+    server.directories.plugins: "/var/lib/neo4j/labs"
+    dbms.security.procedures.unrestricted: "apoc.export.*,apoc.import.*,apoc.*,apoc.export"
+    server.config.strict_validation.enabled: "false"
+    dbms.security.procedures.allowlist: "apoc.export.*,apoc.import.*"
+  apoc_config:
+    apoc.trigger.enabled: "true"
+    apoc.jdbc.neo4j.url: "jdbc:foo:bar"
+    apoc.import.file.enabled: "true"
+    apoc.export.file.enabled: "true"
+  env:
+    NEO4J_PLUGINS: '["apoc"]'
+  volumes:
+    data:
+      mode: defaultStorageClass
+      defaultStorageClass:
+        requests:
+          storage: 2Gi
+```
+Aquí hay varios parámetros importantes. La base de datos siempre debe tener un nombre, el parámetro de name. En este caso es my-standalone. El password es la contraseña del usuario neo4j, que es el usuario predeterminado. Si este campo se omite, la contraseña se genera automáticamente. Los resources definen el tamaño de la instancia de Neo4j. El mínimo es de 0.5 CPU y 2 Gb de memoria. El volumes.data asigna el volumen del contendor que va a contener los datos. Este puede persistir aun cuando la base de datos no está instalada. 
+
+La sección de config se utiliza para instalar plugins, que son como métodos, funciones y procedimientos adicionales a los que ya tiene Neo4j. En este caso, estamos intentando de instalar el plugin de APOC Core. Este permite exportar e importar una base de datos con un archivo del dump. Se incluyen estos procedimientos y la configuración del plugin.
+Finalmente, está el parámetro más importante para nuestro caso de backup: el edition. Esto es debido a que los backups solo están disponibles en el Enterprise Edition de Neo4j.
+ ![Alt text](imgs/BackupNeo4j/enterprise1.png)
+ 
+  ![Alt text](imgs/BackupNeo4j/enterprise2.png)
+
+Para levantar el pod de Neo4j, simplemente hay que hacer 
+```
+helm install databases databases
+```
+
+##### Backup
+Hay varias formas de hacer un backup en Neo4j. La primera es la que se utilizó para esta tarea.
+Para hacer un backup desde un job y luego subir el backup al bucket de AWS, se necesita buscar una forma instalar Neo4j en Amazon Linux. Esto es porque el pod del job usa una imagen del Amazon CLI. Para hacer esto, se utilizan las siguientes instrucciones:
+```
+rpm --import https://debian.neo4j.com/neotechnology.gpg.key
+cat << EOF >  /etc/yum.repos.d/neo4j.repo
+[neo4j]
+name=Neo4j RPM Repository
+baseurl=https://yum.neo4j.com/stable/5
+enabled=1
+gpgcheck=1
+EOF
+NEO4J_ACCEPT_LICENSE_AGREEMENT=yes yum install neo4j-enterprise-5.13.0 -y
+```
+Es importante recalcar que hay que instalar la versión de Enterprise. La Community Edition de Neo4j no tiene la instrucción específica para hacer el backup. 
+La instalación de Neo4j en Amazon Linux contiene las herramientas para interactuar con esta: neo4j y neo-admin. Se utiliza neo4j-admin para hacer el backup. La instrucción es la siguiente:
+```
+neo4j-admin database backup --from=$NEO4J_SERVICE:$NEO4J_PORT --type=full --to-path=/neo4j/$DATE
+```
+Este comando tiene varias opciones. Se explicarán a continuación las que se utilizaron en esta tarea:
+-	--from=<host:port> : Esta opción se utiliza para especificar la dirección de la base de datos de Neo4j. En nuestro caso, se necesita acceder al servicio del admin del pod de Neo4j. Esto se hace poniendo el nombre del pod-admin.default.svc.cluster.local. El puerto es el que se usa para los backups. En este caso es el 6362.
+-	--type=full : Se utiliza para especificar el tipo de backup que se necesita. Hay tres tipos: full, diff y auto. Un backup full contiene toda la base de datos. Un diferencial (diff) contiene una bitácora de las transacciones que se aplicaron a la base de datos desde el último full backup. Auto determina cuál backup hacer automáticamente.
+-	--to-path= : Especifica el directorio donde se va a almacenar el backup. Este puede ser en la misma base de datos, pero en este caso es utilizó el camino absoluto al directorio del pod del job para que se almacene el backup localmente en este.
+Luego de ejecutar la instrucción, es obtiene el siguiente resultado.
+ ![Alt text](imgs/BackupNeo4j/backupcomplete.png)
+
+Las variables de $NEO4J_SERVICE y $NEO4J_PORT se envían por el values.yaml del job. Para la sección de Neo4j, los valores son los siguientes:
+```
+neo4j:
+  enabled: true
+  config:
+    namespace: default
+    host: databases-admin.default.svc.cluster.local
+    port: "6362"
+    bucketName: tec-ic4302-02-2023
+    path: 2019073558/neo4j
+    maxBackups: 3
+    name: neo4j-2023-10-23T20-53-22.backup
+    schedule: "0 */12 * * *"
+    diskSize: 2
+    storageClass: hostpath
+    provider: aws
+    type: backup
+```
+Aquí podemos ver cómo se envían el host (la dirección de la base de datos), el puerto (6362) y la información del path para subir el backup a AWS. Las instrucciones para subirlo a AWS son las mismas para las otras bases de datos:
+```
+aws s3 cp /neo4j/$DATE s3://$BUCKET_NAME/$BACKUP_PATH/ --recursive
+aws s3 ls s3://$BUCKET_NAME/$BACKUP_PATH/
+```
+Luego de correr el backup y subirlo a AWS, podemos revisar si se subió correctamente:
+ ![Alt text](imgs/BackupNeo4j/backupinbucket.png)
+
+La segunda opción para hacer el backup es utilizar el Helm Chart del neo4j-admin para subir el backup directamente a Neo4j. Para hacer esto, es necesario crear un nuevo values.yaml file específico para este. Este archivo tiene parámetros diferentes:
+```
+neo4j:
+  image: "neo4j/helm-charts-backup"
+  imageTag: "5.12.0"
+  jobSchedule: "0 17 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  backoffLimit: 3
+
+
+backup:
+  bucketName: "tec-ic4302-02-2023"
+  databaseAdminServiceName:  "databases-admin"
+  database: "neo4j"
+  cloudProvider: "aws"
+  secretName: "aws-credential"
+  secretKeyName: "credentials"
+consistencyCheck:
+  enabled: true
+```
+Las credenciales de AWS están en un secret de Kubernetes. Este se establece en el helm chart de Bootstrap. La imagen que se va a usar para el pod es la de neo4j/helm-charts-backup. Esta contiene las instrucciones para hacer el backup y subirlo al bucket. Se pone el horario del cronjob que se crea, los límites de intentos, la información del bucket de AWS, las bases de datos que se van a respaldar y el consistency check. Este se asegura de que los datos sean consistentes antes de hacer el backup.
+
+Luego, hay que instalar el Helm Chart de neo4j-admin. Esto se puede hacer con
+```
+helm install backup-name neo4j/neo4j-admin -f /dreccion-del-archivo/backup-values.yaml
+```
+Esto crea un cronjob con la configuración especifica en el values.yaml. Uno puede manualmente correr el cronjob. Es importante que la base de datos de Neo4j se del Enterprise Edition, porque si no, no va a estar abierto el puerto 6362, que es el de los backups, por lo que el job falla.
+ 
+Si el job no falla, ocurre lo siguiente:
+ 
+ 
+ 
+Aquí podemos observar que el backup sí se subió correctamente, pero no se subió al directorio de nuestro grupo. No obstante, cuando intenté cambiar la dirección del bucket, daba error de que no encontraba el bucket.
+ 
+Por lo tanto, usamos la primera forma para que sí se subiera al bucket y dirección correcta. 
+
+La tercera forma de hacer un backup es de la forma que no es en línea, con un dump. Es muy similar a la primera forma, pero la base de datos tiene que estar detenida. Esto se puede hacer con la herramienta de Neo4j. El comando es neo4j stop. El problema con esto es que para detenerla, uno tiene que estar directamente con en el pod de la base de datos, con kubectl exec –it nombre del pod. Por lo tanto, esta forma no nos sirve para esta tarea. No obstante, el procedimiento es el siguiente.
+Cuando uno ya está en el pod, hay que hacer
+```
+neo4j stop
+neo4j-admin database dump neo4j
+```
+El resultado es el siguiente.
+ 
+Para encontrar el dump, hay que entrar al directorio data/dumps/
+ 
+
+La última forma de hacer un backup es por medio del plugin APOC. Este significa Awesome Procedures on Cypher. Este tiene unos procedimientos que son export e import. Hay varias versiones de export. Uno puede exportar a un archivo GraphML, Cypher, CSV, Excel, JSON, etc. 
+Este comando se puede correr desde el browser de Neo4j. 
+ El resultado de esta instrucción se debería guardar en el directorio de imports del pod.
+
+Para correr esta instrucción desde el pod del job, se puede utilizar el API de Neo4j. Se puede instalar curl y realizar un post al endpoint. Se utiliza el servicio y el puerto, como al igual que en la primera forma del backup. La instrucción para hacer esto es el siguiente. Se utiliza un > para guiar el resultado del query a un archivo del pod.
+```
+curl --verbose POST http://databases-admin.default.svc.cluster.local:7474/db/neo4j/tx/commit -H "Content-Type:application/json" -d "{\"statements\":[{\"statement\":\"CALL apoc.export.cypher.all('backup.cypher', {useTypes: TRUE, storeNodeIds: FALSE})\"}]}" -H "Authorization: Basic bmVvNGo6bmVvNGotcGFzc3dvcmQ=" > /neo4j/$DATE/backup.cypher
+``` 
+Sin embargo, como se ve en el resultado del query más arriba, el resultado no es el archivo en sí, es como un mensaje de éxito. Esta respuesta es lo que se guarda en el archivo, no el archivo del backup. Por lo tanto, esta opción no sirve para esta tarea.
+
+##### Restore
+Para hacer un restore, es muy similar a la primera forma de hacer el backup. Los values.yaml para el job son muy similares:
+```
+neo4j:
+  enabled: true
+  config:
+    namespace: default
+    host: databases-admin.default.svc.cluster.local
+    port: "6362"
+    bucketName: tec-ic4302-02-2023
+    path: 2019073558/neo4j
+    maxBackups: 3
+    name: neo4j-2023-10-23T20-53-22.backup
+    schedule: "0 */12 * * *"
+    diskSize: 2
+    storageClass: hostpath
+    provider: aws
+    type: restore
+```
+Cuando uno le pone el type restore, eso indica que el job que se tiene que crear es el de restore y no el backup.
+Hay que instalar Neo4j Enterprise en el pod.
+Primero, hay que copiar el archivo del backup del bucket al pod. Esto se hace con la siguiente instrucción:
+```
+aws s3 cp s3://$BUCKET_NAME/$BACKUP_PATH/$RESTORE_FILE $DIRECTORY
+```
+Luego, se realiza la instrucción propia del restore. Este es muy similar al backup
+```
+neo4j-admin database restore --from-path=$DIRECTORY/$RESTORE_FILE --to-path-data=$NEO4J_SERVICE:$NEO4J_PORT --verbose
+```
+Se envía el servicio de Neo4j y el puerto y ahí se realiza el restore.
+ 
+
+Así se debería ver la base de datos luego del restore.
+
+
 
 ### Conclusiones y Recomendaciones
 
@@ -691,3 +901,23 @@ Y con el response se puede observar que el restore ha sido exitoso.
 * En una tarea de este tipo, dividir el trabajo es importante, pero también es importante que cada persona del equipo entienda su tarea. Se recomienda mantener una buena comunicación durante el desarrollo del proyecto y nunca quedarse con dudas. 
 
 * A la hora de probar los backups generados, se recomienda hacer uso de un pod de depuración como el incluido en la solución de esta tarea. Dicho pod proporciona una terminal con conectividad directa al bucket de almacenamiento en AWS. Esto permite validar de forma efectiva que los respaldos se estén ejecutando correctamente y subiendo a la nube según lo esperado. 
+
+
+### Referencias
+Accessing Neo4J - Operations Manual. (s. f.). Neo4j Graph Data Platform. https://neo4j.com/docs/operations-manual/current/kubernetes/accessing-neo4j/ 
+
+Awesome Procedures on Cypher (APOC) - Neo4J Labs. (s. f.). Neo4j Graph Data Platform. https://neo4j.com/labs/apoc/#:~:text=APOC%20(Awesome%20Procedures%20on%20Cypher,a%20lot%20of%20useful%20functionality. 
+
+Back up an offline database - operations manual. (s. f.). Neo4j Graph Data Platform. https://neo4j.com/docs/operations-manual/current/backup-restore/offline-backup/ 
+
+Back up an online database - operations manual. (s. f.). Neo4j Graph Data Platform. https://neo4j.com/docs/operations-manual/current/backup-restore/online-backup/ 
+
+Back up and restore (online) - Operations manual. (s. f.). Neo4j Graph Data Platform. https://neo4j.com/docs/operations-manual/current/kubernetes/operations/backup-restore/ 
+
+Create a Helm Deployment Values.yaMl file - Operations Manual. (s. f.). Neo4j Graph Data Platform. https://neo4j.com/docs/operations-manual/current/kubernetes/quickstart-standalone/create-value-file/ 
+
+Dump and Load Databases (offline) - Operations Manual. (s. f.). Neo4j Graph Data Platform. https://neo4j.com/docs/operations-manual/current/kubernetes/operations/dump-load/ 
+
+Export - APOC extended documentation. (s. f.). Neo4j Graph Data Platform. https://neo4j.com/labs/apoc/4.1/export/ 
+
+Red Hat, CentOS, Fedora, and Amazon Linux (.RPM) - Operations Manual. (s. f.). Neo4j Graph Data Platform. https://neo4j.com/docs/operations-manual/current/installation/linux/rpm/
