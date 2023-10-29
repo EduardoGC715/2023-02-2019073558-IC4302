@@ -1,4 +1,7 @@
-# Indices 
+# Apuntes Clase 13/10/23
+## José Eduardo Gutiérrez Conejo - 2019073558
+
+## Indices 
 ## Indices Cluster
 El indice se encuentra dentro de los datos, para estos indices se define una estructura, para el ejemplo una arbol binario, pero normalmente son estructuras más complejas, estos arboles tienen un hijo izquierdo y un hijo derecho, dentro del archivo donde se maneja el indice se define un header que posee informacion de los datos que se estan guardando, si el indice se acomoda por numeros, el header debe de decir el row donde inicia el indice, es decir los aots, y despues se tiene un estandar para mostrar cuando hay presencia o ausencia de los hijos derechos o izquierdos. Dependiendo de los datos que se insertan se realizan el acomodo e insercion correcta de los datos (balanceos e inserciones). Se debe de hacer una representacion de la estructura que se esta utilizando dentro del archivo. Cuando se desea realizar un borrado, dentro del header, se tiene un root que apunta a donde arranca la estructura y tenemos, un puntero que apunta a disco, y cuando se borra un elemento se elimina poniendole un 0, el campo donde se realiza el elimanado, se acomoda todo para tener los datos de una forma más compacta, cuando se formatea el disco, lo que realiza es que al estar metiendo y sacando datosde le BD, se empieza a tener espacios en la BD que quedan libres, y lo que se hace es pegar al final y el SO, creia que los espacios estaban siendo utilizados y que la memoria diminuia cada vez más, al utilizar el meotodo anterior, todo queda más compirmido y el uso del espacio es m´´as esficiente.
 ## Indices Non Cluster
